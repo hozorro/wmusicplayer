@@ -1,0 +1,8 @@
+@import "tailwindcss";
+@plugin "@iconify/tailwind4";
+
+@layer components {
+  .btn {
+    @apply px-2 py-1 bg-stone-50/30 text-stone-50 rounded-md;
+  }
+}
