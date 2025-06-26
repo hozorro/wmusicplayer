@@ -8,9 +8,10 @@ export const getAlbum = (id: string) => {
   return generalAlova.Get("/getalbum/" + id, {
     transform: (rawData: AlbumInfo) => {
       // 使用transform时，在transform函数中指定data的类型，不要在上面的Get中使用类型泛型，否则rawData的类型会变为unknown
+      // 并且当响应错误时，获取的rawData为空，此时transform函数中对于用到rawwData的属性进行赋值，会报错，应增加判断或使用.?链式运算符
       return {
         ...rawData,
-        cover: baseSrcURL + 'getcover?size=512&id=' + rawData.id,
+        cover: baseSrcURL + 'getcover?size=512&id=' + rawData?.id,
       }
     }
   })
@@ -42,12 +43,13 @@ export const getArtists = (char: string) => {
   return generalAlova.Get("/getartists/" + char, {
     transform: (rawData:{id:string,name:string,list_data:Artist[]}) => {
       return {
-        id: rawData.id,
-        name: rawData.name,
-        artists: rawData.list_data.map(artist => ({
-        ...artist,
-        cover: baseSrcURL + 'getartistart?type=face&id=' + artist.id,
-      }))}
+        id: rawData?.id,
+        name: rawData?.name,
+        artists: rawData?.list_data.map(artist => ({
+          ...artist,
+          cover: baseSrcURL + 'getartistart?type=face&id=' + artist.id,
+        })
+      )}
     }
   })
 }
@@ -56,9 +58,9 @@ export const getArtist = (id: string) => {
     transform: (rawData: ArtistInfo) => {
       return {
         ...rawData,
-        album_list: rawData.album_list.map(item => ({...item, cover: baseSrcURL + 'getcover?size=512&id=' + item.id})),
-        top20_tracks: rawData.top20_tracks.map(item => ({...item, cover: baseSrcURL + 'getcover?size=512&id=' + item.id})),
-        cover: baseSrcURL + 'getartistart?type=portrait&id=' + rawData.id,        
+        album_list: rawData?.album_list.map(item => ({...item, cover: baseSrcURL + 'getcover?size=512&id=' + item.id})),
+        top20_tracks: rawData?.top20_tracks.map(item => ({...item, cover: baseSrcURL + 'getcover?size=512&id=' + item.id})),
+        cover: baseSrcURL + 'getartistart?type=portrait&id=' + rawData?.id,        
       }
     }
   })
@@ -71,7 +73,7 @@ export const getFolder = (id: string) => {
     transform: (rawData: FolderInfo) => {
       return { 
         ...rawData,
-        tracks: rawData.tracks.map(item => ({...item, cover: new URL('/src/assets/imgs/trackc.png', import.meta.url).href})),
+        tracks: rawData?.tracks.map(item => ({...item, cover: new URL('/src/assets/imgs/trackc.png', import.meta.url).href})),
       } 
     }
   })
@@ -135,8 +137,8 @@ export const getPlaylist = (id: string) => {
     transform: (rawData: PlaylistInfo) => {
       return {
         ...rawData,
-        cover: baseSrcURL + 'getplaylistcover?id=' + rawData.id,
-        tracks: rawData.tracks.map(item => ({...item, cover: baseSrcURL + 'getcover?size=512&id=' + item.id})),
+        cover: baseSrcURL + 'getplaylistcover?id=' + rawData?.id,
+        tracks: rawData?.tracks.map(item => ({...item, cover: baseSrcURL + 'getcover?size=512&id=' + item.id})),
       }
     }
   });

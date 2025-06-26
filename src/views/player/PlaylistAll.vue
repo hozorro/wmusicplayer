@@ -106,8 +106,10 @@ function handleSubmit() {
     </div>
     <div class=" mt-4 grid grid-cols-3 gap-3">
       <div v-for="plist in playlists">
-        <img :src="plist.cover" v-default-src="DefaultCover" class=" rounded-md object-cover aspect-square" />
-        <div class=" text-sm text-gray-500">{{plist.name}}</div>
+        <router-link :to="`/playlist/${plist.id}`"> 
+          <img :src="plist.cover" v-default-src="DefaultCover" class=" rounded-md object-cover aspect-square" />
+          <div class=" text-sm text-gray-500">{{plist.name}}</div>
+        </router-link>
       </div>
     </div>
   </div>

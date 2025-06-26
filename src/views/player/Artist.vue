@@ -36,7 +36,9 @@ function handlePlayAll() {
     store.addListToCurPlaylist(data, PlayChangeMode.REPLACE_LIST)
   })
 }
+const tab = ref<'tracks'|'albums'>('tracks')
 onMounted(() => {
+  if (route.query.tab == 'albums') tab.value = 'albums'
   window.addEventListener('scroll', function(){
     if(banner !== null){
       const rect = banner.value?.getBoundingClientRect();
@@ -48,8 +50,6 @@ onMounted(() => {
     }
   })
 })
-
-const tab = ref<'tracks'|'albums'>('tracks')
 
 import defaultArt from '@/assets/imgs/portrait.png'
 
@@ -65,8 +65,12 @@ function handleOperation(oType: string, oId: string | number, oTitle: string) {
 }
 const backLink = computed(() => {
   let backQuery = {...route.query}
-  if (route.query.back) delete backQuery.back
-  return { name: route.query.back as string, query: backQuery };
+  if (route.query.back) {
+    delete backQuery.back
+    return { name: route.query.back as string || 'artist-list', query: backQuery };
+  } else {
+    return { name: 'artist-list', query: {char: artist.value.start_char} };
+  }
 });
 </script>
 
@@ -112,6 +116,7 @@ const backLink = computed(() => {
         :id="album.id"
         :name="album.name"
         :cover="album.cover"
+        :query="{back:'artist',id:artist.id,tab:'albums'}"
         @operation="(id:string|number, name:string) => handleOperation('album', id, name)"
       />
     </div>

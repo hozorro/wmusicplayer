@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watchEffect } from 'vue'
 import { invalidateCache } from 'alova';
 import { useRequest } from 'alova/client';
 import { getPlaylists, addNewPlaylist, addTrackToPlaylist, getPlaylist } from '@/apis/methods/music';
@@ -9,8 +9,13 @@ const addNewVisible = ref(false)
 const newTitle = ref('')
 const atpVisible = defineModel<boolean>('atpVisible', {default: false})
 
-const { data: listData } = useRequest(getPlaylists, {
-  initialData: []
+const { data: listData, send } = useRequest(getPlaylists, {
+  initialData: [],
+  immediate: false
+})
+// 已优化：只在显示时才请求歌单列表，否则每次只要有本组件的页面都会默认请求。
+watchEffect(async () => { 
+  if (atpVisible.value) await send()
 })
 
 async function onSelect(pid:string){

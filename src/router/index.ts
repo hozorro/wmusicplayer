@@ -33,9 +33,7 @@ const routes: RouteRecordRaw[] = [
     ]
   },{
     path: "/favourite",name: "favourite", component: () => import("@/views/player/Favourite.vue")
-  },{
-    path: "/test",name: "test", component: () => import("@/views/player/Test.vue")
-  },
+  }
 ]
 
 const router = createRouter({

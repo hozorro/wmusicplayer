@@ -100,7 +100,8 @@ const useColor  = () => {
 
     const ctx = canvas.getContext('2d');
     if(!ctx) return;
-    
+
+    img.crossOrigin = 'anonymous';
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
     try {

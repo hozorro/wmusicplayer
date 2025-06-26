@@ -8,6 +8,7 @@ const app = createApp(App)
 app.directive('default-src', (el: HTMLImageElement, binding) => {
   const defaultSrc = binding.value
   el.onerror =  () => {
+    el.crossOrigin = 'anonymous'
     el.src = defaultSrc
     el.onerror = null
   }

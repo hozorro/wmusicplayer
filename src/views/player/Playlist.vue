@@ -118,7 +118,7 @@ function handleSubmit() {
 const backLink = computed(() => {
   let backQuery = {...route.query}
   if (route.query.back) delete backQuery.back
-  return { name: route.query.back as string || 'playlist', query: backQuery };
+  return { name: route.query.back as string || 'playlist-all', query: backQuery };
 });
 </script>
 

@@ -2,6 +2,7 @@ import { axiosRequestAdapter } from "@alova/adapter-axios";
 import { createAlova } from "alova";
 import adapterFetch from "alova/fetch";
 import vueHook from "alova/vue";
+import WMessage from "@/composables/message";
 
 export const generalAlova = createAlova({
   baseURL: "/apiv2/",
@@ -10,21 +11,23 @@ export const generalAlova = createAlova({
   responded: {
     onSuccess: async (response) => {
       if (response.status >= 501) {
-        alert('响应错误')
+        WMessage("服务器错误[" + response.status + ']', "error")
         return
       }
       else if (response.status >= 400) {
-        alert('请求错误')
+        WMessage("请求错误[" + response.status + ']', "error")
         return
       }
       const resData = await response.json()
+      console.log(resData)
       if(resData.code !== 200){
-        alert('数据错误['+resData.code+']\n'+resData.message)
+        WMessage('数据错误['+resData.code+']: '+resData.msg, "error")
+        return
       }
       return resData.data
     },
     onError: (err) => {
-      alert('网络错误:' + err.message)
+      WMessage('网络错误: '+err.message, "error")
     }
   }
 });

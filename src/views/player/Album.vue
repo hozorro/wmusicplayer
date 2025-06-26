@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useTemplateRef } from "vue";
+import { computed, useTemplateRef } from "vue";
 import { useRoute } from "vue-router";
 import { useMusicStore } from "@/store/music"
 import { useRequest } from "alova/client";
@@ -36,6 +36,16 @@ function handlePlayRandom() {
   shuffle(tracks)
   store.addListToCurPlaylist(tracks, PlayChangeMode.REPLACE_LIST)
 }
+const backLink = computed(() => {
+  let backQuery = {...route.query}
+  if (route.query.back == 'artist') {
+    delete backQuery.back
+    return { name: 'artist', params: { id: route.query.id as string }, query: backQuery }
+  } else {
+    if (route.query.back) delete backQuery.back
+    return { name: route.query.back as string || 'album-list', query: backQuery }
+  }
+});
 </script>
 
 <template>
@@ -43,10 +53,10 @@ function handlePlayRandom() {
     :style="{
       background: scrollOut ? '#f3f4f6' : 'transparent',
       borderBottom: scrollOut ? '1px solid #d1d2d4' : 'none'}">
-    <div class=" flex-none" :style="{color: scrollOut ? '#364153' : '#f5f5f4'}">
+    <router-link :to="backLink" class=" flex-none" :style="{color: scrollOut ? '#364153' : '#f5f5f4'}">
       <span class=" icon-[solar--alt-arrow-left-linear] align-middle text-2xl mix-blend-difference"></span>
       <span class=" align-middle">{{scrollOut ? '专辑：' + album.name : '专辑'}}</span>
-    </div>
+    </router-link>
     <div class=" text-stone-200" :style="{display: scrollOut ? 'block' : 'none'}">
       <div class=" inline-block bg-cyan-700 text-white text-sm place-content-center px-2 rounded-md shadow-sm" @click="handlePlayAll">播放全部</div>
       <div class=" inline-block bg-cyan-700 text-white text-sm place-content-center ml-2 px-1 rounded-md shadow-sm" @click="handlePlayRandom">随机播放</div>

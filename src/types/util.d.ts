@@ -11,3 +11,5 @@ declare interface AnalysColors {
   secondDominant: rgbColor,
   average: rgbColor
 }
+
+declare type MsgType = 'success' | 'error' | 'warning' | 'info'
