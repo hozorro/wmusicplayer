@@ -3,43 +3,44 @@ declare interface ResponseData<T> {
   msg: string;
   data: T;
 }
+
+declare type TransferOptions = {
+  page_num: number,
+  page_size: number
+  last_sync?: string,
+}
+declare type DbMetaInfo = {
+  model_name: MetaType;
+  total_count: number;
+  last_update: string;
+}
+
+declare type PopType = 'album' | 'artist' | 'track' | 'playlist' | 'folder' | 'genre';
 // #region Album
 declare interface Album {
-  id: string;
-  name: string;
+  id: number;
+  title: string;
 }
-
 declare interface AlbumInfo extends Album { 
-  artists: Artist[];
-  artist: Artist;
-  track_count: number;
-  track_list: Track[];
-}
-
-declare interface IndexeddbAlbumInfo extends Album {
-  artists: Artist[];
-  tracks: {id: string, title: string}[]
+  album_artist: Omit<Artist, 'pinyin_initial'>;
+  artists: Omit<Artist, 'pinyin_initial'>[];
+  tracks: Track[];
+  track_count?: number;  // transform生成属性
+  cover?: string;
 }
 // #endregion
 
 // #region Artist
 declare interface Artist {
-  id: string;
+  id: number;
   name: string;
-  start_char: string;
+  pinyin_initial: string;
 }
-
 declare interface ArtistInfo extends Artist { 
-  album_count: number;
-  track_count: number;
-  album_list: Album[];
-  top20_tracks: Track[];
-}
-
-declare interface IndexeddbArtistInfo extends Artist {
-  albums: Album[];
-  track_count: number;
-  hit: number[];
+  main_albums: Album[];
+  track_albums: Album[];
+  top_tracks: Track[];
+  track_count: number
 }
 // #endregion
 
@@ -48,77 +49,79 @@ declare interface Folder {
   id: number;
   name: string;
 }
-
 declare interface FolderInfo extends Folder {
-  parent: number;
-  sub_folders: Folder[];
+  parent_id?: number;
+  children: Folder[];
   tracks: Track[];
-}
-
-declare interface IndexeddbFolderInfo extends Folder {
-  parent: number;
-  root: boolean;
-  path: string;
-  cover_art: string;
-  created: string;
-  last_scan: number;
-  tracks: {id: string, title: string}[];
 }
 // #endregion
 
 // #region Genre
 declare interface Genre {
-  id: string;
+  id: number;
   name: string;
-  info?: string;
-}
-
-declare interface IndexeddbGenreInfo extends Genre {
-  track_count: number;
+  color: string;
+  info?: Record<string, any>;
 }
 // #endregion
 
-// #region Track
-declare interface TrackInfo {
-  id: string;
-  title: string;
-  artists?: {id: string, name: string}[];
-  album: string;
-  album_id?: string;
-  duration: number;
-  starred: boolean;
-  cover?: string;
-}
-
-declare interface IndexeddbTrackInfo extends TrackInfo {
-  year: number;
-  artists: Artist[];
-  genres: Genre[];
-  folder: number;
-  hit: number[];
-}
-
+// #region 
 declare type Track = {
-  id: string;
+  id: number;
   title: string;
   artists?: string[];
+  cover?: string;
 };
+declare interface TrackInfo {
+  id: number;
+  title: string;
+  artists?: {id: number, name: string}[];
+  album?: {id: number, title: string};
+  duration: number;
+  favorited_at?: string;
+  is_favorited?: boolean;
+  hit_count?: number; 
+  cover?: string; // transform生成属性
+}
+declare interface TrackMoreInfo { 
+  id: number;
+  title: string;
+  duration?: number;
+  bitrate?: number;
+  bitrate_mode?: string;
+  year?: number;
+  acoustid_id?: string;
+  mb_trackid?: string;
+  path: string;
+  hits: string[];
+}
 // #endregion
 
 // #region Playlist
-declare interface PlaylistInfo {
-  id: string;
-  name: string;
+declare interface Playlist {
+  id: number | string;
+  title: string;
+  cover?: string; // transform生成属性
+}
+declare interface PlaylistInfo extends Playlist {
   comment: string;
-  created: string;
+  created_at: string;
   tracks: Track[];
-  cover?: string;
 }
-
-declare interface IndexeddbPlaylistInfo extends PlaylistInfo {
-  cover:  string;
-  hit: number[];
-}
-
-declare type Playlist = Pick<PlaylistInfo, "id" | "name" | "cover">;
 // #endregion
+
+declare interface LyricMeta {
+  ar?: string; // artist
+  ti?: string; // title
+  al?: string; // album
+  by?: string; // lyric creator
+  hash?: string;
+  total?: number;
+  offset?: number;
+  [key: string]: string | number | undefined;
+}
+
+declare interface LyricLine {
+  time: number;
+  text: string;
+}

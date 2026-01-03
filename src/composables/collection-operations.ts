@@ -3,18 +3,18 @@ import { useMusicStore, useOperationStore } from '@/store/music'
 import { getCollectionTracks } from '@/apis/methods/music'
 import { PlayChangeMode } from '@/constants/play-constants'
 
-export default function useCollectionOperations (colType: string, callback?: () => void) { 
+export default function useCollectionOperations (colType: Exclude<PopType, 'track'>, callback?: () => void) { 
   const musicStore = useMusicStore()
   const operationStore = useOperationStore()
 
-  function handleOperation(id: string | number, name: string) { 
-    operationStore.openPopMenu(id, name, operations.value)
+  function handleOperation(id: number, name: string) { 
+    operationStore.openPopMenu(id, name, colType, operations.value)
     if (callback) callback()
   }
 
   const operations = computed<Operation[]>(() => [
-    { label: '播放全部', action: handlePlayAll },
-    { label: '添加到播放列表', action: handleAddToCurPlaylist },
+    { label: '播放全部', icon: 'icon-[solar--play-circle-linear]', action: handlePlayAll },
+    { label: '添加到播放列表', icon: 'icon-[solar--plaaylist-minimalistic-linear]', action: handleAddToCurPlaylist },
   ])
 
   function handlePlayAll() { 

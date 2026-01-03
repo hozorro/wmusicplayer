@@ -10,7 +10,7 @@ const route = useRoute();
 let artistChar = ref('')
 
 const { data:artistChars,onSuccess } = useRequest(getArtistChars);
-const { loading, error, data:arData, send:getArtistList } = useRequest((archar) => getArtists(archar),{
+const { loading, error, data:artists, send:getArtistList } = useRequest((archar) => getArtists(archar),{
   immediate: false,
   initialData: {artists:[]}
 });
@@ -33,7 +33,7 @@ const { handleOperation } = useCollectionOperations('artist');
 </script>
 
 <template>
-  <div class=" p-2 flex flex-col h-svh">
+  <div class=" fixed top-0 left-0 p-2 bg-gray-100 w-full z-20">
     <router-link to="/" class=" w-full flex-none text-lg font-semibold">
       <span class=" icon-[solar--alt-arrow-left-linear] align-middle text-gray-600"></span> 歌手
     </router-link>
@@ -52,12 +52,14 @@ const { handleOperation } = useCollectionOperations('artist');
         </template>
       </div>
     </div>
+  </div>
+  <div class=" flex flex-col pt-44 pb-2 px-2">
     <div class=" mt-4 flex-1">
       <div class=" w-full h-full overflow-y-scroll">
         <div v-if="loading">{{loading}}</div>
         <div v-else-if="error">{{error.message}}</div>
         <div v-else>
-          <CollectionItem  v-for="artist in arData.artists" 
+          <CollectionItem  v-for="artist in artists" 
             col-type="artist"
             :id="artist.id"
             :name="artist.name"

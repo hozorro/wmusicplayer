@@ -28,7 +28,7 @@ const bgStyle = {
 <template>
   <Teleport to="#message">
     <div v-if="isVisible" 
-      class=" fixed top-1/2 left-1/2 -translate-x-1/2 -tranlate-y-1/2 max-w-44 max-h-44 p-2 flex justify-between items-center rounded-lg" 
+      class=" fixed top-2 left-1/2 -translate-x-1/2 max-w-full p-2 flex justify-between items-center rounded-lg shadow-md" 
       :class="bgStyle[mtype]">
       <div class=" flex-none">
         <span class=" text-2xl mr-2" :class="iconStyle[mtype]"></span>

@@ -14,29 +14,48 @@ const store = useMusicStore()
 getGenre(route.params.id as string).then(res => {
   genreName.value = res.name
 })
+const lastKey = ref<string | null>(null)
 const { 
   data: tracks, 
   total, 
   page,
   isLastPage,
-} = usePagination((page, pageSize) => getGenreTracks(route.params.id as string, page, pageSize),{
+  onSuccess: pageUpdated
+} = usePagination((page, pageSize) => {
+  let lastKeyValue = lastKey.value == null ? null : encodeURIComponent(lastKey.value);
+  return getGenreTracks(route.params.id as string, page, pageSize, lastKeyValue)
+},{
   total: res => res.total,
   data: res => res.tracks,
   append: true,
   initialPage: 1,
-  initialPageSize: 10,
-  immediate: true
+  initialPageSize: 20,
+  immediate: true,
+  preloadPreviousPage: false,
+  preloadNextPage: false
+})
+pageUpdated(res => {
+  if(res.data.next_key) {
+    lastKey.value = res.data.next_key
+  } else {
+    lastKey.value = tracks.value.length > 0 ? tracks.value[tracks.value.length - 1].title : null
+  } 
 })
 
 const clientHeight = document.documentElement.clientHeight
 const pullDistance = 10
-function onPullUp() { 
-  let scrollTop = document.documentElement.scrollTop
-  let scrollHeight = document.body.scrollHeight
-  if (scrollTop + clientHeight >= scrollHeight + pullDistance) {
-    if(isLastPage.value) return
-    page.value++
-  }
+let debounceTimer: NodeJS.Timeout | null = null
+const onPullUp = async () => {
+  if(debounceTimer) clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(async () => {
+    let scrollTop = document.documentElement.scrollTop
+    let scrollHeight = document.body.scrollHeight
+    if (scrollTop + clientHeight >= scrollHeight + pullDistance) { 
+      if(isLastPage.value) return
+      page.value++
+    }
+    debounceTimer = null
+  }, 300)
 }
 window.addEventListener('scroll', onPullUp)
 onUnmounted(() => {
@@ -49,7 +68,7 @@ function handlePlayAll() {
   store.addListToCurPlaylist(tracks.value, PlayChangeMode.REPLACE_LIST)
 }
 function handlePlayRandom() { 
-  getGenreRandomTracks(route.params.id as string).then(data => {
+  getGenreRandomTracks(parseInt(route.params.id as string)).then(data => {
     store.addListToCurPlaylist(data, PlayChangeMode.REPLACE_LIST)
   })
 }
@@ -69,22 +88,24 @@ const backLink = computed(() => {
     <router-link :to="backLink">
       <span class=" icon-[solar--alt-arrow-left-linear] align-middle text-2xl"></span>流派：{{ genreName }} ({{ total }})
     </router-link>
-    <div class=" mt-2 p-2 flex justify-around border-b-stone-200 border-b">
-      <button class=" px-2 h-8 leading-8 bg-cyan-600 text-white rounded-md" @click="handlePlayAll">播放全部</button>
-      <button class=" px-2 h-8 leading-8 bg-cyan-600 text-white rounded-md" @click="handlePlayRandom">随机播放</button>
-      <button class=" px-2 h-8 leading-8 bg-cyan-600 text-white rounded-md" @click="handleAddPlay">添加播放</button>
+    <div class=" mt-2 p-2 flex justify-between border-b-stone-200 border-b">
+      <button class=" px-2 h-8 block bg-cyan-600 text-white rounded-md" @click="handlePlayAll">播放全部</button>
+      <button class=" px-2 h-8 block bg-cyan-600 text-white rounded-md" @click="handlePlayRandom">随机播放</button>
+      <button class=" px-2 h-8 block bg-cyan-600 text-white rounded-md" @click="handleAddPlay">添加播放</button>
     </div>
   </div>
   <div class=" mt-24 p-2">
     <div class=" flex items-center w-full" v-for="(track,index) in tracks">
       <div class=" flex-none w-6 text-center text-stone-500">{{ index + 1 }}</div>
-      <TrackItem class=" my-2"
+      <div class=" flex-1 min-w-0">
+        <TrackItem class=" my-2"
         :id="track.id"
         :title="track.title"
         :sub-info="track.artists?.join(', ')"
         @item-click="handleClick"
         @operation="handleOperation"
-      />
+        />
+      </div>
     </div>
   </div>
 </template>

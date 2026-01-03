@@ -29,7 +29,7 @@ export default function useMediaSession(audio: Ref<HTMLAudioElement>, track: Tra
     navigator.mediaSession.metadata = new MediaMetadata({
       title: track.title,
       artist: track.artists?.map((ar)=>ar.name).join(','),
-      album: track.album,
+      album: track.album?.title,
       artwork: [artwork]
     })
   }

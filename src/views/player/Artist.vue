@@ -16,23 +16,26 @@ const artistNav = ref('')
 import defaultArtSketch from '@/assets/imgs/portrait_sketch.png'
 const route = useRoute()
 const store = useMusicStore()
-const { data: artist } = useRequest(getArtist(route.params.id as string),{
+
+const artist_id = ref(parseInt(route.params.id as string))
+const { data: artist } = useRequest(getArtist(artist_id.value),{
     initialData: {
       cover: defaultArtSketch,
-      top20_tracks: [],
-      album_list: [],
+      top_tracks: [],
+      main_albums: [],
+      track_albums: []
   }
 })
 function handlePlayTop() {
-  store.addListToCurPlaylist(artist.value.top20_tracks, PlayChangeMode.REPLACE_LIST)
+  store.addListToCurPlaylist(artist.value.top_tracks, PlayChangeMode.REPLACE_LIST)
 }
 function handlePlayRandom() {
-  getArtistRandomTracks(route.params.id as string).then(data => {
+  getArtistRandomTracks(artist_id.value).then(data => {
     store.addListToCurPlaylist(data, PlayChangeMode.REPLACE_LIST)
   })
 }
 function handlePlayAll() {
-  getCollectionTracks(route.params.id as string, 'artist').then(data => {
+  getCollectionTracks(artist_id.value, 'artist').then(data => {
     store.addListToCurPlaylist(data, PlayChangeMode.REPLACE_LIST)
   })
 }
@@ -60,7 +63,7 @@ function handleOperation(oType: string, oId: string | number, oTitle: string) {
   if (oType === 'album') {
     handleAlbumOperation(oId as number, oTitle);
   } else {
-    handleTrackOperation(oId as string, oTitle);
+    handleTrackOperation(oId as number, oTitle);
   }
 }
 const backLink = computed(() => {
@@ -69,7 +72,7 @@ const backLink = computed(() => {
     delete backQuery.back
     return { name: route.query.back as string || 'artist-list', query: backQuery };
   } else {
-    return { name: 'artist-list', query: {char: artist.value.start_char} };
+    return { name: 'artist-list', query: {char: artist.value.pinyin_initial} };
   }
 });
 </script>
@@ -86,7 +89,7 @@ const backLink = computed(() => {
     </div>
     <div class=" -mt-4 -mb-6 mx-4 h-16 bg-stone-50 shadow-md rounded-md p-2 relative z-20 text-center">
       <div class=" text-lg">{{ artist.name }}</div>
-      <div class=" text-sm text-stone-400">已收录{{ artist.album_count }}张专辑，{{ artist.track_count }}首歌</div>
+      <div class=" text-sm text-stone-400">已收录{{ artist.main_albums.length }} / {{ artist.track_albums.length }} 张专辑，{{ artist.track_count }}首歌</div>
     </div>
     <div class=" sticky top-0 px-2 pt-9 bg-gray-100 z-10">
       <div class=" flex justify-around mt-2">
@@ -100,23 +103,34 @@ const backLink = computed(() => {
       </div>
     </div>
     <div v-show="tab == 'tracks'" class=" p-2 w-full">
-      <TrackItem v-for="track in artist.top20_tracks"
+      <TrackItem v-for="track in artist.top_tracks"
         :id="track.id"
         :title="track.title"
         :art="track.cover"
         :show-art="true"
         :sub-info="track.artists?.join(', ')"
         @item-click="handleClick"
-        @operation="(id:string, title:string) => handleOperation('track', id, title)"
+        @operation="(id:number, title:string) => handleOperation('track', id, title)"
       />
     </div>
     <div v-show="tab == 'albums'" class=" p-2 w-full">
-      <CollectionItem v-for="album in artist.album_list"
+      <CollectionItem v-for="album in artist.main_albums"
         col-type="album"
         :id="album.id"
-        :name="album.name"
-        :cover="album.cover"
-        :query="{back:'artist',id:artist.id,tab:'albums'}"
+        :name="album.title"
+        :art="album.cover"
+        :query="{back: 'artist', id: artist.id.toString(),tab: 'albums'}"
+        @operation="(id:string|number, name:string) => handleOperation('album', id, name)"
+      />
+    </div>
+    <div v-show="tab == 'albums'" class=" p-2 w-full">
+      <div class=" w-full mb-2 border-t border-t-gray-200"></div>
+      <CollectionItem v-for="album in artist.track_albums"
+        col-type="album"
+        :id="album.id"
+        :name="album.title"
+        :art="album.cover"
+        :query="{back: 'artist', id: artist.id.toString(),tab: 'albums'}"
         @operation="(id:string|number, name:string) => handleOperation('album', id, name)"
       />
     </div>

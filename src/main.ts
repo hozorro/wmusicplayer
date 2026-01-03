@@ -1,5 +1,6 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
+import piniaPluginPersistedState from 'pinia-plugin-persistedstate'
 import './style.css'
 import router from '@/router'
 import App from './App.vue'
@@ -13,7 +14,8 @@ app.directive('default-src', (el: HTMLImageElement, binding) => {
     el.onerror = null
   }
 })
-
+const pinia = createPinia()
+pinia.use(piniaPluginPersistedState)
 app.use(router)
-.use(createPinia())
+.use(pinia)
 .mount('#app')

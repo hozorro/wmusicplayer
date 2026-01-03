@@ -2,9 +2,9 @@
 import { ref, watchEffect } from 'vue'
 import { invalidateCache } from 'alova';
 import { useRequest } from 'alova/client';
-import { getPlaylists, addNewPlaylist, addTrackToPlaylist, getPlaylist } from '@/apis/methods/music';
+import { getPlaylists, addNewPlaylist, addTrackToPlaylist, getPlaylist, getTopPlaylists } from '@/apis/methods/music';
 
-const {id = '', title = ''} = defineProps<{id: string, title: string}>()
+const {id = 0, title = ''} = defineProps<{id: number, title: string}>()
 const addNewVisible = ref(false)
 const newTitle = ref('')
 const atpVisible = defineModel<boolean>('atpVisible', {default: false})
@@ -18,8 +18,7 @@ watchEffect(async () => {
   if (atpVisible.value) await send()
 })
 
-async function onSelect(pid:string){
-  console.log(pid, id)
+async function onSelect(pid: number | string){
   await addTrackToPlaylist(pid, id)
   invalidateCache(getPlaylist(pid))
   atpVisible.value = false
@@ -29,7 +28,7 @@ async function onAddNew(){
   const playlist = await addNewPlaylist(newTitle.value)
   if(playlist) {
     await addTrackToPlaylist(playlist.id, id)
-    invalidateCache(getPlaylists())
+    invalidateCache([getPlaylists(), getTopPlaylists()])
     atpVisible.value = false
   }
 }
@@ -44,7 +43,7 @@ async function onAddNew(){
       enter-active-class="transition-all duration-300 ease-in-out"
       leave-active-class="transition-all duration-300 ease-in-out"
     >
-      <div class=" absolute bottom-0 w-full z-90" v-bind="$attrs" v-show="atpVisible">
+      <div class=" fixed bottom-0 w-full z-90" v-bind="$attrs" v-show="atpVisible">
         <div class=" mx-1 p-2 bg-white rounded">
           <div class=" flex w-full justify-between items-center border-b-[1px] border-b-stone-200">
             <div class=" flex-1">
@@ -60,7 +59,7 @@ async function onAddNew(){
           </div>
           <ul class=" ml-4 mt-2 pb-4">
             <li v-for="(pl, index) in listData" :key="index">
-              <div class=" py-2 cursor-pointer" @click="onSelect(pl.id)">{{ pl.name }}</div>
+              <div class=" py-2 cursor-pointer" @click="onSelect(pl.id)">{{ pl.title }}</div>
             </li>
           </ul>
         </div>

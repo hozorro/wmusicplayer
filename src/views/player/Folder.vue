@@ -9,9 +9,9 @@ import useTrackOperations from '@/composables/track-operations';
 import { getFolder } from '@/apis/methods/music';
 
 const route = useRoute();
-const folderId = computed(() => route.params.id as string || '1');
+const folderId = computed(() => parseInt(route.params.id as string) || 1);
 const { data: folder } = useWatcher(
-  () => getFolder(folderId.value as string),
+  () => getFolder(folderId.value as number),
   [folderId],
   {
     immediate: true,
@@ -21,31 +21,31 @@ const { data: folder } = useWatcher(
 const { handleOperation: handleFolderOperation } = useCollectionOperations('folder');
 const { handleClick, handleOperation: handleTrackOperation } = useTrackOperations();
 
-function handleOperation(oType: string, oId: string | number, oTitle: string) {
+function handleOperation(oType: string, oId: number, oTitle: string) {
   if (oType === 'folder') {
     handleFolderOperation(oId as number, oTitle);
   } else {
-    handleTrackOperation(oId as string, oTitle);
+    handleTrackOperation(oId as number, oTitle);
   }
 }
 </script>
 
 <template>
   <div class=" fixed top-0 left-0 p-2 bg-gray-100 w-full z-20">
-    <router-link :to="folder.parent ? {name: 'folder', params: {id: folder.parent.toString()}} : '/'">
+    <router-link :to="folder.parent_id ? {name: 'folder', params: {id: folder.parent_id.toString()}} : '/'">
       <span class=" icon-[solar--alt-arrow-left-linear] align-middle text-2xl"></span>文件夹：{{ folder.name }}
     </router-link>
   </div>
-  <div class=" w-full min-h-svh mt-9 p-2">
-    <div class=" w-full bg-stone-50 rounded-md p-2" v-if="folder.sub_folders.length > 0">
-      <CollectionItem v-for="f in folder.sub_folders"
+  <div class=" w-full pt-10 px-2 pb-2">
+    <div class=" w-full bg-stone-50 rounded-md p-2" v-if="folder.children?.length > 0">
+      <CollectionItem v-for="f in folder.children"
         col-type="folder"
         :id="f.id"
         :name="f.name"
-        @operation="(id: string|number, name: string) => handleOperation('folder', id, name)"
+        @operation="(id: number, name: string) => handleOperation('folder', id, name)"
       />
     </div>
-    <div class=" w-full  bg-stone-50 rounded-md mt-2 p-2" v-if="folder.tracks.length > 0">
+    <div class=" w-full  bg-stone-50 rounded-md p-2" v-if="folder.tracks?.length > 0">
       <TrackItem v-for="t in folder.tracks"
         :id="t.id"
         :title="t.title"
@@ -53,7 +53,7 @@ function handleOperation(oType: string, oId: string | number, oTitle: string) {
         :art="t.cover"
         :show-art="true"
         @item-click="handleClick"
-        @operation="(id: string, title: string) => handleOperation('track', id, title)"
+        @operation="(id: number, title: string) => handleOperation('track', id, title)"
       />
     </div>
   </div>

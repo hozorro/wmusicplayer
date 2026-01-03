@@ -1,18 +1,25 @@
 <script setup lang="ts">
 import { computed, useTemplateRef } from "vue";
 import { useRoute } from "vue-router";
+import { useMusicStore } from "@/store/music"
 import { useRequest } from "alova/client";
+import { PlayChangeMode } from "@/constants/play-constants";
 import TrackItem from "@/components/TrackItem.vue";
 import { useColorEffect } from "@/composables/color-effect";
 import useTrackOperations from "@/composables/track-operations";
 import { getFavoriteTracks } from "@/apis/methods/music";
-import defaultArt from "@/assets/imgs/fav.png";
+import FavouriteCover from "@/assets/imgs/favorite.png";
+import { shuffle } from "@/utilies/general";
 
 const imgRef = useTemplateRef("coverImg");
-const { bgColor, scrollOut } = useColorEffect(imgRef, defaultArt)
+const { bgColor, scrollOut, refresh } = useColorEffect(imgRef, FavouriteCover)
 
 const route = useRoute()
-const {data: favTracks} = useRequest(() => getFavoriteTracks())
+const store = useMusicStore();
+
+const {data: favTracks, onComplete} = useRequest(() => getFavoriteTracks())
+onComplete(() => refresh())
+
 const { handleClick, handleOperation } = useTrackOperations()
 
 const backLink = computed(() => {
@@ -20,6 +27,19 @@ const backLink = computed(() => {
   if (route.query.back) delete backQuery.back
   return { name: route.query.back as string || 'home', query: backQuery };
 });
+
+function handlePlayAll() {
+  if (favTracks.value)
+    store.addListToCurPlaylist(favTracks.value, PlayChangeMode.REPLACE_LIST)
+}
+
+function handlePlayRandom() {
+  if (favTracks.value) {
+    const tracks = [...favTracks.value]
+    shuffle(tracks)
+    store.addListToCurPlaylist(tracks, PlayChangeMode.REPLACE_LIST)
+  }
+}
 </script>
 
 <template>
@@ -32,21 +52,21 @@ const backLink = computed(() => {
       <span class=" align-middle">{{scrollOut ? '我最喜欢的音乐' : ''}}</span>
     </router-link>
     <div class=" text-stone-200" :style="{display: scrollOut ? 'block' : 'none'}">
-      <div class=" inline-block bg-cyan-700 text-white text-sm place-content-center px-2 rounded-md shadow-sm">播放全部</div>
-      <div class=" inline-block bg-cyan-700 text-white text-sm place-content-center ml-2 px-1 rounded-md shadow-sm">随机播放</div>
+      <div class=" inline-block bg-cyan-700 text-white text-sm place-content-center px-2 rounded-md shadow-sm" @click="handlePlayAll">播放全部</div>
+      <div class=" inline-block bg-cyan-700 text-white text-sm place-content-center ml-2 px-1 rounded-md shadow-sm" @click="handlePlayRandom">随机播放</div>
     </div>
   </div>
   <div class=" w-full min-h-full" :style="bgColor">
     <div class=" flex pt-12 px-3 w-full">
       <div class=" flex-none w-1/3">
-        <img :src="defaultArt" class=" w-full aspect-square object-cover rounded-md" ref="coverImg" />
+        <img :src="FavouriteCover" class=" w-full aspect-square object-cover rounded-md" ref="coverImg" />
       </div>
       <div class=" flex-1 flex flex-col justify-between ml-4">
         <div class=" flex-none">
           <div class=" text-lg font-bold mr-2 text-stone-100">我最喜欢的音乐</div>
           <div class=" text-sm text-stone-200">
             <span class=" ml-2 mr-1 align-middle icon-[solar--music-notes-linear]"></span>
-            <span class=" align-middle">{{ favTracks.length }}</span>
+            <span class=" align-middle">{{ favTracks?.length }}</span>
           </div>
         </div>
         <div class=" flex-1 flex justify-around items-center mt-2">
@@ -66,7 +86,7 @@ const backLink = computed(() => {
           :art="track.cover"
           @item-click="handleClick"
           @operation="handleOperation"
-          class=" my-2"
+          class=" flex-1 my-2 w-64"
         />
       </div>
     </div>

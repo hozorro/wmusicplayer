@@ -1,5 +1,6 @@
 declare interface Operation {
   label: string,
+  icon?: string,
   action: () => void
 }
 declare interface PlayerOptions {
@@ -8,5 +9,6 @@ declare interface PlayerOptions {
   max_fail_count: number,
   isLoop: boolean,
   isAutoPlayNext: boolean,
-  timeUpdateInterval: number
+  timeUpdateInterval: number,
+  transferBatchSize: number
 }

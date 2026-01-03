@@ -22,7 +22,10 @@ const { handleOperation } = useCollectionOperations('genre');
         :id="g.id"
         :name="g.name"
         :art="g.cover"
+        :query="{back:'genre-list'}"
         @operation="handleOperation"
+        :style="`background-color:rgba(${g.info},0.1);`"
+        class="rounded-md"
       />
     </div>
   </div>

@@ -1,6 +1,7 @@
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
+import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
 
 const env = loadEnv('development', process.cwd())
@@ -10,6 +11,47 @@ export default defineConfig({
   plugins: [
     vue(),
     tailwindcss(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      injectRegister: 'auto',
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts',
+      devOptions: {
+        enabled: true,
+        type: 'module',
+      },
+      injectManifest: {
+        // globDirectory: 'dist',
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,ttf,woff,woff2}'],
+      },
+      manifest: {
+        name: 'WMusicPlayer',
+        short_name: 'WPlayer',
+        description: 'PWA Music Player from weyeco',
+        icons: [
+          {
+            src: '/imgs/manifest/web-app-manifest-48x48.png',
+            sizes: '48x48',
+            type: 'image/png',
+          },
+          {
+            src: '/imgs/manifest/web-app-manifest-192x192.png',
+            sizes: '192x192',
+            type: 'image/png',
+          },
+          {
+            src: '/imgs/manifest/web-app-manifest-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+          },
+          {
+            src: '/imgs/manifest/web-app-manifest.svg',
+            sizes: '513x513',
+          },
+        ],
+      }
+    })
   ],
   resolve: {
     alias: {
@@ -20,10 +62,10 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 5174,
     proxy: {
-      '/apiv2': {
+      '/api': {
         target: env.VITE_BASE_URL,
         changeOrigin: true,
-        //rewrite: (path) => path.replace(/^\/api/, ''),
+        rewrite: (path) => path.replace(/^\/api/, ''),
       },
     },
   },
