@@ -26,8 +26,11 @@ async function onSelect(pid: number | string){
 
 async function onAddNew(){
   const playlist = await addNewPlaylist(newTitle.value)
+  let pid: number | string
   if(playlist) {
-    await addTrackToPlaylist(playlist.id, id)
+    if (typeof playlist === 'string') pid = playlist  // local create new playlist returns id string
+    else pid = playlist.id
+    await addTrackToPlaylist(pid, id)
     invalidateCache([getPlaylists(), getTopPlaylists()])
     atpVisible.value = false
   }

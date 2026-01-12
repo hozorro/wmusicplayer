@@ -20,6 +20,7 @@ declare type PopType = 'album' | 'artist' | 'track' | 'playlist' | 'folder' | 'g
 declare interface Album {
   id: number;
   title: string;
+  cover_art_hash?: string;
 }
 declare interface AlbumInfo extends Album { 
   album_artist: Omit<Artist, 'pinyin_initial'>;
@@ -35,12 +36,14 @@ declare interface Artist {
   id: number;
   name: string;
   pinyin_initial: string;
+  cover_art_hash?: string;
 }
 declare interface ArtistInfo extends Artist { 
   main_albums: Album[];
   track_albums: Album[];
   top_tracks: Track[];
   track_count: number
+  cover?: string;
 }
 // #endregion
 
@@ -70,6 +73,7 @@ declare type Track = {
   id: number;
   title: string;
   artists?: string[];
+  cover_art_hash?: string;
   cover?: string;
 };
 declare interface TrackInfo {
@@ -79,8 +83,8 @@ declare interface TrackInfo {
   album?: {id: number, title: string};
   duration: number;
   favorited_at?: string;
-  is_favorited?: boolean;
   hit_count?: number; 
+  cover_art_hash?: string;
   cover?: string; // transform生成属性
 }
 declare interface TrackMoreInfo { 
@@ -93,7 +97,6 @@ declare interface TrackMoreInfo {
   acoustid_id?: string;
   mb_trackid?: string;
   path: string;
-  hits: string[];
 }
 // #endregion
 
@@ -101,6 +104,7 @@ declare interface TrackMoreInfo {
 declare interface Playlist {
   id: number | string;
   title: string;
+  cover_art_hash?: string;
   cover?: string; // transform生成属性
 }
 declare interface PlaylistInfo extends Playlist {

@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from "uuid";
 import { keyRange } from "../idb-funcs";
 import { shuffle, dynamicSort, topWeightedLnRandom } from "@/utilies/general";
 import { indexedDbHelper } from "../idb-funcs";
+import { getISOWithOffset } from "@/utilies/time-text";
 
 function resSucc<T>(data: T) { 
   return new Response(JSON.stringify({
@@ -198,7 +199,9 @@ export default function regIdbApis(idbHelper: indexedDbHelper) {
     getPlaylist: async (options?: IdbApiOptions) => { 
       const id = options?.pathParams?.id
       if (!id) return resError(400, 'Bad request')
-      const pid = parseInt(id)
+      let pid: number | string
+      if (isNumberic(id)) pid = parseInt(id)
+      else pid = id
       const result = await idbHelper.get<IDBPlaylist>('playlist', pid)
       const tracks = await idbHelper.getIndexedIn<IDBTrack>('track', 'id', result.track_ids)
       return resSucc({
@@ -269,7 +272,7 @@ export default function regIdbApis(idbHelper: indexedDbHelper) {
         album: track.album,
         duration: track.duration,
         hit_count: track.hit_count,
-        favorited_at: track.favorited_at ? true : false,
+        favorited_at: track.favorited_at,
       })
     },
     getRandomTracks: async (options?: IdbApiOptions) => { 
@@ -323,21 +326,21 @@ export default function regIdbApis(idbHelper: indexedDbHelper) {
     },
     favoriteTrack: async (options?: IdbApiOptions) => { 
       const track_id = options?.pathParams?.track_id
-      const is_favorited_str = options?.body?.is_favorited
-      if(!track_id || !is_favorited_str) return resError(400, 'Invalid params')
+      const is_favorited = options?.body?.is_favorited
+      if(!track_id || is_favorited == undefined) return resError(400, 'Invalid params')
       const id = parseInt(track_id)
-      const is_favorited = ['true', 'yes', '1'].includes(is_favorited_str as string)
       const track = await idbHelper.get<IDBTrack>('track', id)
       if(!track) return resError(404, 'Track not found')
-      await idbHelper.update('track', id, {favorited_at: is_favorited ? new Date().toISOString() : null})
-      return resSucc(true)
+      const favorited_at = is_favorited ? getISOWithOffset() : ''
+      await idbHelper.update('track', id, {favorited_at})
+      return resSucc(favorited_at)
     },
     // #endregion
 
     // #region Collection Tracks
     getCollectionTracks: async (options?: IdbApiOptions) => { 
-      const id = options?.pathParams?.id
-      const ctype = options?.pathParams?.ctype
+      const id = options?.pathParams?.collection_id
+      const ctype = options?.pathParams?.collection_type
       if (!id || !ctype) return resError(400, 'Bad request')
       const cid = parseInt(id)
       let tracks: IDBTrack[] = []
@@ -512,7 +515,7 @@ export default function regIdbApis(idbHelper: indexedDbHelper) {
                 const cursor = trackReq.result
                 if(cursor) { 
                   const track: IDBTrack = cursor.value
-                  if(track.artist_ids && track.artist_ids.length === 0) {
+                  if(track.artist_ids && track.artist_ids.length !== 0) {
                     let aid = track.artist_ids[0]
                     if(artistIds.includes(aid)) {
                       if(!artistSamples.has(aid)){
@@ -547,17 +550,16 @@ export default function regIdbApis(idbHelper: indexedDbHelper) {
       const result = await func(count, weightRate)
       return resSucc(result.map(item => ({id: item.id, title: item.title})))
     },
-    getRandomHitsWeightedTracks: async ({url}: {url: URL}) => { 
-      const params = new URLSearchParams(url.search)
-      const num = params.get('num')
-      const wr = params.get('weight') // number per genre
+    getRandomHitsWeightedTracks: async (options?: IdbApiOptions) => { 
+      const num = options?.queryParams?.num
+      const wr = options?.queryParams?.weight // number per genre
       const count = num ? parseInt(num) : 50
       const weightRate = wr ? parseInt(wr) : 2
 
       const func = async (count: number, weightRate: number): Promise<IDBTrack[]> => { 
         return new Promise<IDBTrack[]>((resolve, reject) => { 
           idbHelper.begin_transaction('track', 'readonly').then((tx) => {
-            const index = tx.objectStore('track').index('hits_count')
+            const index = tx.objectStore('track').index('hit_count')
             const req = index.openCursor(null, 'prev')
             const reservoir: IDBTrack[] = []
             let total = 0

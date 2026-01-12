@@ -1,3 +1,7 @@
+export function isNumberic(str: string) { 
+  return /^\d+$/.test(str)
+}
+
 export const getAssetImg = (fileName: string) => {
   let src = new URL(`../assets/imgs/${fileName}`, import.meta.url).href
   return src
@@ -13,7 +17,7 @@ export function shuffle(arr: any[]){
   }
 }
 
-export function topWeightedLnRandom<T extends Record<K,number>, K extends ('track_count' | 'hits_count')>(arr: T[], count: number, weightKey: K, weightRate: number) {
+export function topWeightedLnRandom<T extends Record<K,number>, K extends ('track_count' | 'hit_count')>(arr: T[], count: number, weightKey: K, weightRate: number) {
   let wr = 10 - weightRate
   if (wr < 2) wr = 2
   if (wr > 9) wr = 9

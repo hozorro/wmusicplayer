@@ -4,22 +4,27 @@ import { useRoute } from "vue-router";
 import { invalidateCache } from "alova";
 import { useRequest, useForm } from "alova/client";
 import { useMusicStore } from "@/store/music";
-import { shuffle } from "@/utilies/general";
+import { shuffle, isNumberic } from "@/utilies/general";
 import TrackItem from "@/components/TrackItem.vue";
 import { useColorEffect } from "@/composables/color-effect";
 import useTrackOperations from "@/composables/track-operations";
 import { getPlaylist, editPlaylist, removeTrackFromPlaylist } from "@/apis/methods/music";
-import { updatePlaylist } from "@/apis/methods/idb-locals";
+import { updatePlaylist, updateHits } from "@/apis/methods/idb-locals";
 import defaultArt from "@/assets/imgs/playlist.png";
 import { PlayChangeMode } from "@/constants/play-constants";
 import WMessage from "@/composables/message";
 import dayjs from "dayjs";
 
+const musicStore = useMusicStore()
 const imgRef = useTemplateRef("coverImg");
 const { bgColor, scrollOut, refresh } = useColorEffect(imgRef, defaultArt)
 
 const route = useRoute()
-const {data: playlist, send: getData, onComplete} = useRequest(() => getPlaylist(parseInt(route.params.id as string)),{
+const {data: playlist, send: getData, onComplete} = useRequest(() => {
+  let pid: number | string = route.params.id as string
+  if (isNumberic(route.params.id as string)) pid = parseInt(route.params.id as string)
+  return getPlaylist(pid)
+},{
   initialData: { id: '',name: '', tracks: [] }
 })
 onComplete(() => { 
@@ -29,15 +34,24 @@ const { handleClick, handleOperation } = useTrackOperations()
 
 function handlePlayAll(){
   musicStore.addListToCurPlaylist(playlist.value.tracks, PlayChangeMode.REPLACE_LIST)
+  if (musicStore.isIDBReady) {
+    setTimeout(() => {
+      updateHits('playlist', playlist.value.id!)
+    }, 500)
+  }
 }
 function handlePlayRandom(){
   const tracks = [...playlist.value.tracks]
   shuffle(tracks)
   musicStore.addListToCurPlaylist(tracks, PlayChangeMode.REPLACE_LIST)
+  if (musicStore.isIDBReady) {
+    setTimeout(() => {
+      updateHits('playlist', playlist.value.id!)
+    }, 500)
+  }
 }
 
 // 编辑歌单
-const musicStore = useMusicStore()
 const isShowEdit = ref(false)
 const imgSrc = ref('')
 const coverFile = useTemplateRef('coverFile')
@@ -110,14 +124,16 @@ onSuccess(() => {
   isShowEdit.value = false
   musicStore.playerBoxShow = true
 
-  setTimeout(() => {
-    if (playlist.value.id){
-      updatePlaylist(playlist.value.id, {
-        title: updatedPlaylist.value.title,
-        comment: updatedPlaylist.value.comment,
-      })
-    }
-  }, 500)
+  if (musicStore.isIDBReady) { 
+    setTimeout(() => {
+      if (playlist.value.id){
+        updatePlaylist(playlist.value.id, {
+          title: updatedPlaylist.value.title,
+          comment: updatedPlaylist.value.comment,
+        })
+      }
+    }, 500)
+  }
   getData()
 })
 onError(() => {

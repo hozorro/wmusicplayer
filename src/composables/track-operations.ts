@@ -4,6 +4,8 @@ import { useMusicStore, useOperationStore } from '@/store/music'
 import { favTrack, getTrackInfo } from '@/apis/methods/music'
 import { PlayChangeMode } from '@/constants/play-constants'
 import WMessage from '@/composables/message'
+import { openDialog } from './wdialog'
+import TrackMoreInfo from '@/views/dialogs/TrackMoreInfo.vue'
 
 export default function useTrackOperations (callback?: () => void) {
   const router = useRouter()
@@ -31,6 +33,7 @@ export default function useTrackOperations (callback?: () => void) {
     { label: '添加到播放列表', icon: 'icon-[solar--plaaylist-minimalistic-linear]', action: handleAddLast },
     { label: '添加到歌单', icon: 'icon-[solar--playlist-minimalistic-3-linear]', action: handleAddToPlaylist },
     { label: '添加到Fav', icon: 'icon-[solar--list-heart-minimalistic-linear]', action: handleAddToFavorite },
+    { label: '更多歌曲信息（指纹等）', icon: 'icon-[solar--translation-broken]', action: handleGetMoreInfo},
   ])
 
   function handleInsertPlay() {
@@ -58,11 +61,15 @@ export default function useTrackOperations (callback?: () => void) {
     operationStore.closePopMenu()
     if(callback) callback()
   }
+  async function handleGetMoreInfo() { 
+    openDialog(TrackMoreInfo, {title: '更多歌曲信息', contentProps: {trackId: operationStore.popMenuId as number}})
+    operationStore.closePopMenu()
+  }
 
   // current playing list operations
   const curPlaylistOperations = computed<Operation[]>(() => [
     {label: '添加到歌单', icon: 'icon-[solar--playlist-minimalistic-3-linear]', action: handleAddToPlaylist},
-    {label: '查看所属专辑', icon: 'icon-[solar--round-graph-linear]', action: handleGoToAlbum}
+    {label: '查看所属专辑', icon: 'icon-[solar--round-graph-linear]', action: handleGoToAlbum},
   ])
 
   function handleCurPlaylistOperation(id: number, title: string) { 

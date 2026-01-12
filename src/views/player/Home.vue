@@ -100,7 +100,7 @@ function switchTab(e: Event, index: number) {
         </div>
       </template>
       <div class=" flex-none w-1/5 aspect-square bg-gray-200 rounded-md">
-        <router-link to="/artist/favorite">
+        <router-link :to="{name:'favourite-artists'}">
           <img :src="FavoriteArtistsCover" class=" w-full h-full object-cover rounded-md" />
         </router-link>
       </div>

@@ -10,6 +10,7 @@ export const useMusicStore = defineStore("music", () => {
   const curPlayIndex = ref(0)
   const playlistChanged = ref<PlayChangeMode>(PlayChangeMode.DONOTHING)
   const idbHelper = ref(new indexedDbHelper(idbConfig))
+  const isIDBReady = ref(false)
   const params = ref<PlayerOptions>({
     stat_percent: 30,
     switch_time: 500,
@@ -53,6 +54,7 @@ export const useMusicStore = defineStore("music", () => {
     curPlayIndex,
     playlistChanged,
     idbHelper,
+    isIDBReady,
     params,
     addToCurPlaylist,
     addListToCurPlaylist,

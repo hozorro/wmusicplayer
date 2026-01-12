@@ -17,8 +17,8 @@ const lyricContainerRef = useTemplateRef('lyricContainer')
 const { bgColor, refresh } = useColorEffect(coverImg, trackCover)
 const {
   track,
-  moreInfo,
-  loadMoreInfo,
+  hitsInfo,
+  loadHitsInfo,
   lyrics,
   lyricInfo,
   setLyricLineRef,
@@ -57,7 +57,7 @@ const seqOrderIcon = ['icon-[solar--repeat-linear]', 'icon-[solar--shuffle-linea
 const favoritedTrackIcon = computed(() => track.favorited_at ? 'icon-[solar--heart-bold]' : 'icon-[solar--heart-linear]')
 const playlistShow = ref(false)
 const showLyric = ref(false)
-const showMoreInfo = ref(false)
+const showHitsInfo = ref(false)
 
 function playing(){
   if(audioRef.value){
@@ -70,18 +70,12 @@ function playing(){
 function onTimeUpdate(){
   handleTimeUpdate(playing)
 }
-function handleMoreInfo() {
-  if (showMoreInfo.value) showMoreInfo.value = false
+function handleHitsInfo() {
+  if (showHitsInfo.value) showHitsInfo.value = false
   else {
-    loadMoreInfo(track.id)
-    showMoreInfo.value = true
-  }
-}
-function switchFav(){
-  if(track.favorited_at) {
-    track.favorited_at = ''
-  } else {
-    track.favorited_at = new Date().toISOString()
+    if (track.id) loadHitsInfo(track.id)
+    else loadHitsInfo(storeMusic.curPlaylist[storeMusic.curPlayIndex].id)
+    showHitsInfo.value = true
   }
 }
 function hidePlaylist(){
@@ -140,7 +134,7 @@ watch(track, () => {
             <span @click="showLyric = false">歌曲</span> | <span @click="showLyric = true">歌词</span>
           </div>
           <div class=" flex-none text-lg mr-2">
-            <span class="icon-[solar--info-circle-bold]" @click="handleMoreInfo"></span>
+            <span class="icon-[solar--info-circle-bold]" @click="handleHitsInfo"></span>
           </div>
         </div>
         <div v-show="!showLyric" class=" flex justify-center items-center w-full aspect-square overflow-hidden text-center align-middle">
@@ -159,22 +153,11 @@ watch(track, () => {
               :class="{' text-amber-400 font-semibold': index == lyricInfo.curLyricIndex}">{{line.text}}</p>
           </div>
         </div>
-        <div v-show="showMoreInfo" class=" absolute top-0 left-0 p-2 w-full h-full z-80" :style="bgColor" @click="showMoreInfo = false">
-          <div class=" mt-4 p-2 rounded-md bg-gray-200 text-amber-500 whitespace-pre-line">{{ parseHits(moreInfo?.hits) }}</div>
-          <div v-if="moreInfo != undefined" class=" mt-6 p-2 rounded-md bg-gray-200">
-            <div class=" grid grid-cols-[100px_1fr] gap-2 text-sm text-gray-500">
-              <div>year：</div>
-              <div>{{ moreInfo?.year || '未知' }}</div>
-              <div>bitrate：</div>
-              <div>{{ moreInfo?.bitrate }}{{ moreInfo?.bitrate_mode }}</div>
-              <div>acoustid：</div>
-              <div>{{ moreInfo?.acoustid_id || '未知' }}</div>
-              <div>mb_trackid：</div>
-              <div>{{ moreInfo?.mb_trackid || '未知' }}</div>
-              <div>path：</div>
-              <div>{{ moreInfo?.path }}</div>
-            </div>
+        <div v-show="showHitsInfo" class=" absolute top-0 left-0 w-full h-full z-80" :style="bgColor" @click="showHitsInfo = false">
+          <div class=" opacity-75 rounded-md w-full">
+            <img src="/imgs/summer.jpg" class=" object-cover">
           </div>
+          <div class=" mt-4 mx-2 p-2 rounded-md bg-gray-200/30 text-stone-600 whitespace-pre-line">{{ parseHits(hitsInfo) }}</div>
         </div>
         <div class=" w-full flex justify-between items-center p-2 text-stone-50">
           <div class=" flex-1 min-w-0">
@@ -182,7 +165,7 @@ watch(track, () => {
             <div class=" text-gray-200 text-sm truncate">{{ artists }}</div>
           </div>
           <div class=" flex-none flex ml-2">
-            <div :class="favoritedTrackIcon" class=" align-middle text-xl" @click="handleFav(track.favorited_at?true:false, switchFav)"></div>
+            <div :class="favoritedTrackIcon" class=" align-middle text-xl" @click="handleFav"></div>
             <div class=" relative ml-4 align-middle text-xl z-50">
               <div :class="favoritedArtistIcon" @click="handleArtistFavs"></div>
               <div class=" absolute top-6 right-0 w-32 max-h-48 p-1 z-55 bg-white rounded-md shadow overflow-y-auto" v-show="artistsFavsShow">

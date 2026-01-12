@@ -1,5 +1,4 @@
 import { generalAlova } from "..";
-import { getISOWithOffset } from "@/utilies/time-text";
 
 // const baseSrcURL = import.meta.env.VITE_BASE_SRC_URL;
 
@@ -23,14 +22,14 @@ export const getCurrentUser = () => {
 // #region Album
 export const getAlbum = (id: number) => {
   return generalAlova.Get("/music/album/" + id, {
-    name: 'getalbum',
+    name: 'getAlbum',
     transform: (rawData: AlbumInfo) => {
       // 使用transform时，在transform函数中指定data的类型，不要在上面的Get中使用类型泛型，否则rawData的类型会变为unknown
       // 并且当响应错误时，获取的rawData为空，此时transform函数中对于用到rawwData的属性进行赋值，会报错，应增加判断或使用.?链式运算符
       return {
         ...rawData,
         track_count: rawData?.tracks.length || 0,
-        cover: `/api/artwork/album/${rawData?.id}`,
+        cover: `/api/artwork/album/${rawData?.id}?v=${rawData?.cover_art_hash || 'default'}`,
       }
     }
   })
@@ -40,11 +39,11 @@ export const getAlbum = (id: number) => {
 // #region Artist
 export const getTenArtists = () => { 
   return generalAlova.Get("/music/artist/tenartists",{
-    name: 'gettenartists',
+    name: 'getTenArtists',
     transform: (rawData: Omit<Artist, 'pinyin_initial'>[]) => {
       return rawData.map(artist => ({
         ...artist,
-        cover: `/api/artwork/artist/${artist.id}?img_cate=face`,
+        cover: `/api/artwork/artist/${artist.id}?img_cate=face&v=${artist?.cover_art_hash || 'default'}`,
       }))
     },
     hitSource: /^transfer/
@@ -52,7 +51,7 @@ export const getTenArtists = () => {
 }
 export const getArtistChars = () => { 
   return generalAlova.Get("/music/artist/artistchars", {
-    name: 'getartistchars',
+    name: 'getArtistChars',
     transform: (rawData: [string,boolean][]) => {
       return rawData.map(artistChar => ({
         charName: artistChar[0],
@@ -63,36 +62,36 @@ export const getArtistChars = () => {
 }
 export const getArtists = (char: string) => {
   return generalAlova.Get("/music/artist/artists/" + char, {
-    name: 'getartists',
+    name: 'getArtists',
     transform: (rawData: Artist[]) => {
       return rawData.map(artist => ({
         ...artist,
-        cover: `/api/artwork/artist/${artist.id}?img_cate=face`,
+        cover: `/api/artwork/artist/${artist.id}?img_cate=face&v=${artist?.cover_art_hash || 'default'}`,
       }))
     }
   })
 }
 export const getFavoritedArtists = () => {
   return generalAlova.Get("/music/artist/favoritedartists", {
-    name: 'getfavoritedartists',
+    name: 'getFavoritedArtists',
     transform: (rawData: Omit<Artist, 'pinyin_initial'>[]) => {
       return rawData.map(artist => ({
         ...artist,
-        cover: `/api/artwork/artist/${artist.id}?img_cate=face`,
+        cover: `/api/artwork/artist/${artist.id}?img_cate=face&v=${artist?.cover_art_hash || 'default'}`,
       }))
     }
   })
 }
 export const getArtist = (id: number) => {
   return generalAlova.Get("/music/artist/" + id, {
-    name: 'getartist',
+    name: 'getArtist',
     transform: (rawData: ArtistInfo) => {
       return {
         ...rawData,
-        main_albums: rawData?.main_albums.map(item => ({...item, cover: `/api/artwork/album/${item.id}`})),
-        track_albums: rawData?.track_albums.map(item => ({...item, cover: `/api/artwork/album/${item.id}`})),
-        top_tracks: rawData?.top_tracks.map(item => ({...item, cover: `/api/artwork/track/${item.id}`})),
-        cover: `/api/artwork/artist/${rawData?.id}?img_cate=portrait`,        
+        main_albums: rawData?.main_albums.map(item => ({...item, cover: `/api/artwork/album/${item.id}?v=${item?.cover_art_hash || 'default'}`})),
+        track_albums: rawData?.track_albums.map(item => ({...item, cover: `/api/artwork/album/${item.id}?v=${item?.cover_art_hash || 'default'}`})),
+        top_tracks: rawData?.top_tracks.map(item => ({...item, cover: `/api/artwork/track/${item.id}?v=${item?.cover_art_hash || 'default'}`})),
+        cover: `/api/artwork/artist/${rawData?.id}?img_cate=portrait&v=${rawData?.cover_art_hash || 'default'}`,        
       }
     }
   })
@@ -102,7 +101,7 @@ export const getArtist = (id: number) => {
 // #region Folder
 export const getFolder = (id: number) => {
   return generalAlova.Get("/music/folder/" + id, {
-    name: 'getfolder',
+    name: 'getFolder',
     transform: (rawData: FolderInfo) => {
       return { 
         ...rawData,
@@ -116,13 +115,13 @@ export const getFolder = (id: number) => {
 // #region Genre
 export const getRandomGenres = () => { 
   return generalAlova.Get<Genre[]>("/music/genre/randomgenres", {
-    name: 'getrandomgenres',
+    name: 'getRandomGenres',
     hitSource: /^transfer/
   });
 }
 export const getGenres = () => { 
   return generalAlova.Get("/music/genre/genres", {
-    name: 'getgenres',
+    name: 'getGenres',
     transform: (rawData: Genre[]) => {
       return rawData.map(genre => ({
         ...genre,
@@ -132,10 +131,10 @@ export const getGenres = () => {
   })
 }
 export const getGenre = (id: string) => {
-  return generalAlova.Get<Genre>("/music/genre/" + id, {name: 'getgenre'})
+  return generalAlova.Get<Genre>("/music/genre/" + id, {name: 'getGenre'})
 }
 export const getGenreTracks = (id: string, page: number, pageSize: number, lastKey: string | null) => {
-  const options = { params: { page, page_size: pageSize } as Record<string, any>, cacheFor: 0, name: 'getgenretracks' }
+  const options = { params: { page, page_size: pageSize } as Record<string, any>, cacheFor: 0, name: 'getGenreTracks' }
   if(lastKey) options.params.last_key = lastKey
   return generalAlova.Get<{total: number, tracks: Track[], next_key?: string}>(`/music/genre/${id}/tracks`, options)
 }
@@ -144,11 +143,11 @@ export const getGenreTracks = (id: string, page: number, pageSize: number, lastK
 // #region Playlist
 export const getTopPlaylists = () => {
   return generalAlova.Get("/music/playlist/topplaylists",{
-    name: 'gettopplaylists',
+    name: 'getTopPlaylists',
     transform: (rawData: Playlist[]) => {
       return rawData.map(playlist => ({
         ...playlist,
-        cover: `/api/artwork/playlist/${playlist.id}`,
+        cover: `/api/artwork/playlist/${playlist.id}?v=${playlist?.cover_art_hash || 'default'}`,
       }))
     },
     hitSource: /^transfer/
@@ -156,11 +155,11 @@ export const getTopPlaylists = () => {
 }
 export const getPlaylists = () => {
   return generalAlova.Get("/music/playlist/playlists",{
-    name: 'getplaylists',
+    name: 'getPlaylists',
     transform: (rawData: Playlist[]) => {
       return rawData.map(playlist => ({
         ...playlist,
-        cover: `/api/artwork/playlist/${playlist.id}`,
+        cover: `/api/artwork/playlist/${playlist.id}?v=${playlist?.cover_art_hash || 'default'}`,
       }))
     },
     hitSource: ['addplaylist', 'addnewplaylist', 'updateplaylist', /^transfer/]
@@ -168,97 +167,96 @@ export const getPlaylists = () => {
 }
 export const getPlaylist = (id: number | string) => {
   return generalAlova.Get("/music/playlist/" + id, {
-    name: 'getplaylist',
+    name: 'getPlaylist',
     transform: (rawData: PlaylistInfo) => {
       return {
         ...rawData,
-        cover: `/api/artwork/playlist/${rawData?.id}`,
-        tracks: rawData?.tracks.map(item => ({...item, cover: `/api/artwork/track/${item.id}`})),
+        cover: `/api/artwork/playlist/${rawData?.id}?v=${rawData?.cover_art_hash || 'default'}`,
+        tracks: rawData?.tracks.map(item => ({...item, cover: `/api/artwork/track/${item.id}?v=${item?.cover_art_hash || 'default'}`})),
       }
     },
     hitSource: ['addtracktoplaylist', 'removetrackfromplaylist', /^transfer/]
   });
 };
 export const addPlaylist = (formData:FormData) => {
-  return generalAlova.Post<PlaylistInfo>("/music/playlist/addplaylist", formData, {name: 'addplaylist', timeout: 1000 * 60 * 10});
+  return generalAlova.Post<Omit<PlaylistInfo, 'tracks'>>("/music/playlist/addplaylist", formData, {name: 'addPlaylist', timeout: 1000 * 60 * 10});
 };
 export const editPlaylist = (formData: FormData) => { 
-  return generalAlova.Put<Partial<PlaylistInfo>>("/music/playlist/updateplaylist", formData, {name: 'updateplaylist', timeout: 1000 * 60 * 10});
+  return generalAlova.Put<Partial<PlaylistInfo>>("/music/playlist/updateplaylist", formData, {name: 'updatePlaylist', timeout: 1000 * 60 * 10});
 };
 export const addNewPlaylist = (title: string) => { 
-  return generalAlova.Post<Playlist>("/music/playlist/addplaylistsimple", {title}, {name: 'addnewplaylist'});
+  return generalAlova.Post<Playlist | string>("/music/playlist/addplaylistsimple", {title}, {name: 'addNewPlaylist'});
 };
 export const addTrackToPlaylist = (playlist_id: number | string, track_id: number) => {
-  return generalAlova.Put("/music/playlist/addtracktoplaylist", {playlist_id, track_id}, {cacheFor: 0, name: 'addtracktoplaylist'});
+  return generalAlova.Put("/music/playlist/addtracktoplaylist", {playlist_id, track_id}, {cacheFor: 0, name: 'addTrackToPlaylist'});
 };
 export const removeTrackFromPlaylist = (playlist_id: number | string, track_id: number) => { 
-  return generalAlova.Put("/music/playlist/removetrackfromplaylist", {playlist_id, track_id}, {cacheFor: 0, name: 'removetrackfromplaylist'});
+  return generalAlova.Put("/music/playlist/removetrackfromplaylist", {playlist_id, track_id}, {cacheFor: 0, name: 'removeTrackFromPlaylist'});
 };
 // #endregion
 
 // #region Track
 export const getTrackInfo = (id: number) => {
-  return generalAlova.Get<TrackInfo>("/music/track/" + id, {name: 'track'});
+  return generalAlova.Get<TrackInfo>("/music/track/" + id, {name: 'getTrackInfo'});
 };
 export const getTrackMoreInfo = (id: number) => { 
-  return generalAlova.Get<TrackMoreInfo>("/music/track/moreinfo/" + id, {name: 'trackmoreinfo'})
+  return generalAlova.Get<TrackMoreInfo>("/music/track/moreinfo/" + id, {name: 'getTrackMoreInfo'})
 }
 export const getStreamingUrl = (id: number) => { 
-  return generalAlova.Get<string>("/music/track/signed-url/" + id, {name: 'streamingurl'})
+  return generalAlova.Get<string>("/music/track/signed-url/" + id, {name: 'getStreamingUrl'})
 }
 export const getRandomTracks = (num?: number) => { 
-  return generalAlova.Get<Track[]>("/music/track/randomtracks?num=" + num, {name: 'randomtracks'})
+  return generalAlova.Get<Track[]>("/music/track/randomtracks?num=" + num, {name: 'getRandomTracks'})
 }
 export const getArtistRandomTracks = (id: number, num?: number) => { 
-  return generalAlova.Get<Track[]>("/music/track/artistrandomtracks?artist_id=" + id + "&num=" + num, {name: 'artistrandomtracks'})
+  return generalAlova.Get<Track[]>("/music/track/artistrandomtracks?artist_id=" + id + "&num=" + (num || 50), {name: 'getArtistRandomTracks'})
 }
 export const getGenreRandomTracks = (id: number, num?: number) => { 
-  return generalAlova.Get<Track[]>("/music/track/genrerandomtracks?genre_id=" + id + "&num=" + num, {name: 'genrerandomtracks'})
+  return generalAlova.Get<Track[]>("/music/track/genrerandomtracks?genre_id=" + id + "&num=" + (num || 50), {name: 'getGenreRandomTracks'})
 }
 export const getFavoriteTracks = () => { 
   return generalAlova.Get("/music/track/favoritetracks",{
-    name: 'favoritetracks',
+    name: 'getFavoriteTracks',
     transform: (rawData: Track[]) => {
       return rawData.map(track => ({
         ...track,
-        cover: `/api/artwork/track/${track.id}`,
+        cover: `/api/artwork/track/${track.id}?v=${track?.cover_art_hash || 'default'}`,
       }))
     }
   })
 }
 export const getLatestTracks = () => {
   return generalAlova.Get("/music/track/latesttracks",{
-    name: 'latesttracks',
+    name: 'getLatestTracks',
     transform: (rawData: Track[]) => {
       return rawData.map(track => ({
         ...track,
-        cover: `/api/artwork/track/${track.id}`
+        cover: `/api/artwork/track/${track.id}?v=${track?.cover_art_hash || 'default'}`
       }))
     }
   });
 };
 export const getMostPlayedTracks  = () => { 
   return generalAlova.Get("/music/track/mostplayedtracks",{
-    name: 'mostplayedtracks',
+    name: 'getMostPlayedTracks',
     transform: (rawData: Track[]) => {
       return rawData.map(track => ({
         ...track,
-        cover: `/api/artwork/track/${track.id}`
+        cover: `/api/artwork/track/${track.id}?v=${track?.cover_art_hash || 'default'}`
       }))
     }
   });
 };
 export const favTrack = (track_id: number, is_favorited: boolean) => { 
-  return generalAlova.Put<{is_favorited: boolean}>('music/track/favorite/' + track_id, {
+  return generalAlova.Put<string>('music/track/favorite/' + track_id, {
     is_favorited,
-    favorited_at: getISOWithOffset(),
-  }, {name: 'favtrack'})
+  }, {name: 'favTrack'})
 };
 export const testTrack = () => { 
-  return generalAlova.Get<string[]>("/music/track/test/testtime", {name: 'testtrack'})
+  return generalAlova.Get<string[]>("/music/track/test/testtime", {name: 'testTrack'})
 };
 export const getCollectionTracks = (collection_id: number, collection_type: Exclude<PopType, 'track'>) => { 
-  return generalAlova.Get<Track[]>('/music/track/collection/' + collection_type + '/' + collection_id, {name: 'collectiontracks'})
+  return generalAlova.Get<Track[]>('/music/track/collection/' + collection_type + '/' + collection_id, {name: 'getCollectionTracks'})
 };
 // #endregion
 
@@ -275,13 +273,13 @@ export const search = <T extends Track | Artist | Album>(cat: 'album' | 'artist'
           let cover
           switch(cat) { 
             case 'track':
-              cover = `/api/artwork/track/${item.id}`
+              cover = `/api/artwork/track/${item.id}?v=${item?.cover_art_hash || 'default'}`
               break;
             case 'album':
-              cover = `/api/artwork/album/${item.id}`
+              cover = `/api/artwork/album/${item.id}?v=${item?.cover_art_hash || 'default'}`
               break
             case 'artist':
-              cover = `/api/artwork/artist/${item.id}?img_cate=face`
+              cover = `/api/artwork/artist/${item.id}?img_cate=face&v=${item?.cover_art_hash || 'default'}`
               break
           }
           return {...item, cover}
@@ -293,23 +291,23 @@ export const search = <T extends Track | Artist | Album>(cat: 'album' | 'artist'
 }
 
 export const getRandomArtistTracks = (num: number) => { 
-  return generalAlova.Get<Track[]>('/rndartisttracks?num=' + num + '&numpa=1', {name: 'rndartisttracks'})
+  return generalAlova.Get<Track[]>('/music/track/rndartisttracks?num=' + num + '&numpa=1', {name: 'getRandomArtistTracks'})
 }
 export const getRandomConstraintedArtistTracks = (num: number, numpa: number) => { 
-  return generalAlova.Get<Track[]>('/rndartisttracks?num=' + num + '&numpa=' + numpa)
+  return generalAlova.Get<Track[]>('/music/track/rndartisttracks?num=' + num + '&numpa=' + numpa, {name: 'getRandomConstraintedArtistTracks'})
 }
 export const getRandomWeightedArtistTracks = (num: number, weightRate: number) => { 
-  return generalAlova.Get<Track[]>('/rndwgttracks?num=' + num + '&weight=' + weightRate, {name: 'rndwgttracks'})
+  return generalAlova.Get<Track[]>('/music/track/rndwgttracks?num=' + num + '&weight=' + weightRate, {name: 'getRandomWeightedArtistTracks'})
 }
 export const getRandomHitsWeightedTracks = (num: number, weightRate: number) => { 
-  return generalAlova.Get<Track[]>('/rndhitswgttracks?num=' + num + '&weight=' + weightRate, {name: 'rndhitswgttracks'})
+  return generalAlova.Get<Track[]>('/music/track/rndhitswgttracks?num=' + num + '&weight=' + weightRate, {name: 'getRandomHitsWeightedTracks'})
 }
 
 // #endregion
 export const getLyric = (id: number) => { 
-  return generalAlova.Get<string>('/music/track/lyric/' + id, {name: 'lyric'})
+  return generalAlova.Get<string>('/music/track/lyric/' + id, {name: 'getLyric'})
 }
 
 export const delLyric = (id: number) => { 
-  return generalAlova.Delete<string>('/music/track/lyric/' + id, {name: 'dellyric'})
+  return generalAlova.Delete<string>('/music/track/lyric/' + id, {name: 'delLyric'})
 }

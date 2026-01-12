@@ -1,5 +1,6 @@
 import { useMusicStore } from "@/store/music";
 import { indexedDbHelper, keyRange } from "../idb-funcs";
+import { getISOWithOffset } from "@/utilies/time-text";
 
 const getIdbHelper = () => {
   const store = useMusicStore()
@@ -10,6 +11,23 @@ export const getArtistsByIds = async (ids: number[]): Promise<Pick<IDBArtist, 'i
   const idbHelper = getIdbHelper()
   const artists: IDBArtist[] = await idbHelper.getIndexedIn('artist', 'id', ids)
   return artists.map(artist => ({id: artist.id, name: artist.name, favorited_at: artist.favorited_at}))
+}
+export const getTrackHits = async (id: number): Promise<string[]> => { 
+  const idbHelper = getIdbHelper()
+  return new Promise((resolve, reject) => { 
+    idbHelper.begin_transaction('track', 'readonly').then((tx: IDBTransaction) => {
+      const req = tx.objectStore('track').get(id)
+      req.onsuccess = () => { 
+        const data = req.result
+        if(data) { 
+          resolve(data.hits || [])
+        } else { 
+          resolve([])
+        }
+      }
+      req.onerror = () => reject(req.error)
+    }).catch(reject)
+  })
 }
 export const getFavs = async (playback: 'track' | 'artist'): Promise<FavData[]> => {
   const idbHelper = getIdbHelper()
@@ -101,7 +119,7 @@ export const updatePlaylist = async (id: number | string, updateData: Partial<ID
   await idbHelper.update('playlist', id, updateData)
 }
 
-export const updateHits = async (hitType: 'playlist' | 'track', id: number) => { 
+export const updateHits = async (hitType: 'playlist' | 'track', id: number | string) => { 
   const idbHelper = getIdbHelper()
   const func = async () => {
     return new Promise((resolve, reject) => { 
@@ -111,7 +129,7 @@ export const updateHits = async (hitType: 'playlist' | 'track', id: number) => {
         req.onsuccess = () => { 
           const data = req.result
           if(data) { 
-            data.hits.push(new Date().toISOString())
+            data.hits.push(getISOWithOffset())
             data.hit_count += 1
             store.put(data)
             resolve(data.hit_count)
@@ -138,7 +156,7 @@ export const updateFav = async (favType: 'track' | 'artist', id: number) => {
             if (data.favorited_at) {
               data.favorited_at = ''
             } else { 
-              data.favorited_at = new Date().toISOString()
+              data.favorited_at = getISOWithOffset()
             }
             store.put(data)
             resolve(data.favorited_at)

@@ -3,6 +3,7 @@ declare const self: ServiceWorkerGlobalScope
 import { cleanupOutdatedCaches, precacheAndRoute } from 'workbox-precaching'
 import { clientsClaim } from 'workbox-core'
 import { CacheFirst } from 'workbox-strategies'
+import { ExpirationPlugin } from 'workbox-expiration'
 import { registerRoute } from 'workbox-routing'
 import { indexedDbHelper } from './apis/idb-funcs'
 import idbConfig from './apis/idb-config'
@@ -55,7 +56,13 @@ registerRoute(
     },
     matchOptions: {
       ignoreSearch: false,
-    }
+    },
+    plugins: [
+      new ExpirationPlugin({
+        maxEntries: 300,
+        maxAgeSeconds: 60 * 60 * 24 * 30,
+      })
+    ]
   })
 )
 

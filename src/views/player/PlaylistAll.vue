@@ -84,22 +84,24 @@ onSuccess(() => {
   isShowCreate.value = false
   musicStore.playerBoxShow = true
 
-  setTimeout(() => {
-    if(newPlaylist.value){
-      addPlaylistLocal({
-        id: newPlaylist.value.id,
-        title: newPlaylist.value.title,
-        cover: newPlaylist.value.cover,
-        comment: newPlaylist.value.comment,
-        created_at: newPlaylist.value.created_at,
-        track_ids: [],
-        hits: [],
-        hit_count: 0
-      }).then(() => {
-        updateLocalMeta('playlist')
-      })
-    }
-  }, 1000);
+  if (musicStore.isIDBReady) {
+    setTimeout(() => {
+      if(newPlaylist.value){
+        addPlaylistLocal({
+          id: newPlaylist.value.id,
+          title: newPlaylist.value.title,
+          cover: newPlaylist.value.cover,
+          comment: newPlaylist.value.comment,
+          created_at: newPlaylist.value.created_at,
+          track_ids: [],
+          hits: [],
+          hit_count: 0
+        }).then(() => {
+          updateLocalMeta('playlist')
+        })
+      }
+    }, 1000);
+  }
 
   refreshList()
 })

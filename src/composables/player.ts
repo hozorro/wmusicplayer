@@ -1,8 +1,8 @@
 import { type Ref, reactive, ref, shallowRef, watch, nextTick, computed, onMounted, onBeforeUnmount, onUnmounted } from "vue"
 import { storeToRefs } from "pinia"
 import { useMusicStore } from "@/store/music"
-import { getTrackInfo, getStreamingUrl, favTrack, getLyric, getTrackMoreInfo } from "@/apis/methods/music"
-import { updateHits, updateArtistHitCount, getArtistsByIds, updateFav } from '@/apis/methods/idb-locals'
+import { getTrackInfo, getStreamingUrl, favTrack, getLyric } from "@/apis/methods/music"
+import { updateHits, updateArtistHitCount, getArtistsByIds, updateFav, getTrackHits } from '@/apis/methods/idb-locals'
 import { usePlaySeq } from "@/composables/play-seq"
 import useMediaSession from '@/composables/media-session';
 import { PlayChangeMode, SeqMode } from "@/constants/play-constants"
@@ -36,7 +36,6 @@ export function usePlayer(
     album: undefined,
     duration: 0,
     cover: '',
-    is_favorited: false,
   })
   const playStatus = ref(false)
   const playInfo = reactive({
@@ -54,7 +53,7 @@ export function usePlayer(
   const lyrics = ref<LyricLine[]>([])
   const metadata = ref<ReturnType<LyricParser['getMetadata']>>({})
   const lyricLineRefs = ref<HTMLElement[]>([])
-  const moreInfo = ref<TrackMoreInfo | undefined>(undefined)
+  const hitsInfo = ref<string[] | undefined>([])
 
   const consecutiveError = ref(0)
 
@@ -107,10 +106,12 @@ export function usePlayer(
         playInfo.playPortion = curTime / audioRef.value.duration
         if(playInfo.playPortion > store.getParam('stat_percent') / 100 && !playInfo.playHitsChecked){
           try{
-            updateHits('track',track.id)  // only update at local
-            if(track.artists) {
-              for (const ar of track.artists) {
-                updateArtistHitCount(ar.id) // only update at local
+            if (store.isIDBReady) {
+              updateHits('track',track.id)  // only update at local
+              if(track.artists) {
+                for (const ar of track.artists) {
+                  updateArtistHitCount(ar.id) // only update at local
+                }
               }
             }
           }catch(err){
@@ -151,9 +152,9 @@ export function usePlayer(
     }
     lyricInfo.lyricLoading = false
   }
-  function loadMoreInfo(track_id: number) {
-    if (moreInfo.value) return;
-    getTrackMoreInfo(track_id).then((data) => moreInfo.value = data)
+  function loadHitsInfo(track_id: number) {
+    if (hitsInfo.value && hitsInfo.value.length > 0) return;
+    getTrackHits(track_id).then((data) => hitsInfo.value = data).catch(() => {hitsInfo.value = []})
   }
   function play(opts: {curTime?: number}={curTime: 0}){
     return new Promise((resolve, reject) => {
@@ -211,8 +212,8 @@ export function usePlayer(
     track.artists = data.artists
     track.album = data.album
     track.duration = data.duration
-    track.is_favorited = data.is_favorited
-    track.cover = `/api/artwork/track/${tid}`
+    track.favorited_at = data.favorited_at
+    track.cover = `/api/artwork/track/${tid}?v=${track.cover_art_hash || 'default'}`
     
     nextTick(() => { 
       if(audioRef.value && !isNaN(audioRef.value.currentTime)) {
@@ -227,7 +228,7 @@ export function usePlayer(
       const streamUrl = await getStreamingUrl(tid)
       audioRef.value.src = `/api/${streamUrl}`
       _getLyric(tid)
-      moreInfo.value = undefined
+      hitsInfo.value = undefined
     }
     play().then(() => switchCallback()).catch((err) =>{
       WMessage(err.message, 'error')
@@ -295,12 +296,9 @@ export function usePlayer(
     nextSeqMode()
   }
 
-  function handleFav(is_favorited: boolean | undefined, callback: () => void){
-    if(!is_favorited) is_favorited = true
-    else is_favorited = false
-    favTrack(curPlaylist.value[curPlayIndex.value].id,is_favorited).then(_ => {
-      callback()
-    })
+  async function handleFav(){
+    const favorited_at = await favTrack(curPlaylist.value[curPlayIndex.value].id, !track.favorited_at)
+    track.favorited_at = favorited_at || ''
   }
 
   const artistsFavStatus = ref<'pending' | 'hasFav' | 'noneFav' | 'failed'>('pending')
@@ -318,8 +316,10 @@ export function usePlayer(
   }
   async function _switchArtistFav(artistId: number){ 
     try {
-      await updateFav('artist', artistId)
-      fetchArtistsFavStatus()
+      if (store.isIDBReady) {
+        await updateFav('artist', artistId)
+        fetchArtistsFavStatus()
+      }
     } catch (err) {
       WMessage('failed to fav artist', 'error')
     }
@@ -418,7 +418,7 @@ export function usePlayer(
           track.artists = data.artists
           track.album = data.album
           track.duration = data.duration
-          track.is_favorited = data.is_favorited
+          track.favorited_at = data.favorited_at
           track.cover = `/api/artwork/track/${tid}`
         })
         getStreamingUrl(tid).then(streamUrl => {
@@ -439,8 +439,8 @@ export function usePlayer(
 
   return {
     track,
-    moreInfo,
-    loadMoreInfo,
+    hitsInfo,
+    loadHitsInfo,
     lyric,
     lyrics,
     metadata,

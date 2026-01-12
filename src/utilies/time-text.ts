@@ -65,6 +65,17 @@ export function getISOWithOffset(date = new Date()) {
   ].join('');
 }
 export function timeText (dt: dayjs.Dayjs) {
+  if (dt.year() == nowTime.year()) {
+    if (dt.month() == nowTime.month()) {
+      if (dt.date() == nowTime.date()) {
+        return `今天`
+      } else {
+        return `${nowTime.date() - dt.date()}天前`
+      }
+    } else {
+      return `${nowTime.month() - dt.month()}个月前`
+    }
+  }
   const yrWord = yearWord(dt)
   const monWord = monthDict[dt.month() + 1]
   const hrNum = dt.hour()
@@ -73,27 +84,29 @@ export function timeText (dt: dayjs.Dayjs) {
 }
 
 export function parseHits(hits: string[] | undefined) {
-  if (!hits) return '你还没有听过这首歌。'
-  if (hits.length === 0) return '你没有听过这首歌。'
-  const earliest = hits.reduce((earliest, hit) => {
+  if (!hits) return '你还没有听过这首歌'
+  if (hits.length === 0) return '你还没有听过这首歌'
+
+  const [earliest, latest] = hits.reduce((acc, hit) => {
     const hitTime = dayjs(hit)
-    return earliest.isBefore(hitTime) ? earliest : hitTime
-  }, dayjs())
-  let hitText = `${timeText(earliest)}，你第一次听了这首歌。`
-  const latest = hits.reduce((latest, hit) => {
-    const hitTime = dayjs(hit)
-    return latest.isAfter(hitTime) ? latest : hitTime
-  }, dayjs())
-  if (earliest.isSame(latest)) return hitText + '\n之后，你没有再听这首歌。'
+    if (hitTime.isBefore(acc[0])) acc[0] = hitTime
+    if (hitTime.isAfter(acc[1])) acc[1] = hitTime
+    return acc
+  }, [dayjs(hits[0]), dayjs(hits[0])])
+
+  let hitText = `${timeText(earliest)}\n你第一次听了这首歌\n`
+  
+  if (earliest.isSame(latest)) return hitText + '\n之后，你没有再听这首歌'
+
   const count = hits.length
   if (count == 2) {
-    if (latest.year() === earliest.year() && latest.month() - earliest.month() < 2) 
-      return `${hitText}\n最近，你又听了这首歌}。`
-    else return hitText + `\n之后，直到${timeText(latest)}你才第二次听了这首歌。`
+    if (latest.year() === earliest.year() && nowTime.month() - latest.month() < 2) 
+      return `${hitText}\n最近，你又听了这首歌`
+    else return hitText + `\n之后，直到${timeText(latest)}\n你才第二次听了这首歌`
   } else if (count < 6) {
-    return `${hitText}\n之后，你听得不多。\n${timeText(latest)}你最近一次听了这首歌。`
+    return `${hitText}\n之后，你听得不多\n\n${timeText(latest)}\n你最近一次听了这首歌`
   } else if (count > 5) {
     const mostHitHourNum = getMostHitHourNum(hits)
-    return `${hitText}\n之后，你又听了${count - 1}次， 经常在${timeWord(mostHitHourNum)}听这首歌。\n${timeText(latest)}你最近一次听了这首歌。`
+    return `${hitText}\n之后，你又听了${count - 1}次\n经常在${timeWord(mostHitHourNum)}听这首歌\n\n${timeText(latest)}\n你最近一次听了这首歌。`
   }
 }

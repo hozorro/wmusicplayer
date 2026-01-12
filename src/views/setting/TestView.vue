@@ -3,18 +3,25 @@ import { ref, useTemplateRef, onMounted } from 'vue'
 import { generalAlova } from '@/apis';
 import { invalidateCache } from 'alova';
 import { useMusicStore } from '@/store/music';
-import { testTrack } from '@/apis/methods/music';
-import { parseHits } from '@/utilies/time-text';
+import * as musicMethods from '@/apis/methods/music';
 
 const { idbHelper } = useMusicStore();
 
 const methods = ref<[string,string][]>([])
+const selectedMethods = ref<string[]>([])
+const excludeMethods = ['login', 'refreshToken', 'getCurrentUser']
 
+for (const key in musicMethods) {
+  const method = (musicMethods as any)[key]
+  if (typeof method === 'function' && !excludeMethods.includes(method.name)) {
+    methods.value.push([method.name, method.name])
+  }
+}
 function handleInvalidateCaches() {
   //TODO: 批量删除缓存
-  if(methods.value.length){
-    for(const m of methods.value) {
-      const matchedMethods = generalAlova.snapshots.match(m[0])
+  if(selectedMethods.value.length){
+    for(const m of selectedMethods.value) {
+      const matchedMethods = generalAlova.snapshots.match(m)
       invalidateCache(matchedMethods)
     }
   }
@@ -33,11 +40,12 @@ async function testFunc1() {
   await idbHelper.update('meta', 'trackhit', {name: 'trackhit', last_update: '2000-01-01T00:00:00.000Z'})
   alert('更新成功')
 }
-test2.value = 'timeText'
+test2.value = 'delete playlist'
 async function testFunc2() {
   // TODO
-  const timeList = await testTrack()
-  console.log(parseHits(timeList))
+  idbHelper.delete('playlist', model2.value)
+  invalidateCache([musicMethods.getPlaylists(), musicMethods.getTopPlaylists()])
+  console.log('deleted playlist ', model2.value)
 }
 
 const needShowMore = ref(false)
@@ -69,7 +77,7 @@ onMounted(() => {
     <div class=" mt-2 p-2">
       <button class=" px-2 block h-8 bg-cyan-600 text-white rounded-md" @click="handleInvalidateCaches">InvalidateCache</button>
       <div>
-        <select v-model="methods" multiple class=" w-full text-sm p-2 mt-2 border-1 focus:outline-0 rounded-md">
+        <select v-model="selectedMethods" multiple class=" w-full text-sm p-2 mt-2 border-1 focus:outline-0 rounded-md" @change="console.log(selectedMethods)">
           <option v-for="method in methods" :key="method[0]" :value="method[0]">{{method[1]}}</option>
         </select>
     </div>

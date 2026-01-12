@@ -14,7 +14,7 @@ const { data: artists } = useRequest(getFavoritedArtists);
     <div class=" mt-4 grid grid-cols-3 gap-3">
       <div v-for="artist in artists">
         <router-link :to="`/artist/${artist.id}`"> 
-          <img :src="artist.cover" v-default-src="defaultArtistArt" class=" rounded-md object-cover aspect-square" />
+          <img :src="artist.cover" v-default-src="defaultArtistArt" class=" rounded-md w-full object-cover aspect-square" />
           <div class=" text-sm text-gray-500">{{artist.name}}</div>
         </router-link>
       </div>
