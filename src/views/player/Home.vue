@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { useRequest } from 'alova/client';
 import { useMusicStore } from '@/store/music';
+import { useI18n } from 'vue-i18n';
 import TrackListSlider from '@/views/part/TrackListSlider.vue';
 import Header from '@/views/part/Header.vue';
 import { getTopPlaylists, getTenArtists, getRandomGenres, getRandomTracks, getLatestTracks, getMostPlayedTracks } from '@/apis/methods/music';
@@ -11,6 +12,9 @@ import { PlayChangeMode } from '@/constants/play-constants';
 import DefaultPlaylistCover from '@/assets/imgs/playlist.png'
 import FavoriteListCover from '@/assets/imgs/favorite.png'
 import FavoriteArtistsCover from '@/assets/imgs/fav_artists.png'
+
+const { t } = useI18n()
+
 const { data: topPlaylists } = useRequest(getTopPlaylists)
 
 const { data: artists } = useRequest(getTenArtists)
@@ -22,8 +26,8 @@ const { data: mostPlayedTracks } = useRequest(getMostPlayedTracks);
 const { data: latestTracks } = useRequest(getLatestTracks);
 const curTab = ref(0)
 const tabs = [
-  {label:'最新添加', component: TrackListSlider},
-  {label:'最常播放', component: TrackListSlider},
+  {label: t('player.latest_added'), component: TrackListSlider},
+  {label: t('player.most_played'), component: TrackListSlider},
 ]
 const slideTracks = computed(() => {
   switch (curTab.value) {
@@ -58,37 +62,43 @@ function switchTab(e: Event, index: number) {
   <Header />
   <div class=" px-2">
     <div>
-      <router-link to="/playlist" class=" text-lg font-semibold">歌单<span class=" icon-[solar--alt-arrow-right-linear] align-middle text-gray-600"></span></router-link>
+      <router-link to="/playlist" class=" text-lg font-semibold">
+        {{ t('player.playlist') }}<span class=" icon-[solar--alt-arrow-right-linear] align-middle"></span>
+      </router-link>
     </div>
     <div class=" mt-2 flex flex-nowrap overflow-x-scroll">
       <div class=" flex-none w-1/4 mr-2 last:mr-0 rounded-md">
         <router-link to="/favourite">
           <img :src="FavoriteListCover" class=" w-full rounded-md object-cover aspect-square" />
-          <div class=" text-sm text-gray-500">我最喜欢</div>
+          <div class=" text-sm text-gray-500 dark:text-gray-300">{{ t('player.favorited') }}</div>
         </router-link>
       </div>
       <template v-for="plist in topPlaylists">
         <div class=" flex-none w-1/4 mr-2 last:mr-0 rounded-md">
           <router-link :to="{name:'playlist',params:{id:plist.id},query:{back:'home'}}">
             <img :src="plist.cover" v-default-src="DefaultPlaylistCover" class=" w-full rounded-md object-cover aspect-square" />
-            <div class=" text-sm text-gray-500">{{plist.title}}</div>
+            <div class=" text-sm text-gray-500 dark:text-gray-300">{{plist.title}}</div>
           </router-link>
         </div>
       </template>
     </div>
-    <div class=" mt-3 flex justify-between bg-gray-200 rounded-md p-2">
+    <div class=" mt-3 flex justify-between bg-gray-200 dark:bg-teal-800/50 rounded-md p-2">
       <div class=" flex-1 flex gap-1">
-        <div class=" text-lg border border-cyan-500 text-gray-600 place-content-center px-2 rounded-md shadow-sm" @click="handlePlayRandom">
-          <span class=" icon-[solar--magic-stick-3-outline] align-middle mr-1"></span>随机播放
+        <div class=" text-lg border border-cyan-500 place-content-center px-2 rounded-md shadow-sm" @click="handlePlayRandom">
+          <span class=" icon-[solar--magic-stick-3-outline] align-middle mr-1"></span>{{ t('player.randomplay') }}
         </div>
-        <div class=" text-lg border border-cyan-500 text-gray-600 place-content-center px-2 rounded-md shadow-sm" @click="handlePlayRandomUsual">
-          <span class=" icon-[solar--cup-music-outline] align-middle mr-1"></span>熟歌模式
+        <div class=" text-lg border border-cyan-500 place-content-center px-2 rounded-md shadow-sm" @click="handlePlayRandomUsual">
+          <span class=" icon-[solar--cup-music-outline] align-middle mr-1"></span>{{ t('random.familiar') }}
         </div>
       </div>
-      <RouterLink to="/random" class=" block flex-none text-lg text-gray-500">更多<span class=" icon-[solar--alt-arrow-right-linear] align-middle text-gray-600"></span></RouterLink>
+      <RouterLink to="/random" class=" block flex-none text-lg text-gray-500">
+        {{ t('common.more') }}<span class=" icon-[solar--alt-arrow-right-linear] align-middle"></span>
+      </RouterLink>
     </div>
     <div class=" mt-3">
-      <router-link to="/artist" class=" text-lg font-semibold">歌手<span class=" icon-[solar--alt-arrow-right-linear] align-middle text-gray-600"></span></router-link to="/artist">
+      <router-link to="/artist" class=" text-lg font-semibold">
+        {{ t('player.artist') }}<span class=" icon-[solar--alt-arrow-right-linear] align-middle"></span>
+      </router-link to="/artist">
     </div>
     <div class=" mt-2 flex flex-nowrap overflow-x-scroll">
       <template v-for="artist in artists">
@@ -106,7 +116,9 @@ function switchTab(e: Event, index: number) {
       </div>
     </div>
     <div class=" mt-3">
-      <router-link to="/genre" class=" text-lg font-semibold">流派<span class=" icon-[solar--alt-arrow-right-linear] align-middle text-gray-600"></span></router-link>
+      <router-link to="/genre" class=" text-lg font-semibold">
+        {{ t('player.genre') }}<span class=" icon-[solar--alt-arrow-right-linear] align-middle"></span>
+      </router-link>
     </div>
     <div class=" mt-2 flex flex-wrap gap-2">
       <router-link v-for="genre in genres" :to="{name:'genre',params:{id:genre.id}, query:{back:'home'}}">
@@ -118,7 +130,7 @@ function switchTab(e: Event, index: number) {
         type="button"
         v-for="(tab, index) in tabs" 
         :key="index" 
-        :class="[' h-full w-24', {'border-b-2 border-b-cyan-600': curTab == index} ]" 
+        :class="[' h-full min-w-24 mr-2', {'border-b-2 border-b-cyan-600': curTab == index} ]" 
         @click="switchTab($event, index)">
         {{ tab.label }}
       </button>
@@ -138,7 +150,9 @@ function switchTab(e: Event, index: number) {
       </transition>
     </div>
     <div class=" mt-3">
-      <router-link :to="{name: 'folder', params: {id: 1}}" class=" text-lg font-semibold">文件夹<span class=" icon-[solar--alt-arrow-right-linear] align-middle text-gray-600"></span></router-link>
+      <router-link :to="{name: 'folder', params: {id: 1}}" class=" text-lg font-semibold">
+        {{ t('player.folder') }}<span class=" icon-[solar--alt-arrow-right-linear] align-middle"></span>
+      </router-link>
     </div>
   </div>
 </template>

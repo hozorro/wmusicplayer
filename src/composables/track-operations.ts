@@ -5,6 +5,7 @@ import { favTrack, getTrackInfo } from '@/apis/methods/music'
 import { PlayChangeMode } from '@/constants/play-constants'
 import WMessage from '@/composables/message'
 import { openDialog } from './wdialog'
+import { t } from '@/utilies/use-i18n'
 import TrackMoreInfo from '@/views/dialogs/TrackMoreInfo.vue'
 
 export default function useTrackOperations (callback?: () => void) {
@@ -28,12 +29,12 @@ export default function useTrackOperations (callback?: () => void) {
   }
 
   const operations = computed<Operation[]>(() => [
-    { label: '添加并播放', icon: 'icon-[solar--play-circle-linear]', action: handleInsertPlay },
-    { label: '添加到下一首', icon: 'icon-[solar--rewind-forward-circle-linear]', action: handleInsertNext },
-    { label: '添加到播放列表', icon: 'icon-[solar--plaaylist-minimalistic-linear]', action: handleAddLast },
-    { label: '添加到歌单', icon: 'icon-[solar--playlist-minimalistic-3-linear]', action: handleAddToPlaylist },
-    { label: '添加到Fav', icon: 'icon-[solar--list-heart-minimalistic-linear]', action: handleAddToFavorite },
-    { label: '更多歌曲信息（指纹等）', icon: 'icon-[solar--translation-broken]', action: handleGetMoreInfo},
+    { label: t('player.add_and_play'), icon: 'icon-[solar--play-circle-linear]', action: handleInsertPlay },
+    { label: t('player.add_next'), icon: 'icon-[solar--rewind-forward-circle-linear]', action: handleInsertNext },
+    { label: t('player.add_to_playinglist'), icon: 'icon-[solar--plaaylist-minimalistic-linear]', action: handleAddLast },
+    { label: t('player.add_to_playlist'), icon: 'icon-[solar--playlist-minimalistic-3-linear]', action: handleAddToPlaylist },
+    { label: t('player.add_to_favorite'), icon: 'icon-[solar--list-heart-minimalistic-linear]', action: handleAddToFavorite },
+    { label: t('player.more_track_info'), icon: 'icon-[solar--translation-broken]', action: handleGetMoreInfo},
   ])
 
   function handleInsertPlay() {
@@ -56,20 +57,20 @@ export default function useTrackOperations (callback?: () => void) {
 
   function handleAddToFavorite() {
     favTrack(operationStore.popMenuId as number, true).then(data => { 
-      if(data) WMessage('收藏成功', 'success')
+      if(data) WMessage(t('player.favorited_success'), 'success')
     })
     operationStore.closePopMenu()
     if(callback) callback()
   }
   async function handleGetMoreInfo() { 
-    openDialog(TrackMoreInfo, {title: '更多歌曲信息', contentProps: {trackId: operationStore.popMenuId as number}})
+    openDialog(TrackMoreInfo, {title: t('player.more_track_info'), contentProps: {trackId: operationStore.popMenuId as number}})
     operationStore.closePopMenu()
   }
 
   // current playing list operations
   const curPlaylistOperations = computed<Operation[]>(() => [
-    {label: '添加到歌单', icon: 'icon-[solar--playlist-minimalistic-3-linear]', action: handleAddToPlaylist},
-    {label: '查看所属专辑', icon: 'icon-[solar--round-graph-linear]', action: handleGoToAlbum},
+    {label: t('player.add_to_playlist'), icon: 'icon-[solar--playlist-minimalistic-3-linear]', action: handleAddToPlaylist},
+    {label: t('player.to_album'), icon: 'icon-[solar--round-graph-linear]', action: handleGoToAlbum},
   ])
 
   function handleCurPlaylistOperation(id: number, title: string) { 

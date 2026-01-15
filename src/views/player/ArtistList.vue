@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRoute } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import CollectionItem from '@/components/CollectionItem.vue';
 import useCollectionOperations from '@/composables/collection-operations';
 import { getArtistChars, getArtists } from '@/apis/methods/music';
 import { useRequest } from 'alova/client';
+
+const { t } = useI18n();
 
 const route = useRoute();
 let artistChar = ref('')
@@ -33,12 +36,12 @@ const { handleOperation } = useCollectionOperations('artist');
 </script>
 
 <template>
-  <div class=" fixed top-0 left-0 p-2 bg-gray-100 w-full z-20">
+  <div class=" fixed top-0 left-0 p-2 bg-light dark:bg-dark w-full z-20">
     <router-link to="/" class=" w-full flex-none text-lg font-semibold">
-      <span class=" icon-[solar--alt-arrow-left-linear] align-middle text-gray-600"></span> 歌手
+      <span class=" icon-[solar--alt-arrow-left-linear] align-middle"></span> {{ t('player.artist') }}
     </router-link>
     <div class=" mt-2 flex-none">
-      <div class=" p-2 grid grid-cols-9 gap-2 w-full bg-white rounded-xl">
+      <div class=" p-2 grid grid-cols-9 gap-2 w-full bg-white dark:bg-teal-800/50 rounded-xl">
         <template v-for="achar in artistChars">
           <div v-if="achar.hasArtist && artistChar == achar.charName" class=" bg-cyan-700 text-white rounded-md p-1 aspect-square place-content-center">
             <div class=" text-center">{{ achar.charName }}</div>

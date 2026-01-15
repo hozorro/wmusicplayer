@@ -3,6 +3,7 @@ declare interface Operation {
   icon?: string,
   action: () => void
 }
+declare type SupportedLocale = 'en-US' | 'zh-CN' | 'ja-JP' | 'ko-KR'
 declare interface PlayerOptions {
   stat_percent: number,
   switch_time: number,
@@ -10,5 +11,5 @@ declare interface PlayerOptions {
   isLoop: boolean,
   isAutoPlayNext: boolean,
   timeUpdateInterval: number,
-  transferBatchSize: number
+  transferBatchSize: number,
 }

@@ -2,6 +2,7 @@ import { computed } from 'vue'
 import { useMusicStore, useOperationStore } from '@/store/music'
 import { getCollectionTracks } from '@/apis/methods/music'
 import { PlayChangeMode } from '@/constants/play-constants'
+import { t } from '@/utilies/use-i18n'
 
 export default function useCollectionOperations (colType: Exclude<PopType, 'track'>, callback?: () => void) { 
   const musicStore = useMusicStore()
@@ -13,8 +14,8 @@ export default function useCollectionOperations (colType: Exclude<PopType, 'trac
   }
 
   const operations = computed<Operation[]>(() => [
-    { label: '播放全部', icon: 'icon-[solar--play-circle-linear]', action: handlePlayAll },
-    { label: '添加到播放列表', icon: 'icon-[solar--plaaylist-minimalistic-linear]', action: handleAddToCurPlaylist },
+    { label: t('player.playall'), icon: 'icon-[solar--play-circle-linear]', action: handlePlayAll },
+    { label: t('player.add_to_playinglist'), icon: 'icon-[solar--plaaylist-minimalistic-linear]', action: handleAddToCurPlaylist },
   ])
 
   function handlePlayAll() { 

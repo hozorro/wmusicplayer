@@ -3,6 +3,7 @@ import { ref, computed, useTemplateRef, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { useMusicStore } from "@/store/music"
 import { useRequest } from "alova/client";
+import { useI18n } from "vue-i18n";
 import TrackItem from "@/components/TrackItem.vue";
 import { useColorEffect } from "@/composables/color-effect";
 import { getAlbum, getCollectionTracks } from "@/apis/methods/music";
@@ -10,6 +11,8 @@ import useTrackOperations from '@/composables/track-operations';
 import { shuffle } from "@/utilies/general";
 import { PlayChangeMode } from "@/constants/play-constants";
 import defaultArt from '@/assets/imgs/album_art.png'
+
+const { t } = useI18n()
 
 const route = useRoute();
 const store = useMusicStore();
@@ -82,10 +85,12 @@ onMounted(() => {
     <div class=" flex-none">
       <RouterLink :to="backLink"><span class=" icon-[solar--alt-arrow-left-linear] align-middle text-2xl mix-blend-difference"></span></RouterLink>
     </div>
-    <div class=" flex-1 min-w-0 align-middle truncate mix-blend-difference"><RouterLink :to="backLink">{{scrollOut ? '专辑：' + album.title : '专辑'}}</RouterLink></div>
+    <div class=" flex-1 min-w-0 align-middle truncate mix-blend-difference">
+      <RouterLink :to="backLink">{{scrollOut ? `${t('player.album')}: ` + album.title : t('player.album')}}</RouterLink>
+    </div>
     <div class=" flex-none text-stone-200" :class="{'hidden': !scrollOut}">
-      <span class=" bg-cyan-700 text-white text-sm px-2 rounded-md shadow-sm" @click="handlePlayAll">播放全部</span>
-      <span class=" bg-cyan-700 text-white text-sm mx-2 px-1 rounded-md shadow-sm" @click="handlePlayRandom">随机播放</span>
+      <div class=" btn-bar" @click="handlePlayAll">{{ t('player.playall') }}</div>
+      <div class=" btn-bar ml-2" @click="handlePlayRandom">{{ t('player.randomplay') }}</div>
     </div>
   </div>
   <div class=" w-full min-h-full" :style="bgColor">
@@ -99,23 +104,24 @@ onMounted(() => {
             </div>
             <div class=" flex-1 flex relative min-w-0 align-middle">
               <div class=" flex-1 min-w-0 p-1 truncate">{{ artists }}</div>
-              <div class=" flex-none text-cyan-500 py-1" v-if="needShowMoreArtists" v-show="!showMoreArtists" @click="showMoreArtists = true">更多</div>
+              <div class=" flex-none text-cyan-500 py-1" 
+                v-if="needShowMoreArtists" v-show="!showMoreArtists" @click="showMoreArtists = true">{{ t('common.more') }}</div>
               <div class=" absolute top-0 left-0 right-0 max-h-48 overflow-y-auto p-1 rounded-md text-wrap bg-cyan-50 shadow" 
                 ref="allArtistsDiv" 
                 :class="{'visible': showMoreArtists, 'invisible': !showMoreArtists}"
                 :style="bgColor">
-                {{ artists }} <span class=" ml-2 text-cyan-500" @click="showMoreArtists = false">收起</span>
+                {{ artists }} <span class=" ml-2 text-cyan-500" @click="showMoreArtists = false">{{ t('common.closeup') }}</span>
               </div>
             </div>
           </div>
           <div class=" mt-2 text-sm text-stone-300">
             <span class=" mr-1 align-middle icon-[solar--music-notes-linear]"></span>
-            <span class=" align-middle">共{{ album.track_count }}首歌</span>
+            <span class=" align-middle">{{ t('player.total_tracks', {count: album.track_count}) }}</span>
           </div>
         </div>
         <div class=" flex-1 flex justify-around items-center mt-2">
-          <button class=" btn" @click="handlePlayAll">播放全部</button>
-          <button class=" btn" @click="handlePlayRandom">随机播放</button>
+          <button class=" btn" @click="handlePlayAll">{{ t('player.playall') }}</button>
+          <button class=" btn" @click="handlePlayRandom">{{ t('player.randomplay') }}</button>
         </div>
       </div>
       <div class=" flex-none w-7/15">
@@ -123,7 +129,7 @@ onMounted(() => {
         <img src="@/assets/imgs/album_part.png" class=" w-4/17 inline-block" />
       </div>
     </div>
-    <div class="  w-full mt-4 p-2 bg-gray-100 rounded-t-lg">
+    <div class="  w-full mt-4 p-2 bg-light dark:bg-dark rounded-t-lg">
       <div class=" flex items-center w-full" v-for="(track,index) in album.tracks">
         <div class=" flex-none w-6 text-center text-stone-500">{{ index + 1 }}</div>
         <TrackItem

@@ -24,8 +24,7 @@ export const getAlbum = (id: number) => {
   return generalAlova.Get("/music/album/" + id, {
     name: 'getAlbum',
     transform: (rawData: AlbumInfo) => {
-      // 使用transform时，在transform函数中指定data的类型，不要在上面的Get中使用类型泛型，否则rawData的类型会变为unknown
-      // 并且当响应错误时，获取的rawData为空，此时transform函数中对于用到rawwData的属性进行赋值，会报错，应增加判断或使用.?链式运算符
+      // not use type as typevar in the Get method, but in the transform function
       return {
         ...rawData,
         track_count: rawData?.tracks.length || 0,

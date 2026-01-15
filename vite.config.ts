@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
@@ -11,6 +12,11 @@ export default defineConfig({
   plugins: [
     vue(),
     tailwindcss(),
+    VueI18nPlugin({
+      include: [path.resolve(__dirname, './src/i18n/langs/**')],
+      runtimeOnly: false,
+      compositionOnly: true,
+    }),
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',

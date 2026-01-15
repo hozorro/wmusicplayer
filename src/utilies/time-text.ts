@@ -1,45 +1,47 @@
 import dayjs from "dayjs";
+import { t } from "./use-i18n";
 
 const nowTime = dayjs()
 const monthDict: Record<number, string> = {
-  1: '凛冬',
-  2: '早春',
-  3: '春天',
-  4: '暮春',
-  5: '初夏',
-  6: '仲夏',
-  7: '盛夏',
-  8: '初秋',
-  9: '秋天',
-  10: '深秋',
-  11: '初冬',
-  12: '冬天'
+  1: t('sentence.month_1'),
+  2: t('sentence.month_2'),
+  3: t('sentence.month_3'),
+  4: t('sentence.month_4'),
+  5: t('sentence.month_5'),
+  6: t('sentence.month_6'),
+  7: t('sentence.month_7'),
+  8: t('sentence.month_8'),
+  9: t('sentence.month_9'),
+  10: t('sentence.month_10'),
+  11: t('sentence.month_11'),
+  12: t('sentence.month_12')
 }
-const timeDict = {
-  '凌晨': [1,2,3,4,5],
-  '清早': [6,7],
-  '上午': [8,9,10,11],
-  '中午': [12,13],
-  '下午': [14,15,16,17],
-  '黄昏': [18,19],
-  '晚上': [20,21,22],
-  '深夜': [23,0]
-}
+const timeDict = [
+  { label: t('sentence.early_morning'), value: [1,2,3,4,5] },
+  { label: t('sentence.dawn'), value: [6,7] },
+  { label: t('sentence.morning'), value: [8,9,10,11] },
+  { label: t('sentence.noon'), value: [12,13] },
+  { label: t('sentence.afternoon'), value: [14,15,16,17] },
+  { label: t('sentence.dusk'), value: [18,19] },
+  { label: t('sentence.evening'), value: [20,21,22] },
+  { label: t('sentence.night'), value: [23,0]}
+]
 const timeWord = (timeNum: number | undefined) => {
-  if (timeNum === undefined) return '某个神秘时刻'
-  for (const [time, nums] of Object.entries(timeDict)) {
-    if (nums.includes(timeNum)) return time
+  if (timeNum === undefined) return t('sentence.unknown_time')
+  for (let i = 0; i < timeDict.length; i++) {
+    const time = timeDict[i]
+    if (time.value.includes(timeNum)) return time.label
   }
-  return '某个神秘时刻'
+  return t('sentence.unknown_time')
 }
 
 const yearWord = (dt: dayjs.Dayjs) => {
   const dtYear = dt.year()
   const nowYear = nowTime.year()
-  if (dtYear === nowYear) return '今年'
-  if (dtYear === nowYear - 1) return '去年'
-  if (dtYear === nowYear - 2) return '前年'
-  return (nowYear - dtYear).toString() + '年前'
+  if (dtYear === nowYear) return t('sentence.this_year')
+  if (dtYear === nowYear - 1) return t('sentence.last_year')
+  if (dtYear === nowYear - 2) return t('sentence.before_last_year')
+  return t('sentence.year_before', { year: nowYear - dtYear })
 }
 const getMostHitHourNum = (hits: string[]) => {
   const hitCounts = hits.map(hit => dayjs(hit).hour())
@@ -54,7 +56,7 @@ const getMostHitHourNum = (hits: string[]) => {
 }
 export function getISOWithOffset(date = new Date()) {
   const pad = (num: number) => String(num).padStart(2, '0');
-  const offset = date.getTimezoneOffset(); // 分钟
+  const offset = date.getTimezoneOffset(); // minitues
   const absOffset = Math.abs(offset);
   const sign = offset > 0 ? '-' : '+';
   return [
@@ -68,24 +70,24 @@ export function timeText (dt: dayjs.Dayjs) {
   if (dt.year() == nowTime.year()) {
     if (dt.month() == nowTime.month()) {
       if (dt.date() == nowTime.date()) {
-        return `今天`
+        return t('sentence.today')
       } else {
-        return `${nowTime.date() - dt.date()}天前`
+        return t('sentence.day_before', { day: nowTime.date() - dt.date() })
       }
     } else {
-      return `${nowTime.month() - dt.month()}个月前`
+      return t('sentence.month_before', { month: nowTime.month() - dt.month() })
     }
   }
   const yrWord = yearWord(dt)
   const monWord = monthDict[dt.month() + 1]
   const hrNum = dt.hour()
   const tmWord = timeWord(hrNum)
-  return `在${yrWord}一个${monWord}的${tmWord}`
+  return t('sentence.time_detail', { year: yrWord, month: monWord, time: tmWord })
 }
 
 export function parseHits(hits: string[] | undefined) {
-  if (!hits) return '你还没有听过这首歌'
-  if (hits.length === 0) return '你还没有听过这首歌'
+  if (!hits) return t('sentence.not_listened')
+  if (hits.length === 0) return t('sentence.not_listened')
 
   const [earliest, latest] = hits.reduce((acc, hit) => {
     const hitTime = dayjs(hit)
@@ -94,19 +96,23 @@ export function parseHits(hits: string[] | undefined) {
     return acc
   }, [dayjs(hits[0]), dayjs(hits[0])])
 
-  let hitText = `${timeText(earliest)}\n你第一次听了这首歌\n`
+  let hitText = `${timeText(earliest)}\n${t('sentence.first_listened')}\n`
   
-  if (earliest.isSame(latest)) return hitText + '\n之后，你没有再听这首歌'
+  if (earliest.isSame(latest)) return hitText + `\n${t('sentence.then_not_listened')}`
 
   const count = hits.length
   if (count == 2) {
     if (latest.year() === earliest.year() && nowTime.month() - latest.month() < 2) 
-      return `${hitText}\n最近，你又听了这首歌`
-    else return hitText + `\n之后，直到${timeText(latest)}\n你才第二次听了这首歌`
+      return `${hitText}\n${t('sentence.recent_listened')}`
+    else return hitText + t('sentence.then_second_listened', { full_time: timeText(latest) })
   } else if (count < 6) {
-    return `${hitText}\n之后，你听得不多\n\n${timeText(latest)}\n你最近一次听了这首歌`
+    return `${hitText}${t('sentence.then_recent_listened'), { full_time: timeText(latest) }}`
   } else if (count > 5) {
     const mostHitHourNum = getMostHitHourNum(hits)
-    return `${hitText}\n之后，你又听了${count - 1}次\n经常在${timeWord(mostHitHourNum)}听这首歌\n\n${timeText(latest)}\n你最近一次听了这首歌。`
+    return `${hitText}${t('sentence.then_often_listened', { 
+      count: count - 1, 
+      time: timeWord(mostHitHourNum),
+      full_time: timeText(latest)
+    })}`
   }
 }

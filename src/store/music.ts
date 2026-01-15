@@ -3,8 +3,11 @@ import { defineStore } from "pinia";
 import { PlayChangeMode } from "@/constants/play-constants";
 import { indexedDbHelper } from "@/apis/idb-funcs";
 import idbConfig from "@/apis/idb-config";
+import { loadLocaleMessages } from "@/i18n";
 
 export const useMusicStore = defineStore("music", () => {
+  const locale =  ref<SupportedLocale>((localStorage.getItem('locale') || 'zh-CN') as SupportedLocale)
+  const isDark = ref(false)
   const playerBoxShow = ref(true)
   const curPlaylist = ref<Track[]>([])
   const curPlayIndex = ref(0)
@@ -18,9 +21,13 @@ export const useMusicStore = defineStore("music", () => {
     isLoop: true,
     isAutoPlayNext: true,
     timeUpdateInterval: 500,
-    transferBatchSize: 500
+    transferBatchSize: 500,
   })
-
+  async function setLocale(newLocale: SupportedLocale) {
+    if (locale.value === newLocale) return
+    await loadLocaleMessages(newLocale)
+    locale.value = newLocale
+  }
   function addToCurPlaylist(track: Track, addMode: PlayChangeMode) { 
     switch (addMode) {
       case PlayChangeMode.ADD_CUR:
@@ -49,6 +56,8 @@ export const useMusicStore = defineStore("music", () => {
     params.value[key] = value
   }
   return { 
+    locale,
+    isDark,
     playerBoxShow,
     curPlaylist,
     curPlayIndex,
@@ -56,6 +65,7 @@ export const useMusicStore = defineStore("music", () => {
     idbHelper,
     isIDBReady,
     params,
+    setLocale,
     addToCurPlaylist,
     addListToCurPlaylist,
     getParam,
@@ -63,7 +73,7 @@ export const useMusicStore = defineStore("music", () => {
   }
 }, {
   persist: {
-    pick:['params', 'curPlaylist', 'curPlayIndex']
+    pick:['locale', 'isDark', 'params', 'curPlaylist', 'curPlayIndex']
   }
 })
 

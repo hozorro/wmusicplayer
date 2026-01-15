@@ -15,7 +15,7 @@
     "paths": {
       "@/*": ["src/*"]
     },
-    "types": ["node"]
+    "types": ["node", "@intlify/unplugin-vue-i18n/messages"]
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue"]
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "src/i18n/langs/*.json"]
 }

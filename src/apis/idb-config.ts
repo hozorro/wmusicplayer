@@ -68,11 +68,16 @@ export default  {
         { name: 'hit_count', keyPath: 'hit_count', options: { unique: false }},
         { name: 'updated_at', keyPath: 'updated_at', options: { unique: false }},
         { name: 'genre_titles', keyPath: 'genre_titles', options: { multiEntry: true }}
-        // 由于genre关联的track可能较多，有的genre下可能有几千条track记录，需要分页，
-        // 分页时最好要对记录进行排序，因此对于track的查询，采用genre_ids(multientry）过滤，并对track通过title排序，
-        // 过滤与排序不是同一字段，此时最佳方案是采用复合索引，但复合索引不能使用multiEntry=true。
-        // 此时可创建复合字段，注意复合字段的元素不能为对象，否则不能创建索引。
-        // 对于folder、artist和album的过滤查询，由于过滤结果集较小，采用普通索引，在内存中对结果集排序即可。
+        /*
+        Because some genres may have a large number of tracks, pagination needed.
+        Records need to be sorted when paginated. 
+        Therefore, for track queries, use genre_ids(multiEntry) to filter, and sort the track through title.
+        But the filter and sort are not the same field, the best solution is to create a compound index.
+        But the compound index cannot use multiEntry=true.
+        Therefore, a compound field needs to be created. 
+        Note that the elements of the compound field cannot be objects, otherwise the index cannot be created.
+        For folder, artist and album filtering queries, since the filtering result set is small, use normal index, sort the result set in memory.
+         */
       ]
     },{
       name: 'playlist',
@@ -86,5 +91,5 @@ export default  {
       ]
     }
   ],
-  init: () => { console.log('[IndexDB] 数据库初始化完成。') }
+  init: () => { console.log('[IndexDB] idb init completed.') }
 }

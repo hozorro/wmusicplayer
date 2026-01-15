@@ -2,11 +2,14 @@
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { useWatcher } from 'alova/client';
+import { useI18n } from 'vue-i18n';
 import CollectionItem from '@/components/CollectionItem.vue';
 import TrackItem from '@/components/TrackItem.vue';
 import useCollectionOperations from '@/composables/collection-operations';
 import useTrackOperations from '@/composables/track-operations';
 import { getFolder } from '@/apis/methods/music';
+
+const { t } = useI18n();
 
 const route = useRoute();
 const folderId = computed(() => parseInt(route.params.id as string) || 1);
@@ -31,13 +34,13 @@ function handleOperation(oType: string, oId: number, oTitle: string) {
 </script>
 
 <template>
-  <div class=" fixed top-0 left-0 p-2 bg-gray-100 w-full z-20">
-    <router-link :to="folder.parent_id ? {name: 'folder', params: {id: folder.parent_id.toString()}} : '/'">
-      <span class=" icon-[solar--alt-arrow-left-linear] align-middle text-2xl"></span>文件夹：{{ folder.name }}
+  <div class=" fixed top-0 left-0 p-2 bg-light dark:bg-dark w-full z-20">
+    <router-link :to="folder.parent_id ? {name: 'folder', params: {id: folder.parent_id.toString()}} : '/'" class=" w-full text-lg font-semibold">
+      <span class=" icon-[solar--alt-arrow-left-linear] align-middle"></span>{{ t('player.folder') }}: {{ folder.name }}
     </router-link>
   </div>
-  <div class=" w-full pt-10 px-2 pb-2">
-    <div class=" w-full bg-stone-50 rounded-md p-2" v-if="folder.children?.length > 0">
+  <div class=" w-full pt-12 px-2 pb-2">
+    <div class=" w-full bg-stone-50 dark:bg-teal-800/50 rounded-md p-2" v-if="folder.children?.length > 0">
       <CollectionItem v-for="f in folder.children"
         col-type="folder"
         :id="f.id"
@@ -45,7 +48,7 @@ function handleOperation(oType: string, oId: number, oTitle: string) {
         @operation="(id: number, name: string) => handleOperation('folder', id, name)"
       />
     </div>
-    <div class=" w-full  bg-stone-50 rounded-md p-2" v-if="folder.tracks?.length > 0">
+    <div class=" w-full  bg-stone-50 dark:bg-teal-800/50 rounded-md p-2" v-if="folder.tracks?.length > 0">
       <TrackItem v-for="t in folder.tracks"
         :id="t.id"
         :title="t.title"

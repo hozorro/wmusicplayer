@@ -17,14 +17,14 @@ onMounted(async () => {
 <template>
   <div class=" grid grid-cols-[100px_1fr] gap-2 text-sm text-gray-500">
     <div>year：</div>
-    <div>{{ moreInfo?.year || '未知' }}</div>
+    <div>{{ moreInfo?.year || 'Unknown' }}</div>
     <div>bitrate：</div>
     <div>{{ bitrate }}</div>
     <div>acoustid：</div>
-    <div>{{ moreInfo?.acoustid_id || '未知' }}</div>
+    <div>{{ moreInfo?.acoustid_id || 'Unknown' }}</div>
     <div>mb_trackid：</div>
-    <div>{{ moreInfo?.mb_trackid || '未知' }}</div>
+    <div>{{ moreInfo?.mb_trackid || 'Unknown' }}</div>
     <div>path：</div>
-    <div>{{ moreInfo?.path || '未知' }}</div>
+    <div>{{ moreInfo?.path || 'Unknown' }}</div>
   </div>
 </template>

@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import defaultArt from '@/assets/imgs/track.png'
 import { useMusicStore } from '@/store/music';
+import defaultArt from '@/assets/imgs/track.png'
+
 interface ItemObject {
   id: number;
   title: string;

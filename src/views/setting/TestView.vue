@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { ref, useTemplateRef, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { generalAlova } from '@/apis';
 import { invalidateCache } from 'alova';
 import { useMusicStore } from '@/store/music';
 import * as musicMethods from '@/apis/methods/music';
+import { useI18n } from 'vue-i18n';
 
 const { idbHelper } = useMusicStore();
+const { t } = useI18n();
 
 const methods = ref<[string,string][]>([])
 const selectedMethods = ref<string[]>([])
@@ -48,20 +50,11 @@ async function testFunc2() {
   console.log('deleted playlist ', model2.value)
 }
 
-const needShowMore = ref(false)
-const showMore = ref(false)
-const artists = 'Celine Dion, Taylor Swift, Michael Jackson'
-const iconDiv = useTemplateRef<HTMLElement>('iconDiv')
-const abArDiv = useTemplateRef<HTMLElement>('abArDiv')
 onMounted(() => {
-  if(iconDiv.value && abArDiv.value) {
-    const height = iconDiv.value?.getBoundingClientRect().height
-    const abArHeight = abArDiv.value?.getBoundingClientRect().height
-    console.log(height, abArHeight)
-    if(abArHeight > height) {
-      needShowMore.value = true
-    }
-  }
+  const st = localStorage.getItem('music')
+  let music: any = {}
+  if(st) music = JSON.parse(st)
+  console.log(music.isDark)
 })
 
 
@@ -72,7 +65,7 @@ onMounted(() => {
   <div class=" p-2">
     <div class=" flex justify-between">
       <router-link to="/setting" class=" flex-none text-lg font-semibold"><span class=" icon-[solar--alt-arrow-left-linear] align-middle text-gray-600"></span></router-link>
-      <div class=" flex-1 text-lg font-semibold text-right">试验功能</div>
+      <div class=" flex-1 text-lg font-semibold text-right">{{ t('settings.test') }}</div>
     </div>
     <div class=" mt-2 p-2">
       <button class=" px-2 block h-8 bg-cyan-600 text-white rounded-md" @click="handleInvalidateCaches">InvalidateCache</button>
@@ -98,16 +91,7 @@ onMounted(() => {
       <div v-for="track in tracks" :key="track.id">{{track.title}}</div> -->
     </div>
     <div class=" flex w-full mt-2 p-2 items-start">
-      <div class=" p-1" ref="iconDiv"><span class=" text-lg align-middle icon-[solar--user-speak-linear]"></span></div>
-      <div class=" flex-1 flex relative min-w-0">
-        <div class=" flex-1 min-w-0 p-1 truncate">{{ artists }}</div>
-        <div class=" flex-none text-cyan-500 py-1" v-if="needShowMore" v-show="!showMore" @click="showMore = true">更多</div>
-        <div class=" absolute top-0 left-0 right-0 p-1 rounded-md text-wrap bg-cyan-50" 
-          ref="abArDiv" 
-          :class="{'visible': showMore, 'invisible': !showMore}">
-          {{ artists }} <span @click="showMore = false" class=" ml-2 text-cyan-500">更少</span>
-        </div>
-      </div>
+      
     </div>
   </div>
 </template>

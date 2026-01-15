@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useSync } from '@/composables/sync'
+import { useI18n } from 'vue-i18n'
 import dayjs from 'dayjs'
+
+const { t } = useI18n()
 
 const optInfo = ref('Ready.')
 
@@ -78,16 +81,18 @@ const playbackSyncMethodMap = {
 <template>
     <div class=" p-2">
       <div class=" flex justify-between">
-        <router-link to="/setting" class=" flex-none text-lg font-semibold"><span class=" icon-[solar--alt-arrow-left-linear] align-middle text-gray-600"></span></router-link>
-        <div class=" flex-1 text-lg font-semibold text-right">本地数据库(IndexedDb)</div>
+        <router-link to="/setting" class=" flex-none text-lg font-semibold">
+          <span class=" icon-[solar--alt-arrow-left-linear] align-middle text-gray-600"></span>
+        </router-link>
+        <div class=" flex-1 text-lg font-semibold text-right">{{ t('settings.localdb.item') }} (IndexedDb)</div>
       </div>
       <div class=" mt-4">
         <div class=" bg-gray-200 rounded-md p-2 text-xs">
           <div class=" border-b border-gray-300 pb-1">
             <span class=" icon-[solar--hand-stars-outline] align-middle"></span>
-            <span class=" ml-2 align-middle font-semibold">本地数据库使用说明</span>
+            <span class=" ml-2 align-middle font-semibold">{{ t('settings.localdb.title') }}</span>
           </div>
-          <p class=" mt-1 indent-6">基于IndexedDb构建本地数据库缓存所有音乐信息数据，除了播放音乐外，其他所有内容均无需连接服务器，可离线操作。如果服务器音乐数据库有变化，需点击下面的按钮手动更新同步（会先同步上传本地变化）。</p>
+          <p class=" mt-1 indent-6">{{ t('settings.localdb.content') }}</p>
         </div>
       </div>
     </div>
@@ -95,9 +100,9 @@ const playbackSyncMethodMap = {
       <table class=" table-auto w-full">
         <thead>
           <tr class=" border-b">
-            <th class=" px-2 py-1" width="16%">数据表</th>
-            <th class=" px-2 py-1" width="42%">本地数量</th>
-            <th class=" px-2 py-1" width="42%">服务器数量</th>
+            <th class=" px-2 py-1" width="16%">{{ t('settings.localdb.model') }}</th>
+            <th class=" px-2 py-1" width="42%">{{ t('settings.localdb.local_count') }}</th>
+            <th class=" px-2 py-1" width="42%">{{ t('settings.localdb.remote_count') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -130,17 +135,17 @@ const playbackSyncMethodMap = {
       </table>
     </div>
     <div class=" flex justify-between w-full p-2">
-      <button class=" px-2 block h-8 bg-cyan-600 text-white rounded-md" @click="rebuildLocalData">重建数据</button>
-      <button class=" px-2 block h-8 bg-cyan-600 text-white rounded-md" @click="checkUpdate">检查更新</button>
-      <button class=" px-2 block h-8 bg-cyan-600 text-white rounded-md" @click="syncAll">同步全部</button>
+      <button class=" px-2 block h-8 bg-cyan-600 text-white rounded-md" @click="rebuildLocalData">{{ t('settings.localdb.rebuild') }}</button>
+      <button class=" px-2 block h-8 bg-cyan-600 text-white rounded-md" @click="checkUpdate">{{ t('settings.localdb.check') }}</button>
+      <button class=" px-2 block h-8 bg-cyan-600 text-white rounded-md" @click="syncAll">{{ t('settings.localdb.syncall') }}</button>
     </div>
     <div class=" w-full p-2 mt-2 border-t border-t-gray-200">
       <table class=" table-auto w-full">
         <thead>
           <tr class=" border-b">
-            <th class=" px-2 py-1" width="16%">数据表</th>
-            <th class=" px-2 py-1" width="42%">本地版本</th>
-            <th class=" px-2 py-1" width="42%">服务器版本</th>
+            <th class=" px-2 py-1" width="16%">{{ t('settings.localdb.model') }}</th>
+            <th class=" px-2 py-1" width="42%">{{ t('settings.localdb.local_version') }}</th>
+            <th class=" px-2 py-1" width="42%">{{ t('settings.localdb.remote_version') }}</th>
           </tr>
         </thead>
         <tbody>

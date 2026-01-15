@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { useRequest } from 'alova/client';
+import { useI18n } from 'vue-i18n';
 import CollectionItem from '@/components/CollectionItem.vue';
 import useCollectionOperations from '@/composables/collection-operations';
 import { getGenres } from '@/apis/methods/music';
+
+const { t } = useI18n();
 
 const { data: genres } = useRequest(getGenres, {
   initialData: []
@@ -12,8 +15,8 @@ const { handleOperation } = useCollectionOperations('genre');
 </script>
 
 <template>
-  <router-link to="/" class=" fixed top-0 left-0 p-2 bg-gray-100 w-full z-20">
-    <span class=" icon-[solar--alt-arrow-left-linear] align-middle text-2xl"></span>流派
+  <router-link to="/" class=" fixed top-0 left-0 p-2 bg-light dark:bg-dark w-full z-20 text-lg font-semibold">
+    <span class=" icon-[solar--alt-arrow-left-linear] align-middle"></span>{{ t('player.genre') }}
   </router-link>
   <div class=" w-full mt-9 p-2">
     <div class=" w-full">

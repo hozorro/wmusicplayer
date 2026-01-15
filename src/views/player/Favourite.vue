@@ -3,6 +3,7 @@ import { computed, useTemplateRef } from "vue";
 import { useRoute } from "vue-router";
 import { useMusicStore } from "@/store/music"
 import { useRequest } from "alova/client";
+import { useI18n } from "vue-i18n";
 import { PlayChangeMode } from "@/constants/play-constants";
 import TrackItem from "@/components/TrackItem.vue";
 import { useColorEffect } from "@/composables/color-effect";
@@ -10,6 +11,8 @@ import useTrackOperations from "@/composables/track-operations";
 import { getFavoriteTracks } from "@/apis/methods/music";
 import FavouriteCover from "@/assets/imgs/favorite.png";
 import { shuffle } from "@/utilies/general";
+
+const { t } = useI18n();
 
 const imgRef = useTemplateRef("coverImg");
 const { bgColor, scrollOut, refresh } = useColorEffect(imgRef, FavouriteCover)
@@ -49,11 +52,11 @@ function handlePlayRandom() {
       borderBottom: scrollOut ? '1px solid #d1d2d4' : 'none'}">
     <router-link :to="backLink" class=" flex-none" :style="{color: scrollOut ? '#364153' : '#f5f5f4'}">
       <span class=" icon-[solar--alt-arrow-left-linear] align-middle text-2xl mix-blend-difference"></span>
-      <span class=" align-middle">{{scrollOut ? '我最喜欢的音乐' : ''}}</span>
+      <span class=" align-middle">{{scrollOut ? t('player.favorited_tracks') : ''}}</span>
     </router-link>
     <div class=" text-stone-200" :style="{display: scrollOut ? 'block' : 'none'}">
-      <div class=" inline-block bg-cyan-700 text-white text-sm place-content-center px-2 rounded-md shadow-sm" @click="handlePlayAll">播放全部</div>
-      <div class=" inline-block bg-cyan-700 text-white text-sm place-content-center ml-2 px-1 rounded-md shadow-sm" @click="handlePlayRandom">随机播放</div>
+      <div class=" inline-block bg-cyan-700 text-white text-sm place-content-center px-2 rounded-md shadow-sm" @click="handlePlayAll">{{ t('player.playall') }}</div>
+      <div class=" inline-block bg-cyan-700 text-white text-sm place-content-center ml-2 px-1 rounded-md shadow-sm" @click="handlePlayRandom">{{ t('player.randomplay') }}</div>
     </div>
   </div>
   <div class=" w-full min-h-full" :style="bgColor">
@@ -63,15 +66,15 @@ function handlePlayRandom() {
       </div>
       <div class=" flex-1 flex flex-col justify-between ml-4">
         <div class=" flex-none">
-          <div class=" text-lg font-bold mr-2 text-stone-100">我最喜欢的音乐</div>
+          <div class=" text-lg font-bold mr-2 text-stone-100">{{ t('player.favorited_tracks') }}</div>
           <div class=" text-sm text-stone-200">
             <span class=" ml-2 mr-1 align-middle icon-[solar--music-notes-linear]"></span>
             <span class=" align-middle">{{ favTracks?.length }}</span>
           </div>
         </div>
         <div class=" flex-1 flex justify-around items-center mt-2">
-          <button class=" btn">播放全部</button>
-          <button class=" btn">随机播放</button>
+          <button class=" btn">{{ t('player.playall') }}</button>
+          <button class=" btn">{{ t('player.randomplay') }}</button>
         </div>
       </div>
     </div>

@@ -5,9 +5,9 @@ import { getTrackInfo, getStreamingUrl, favTrack, getLyric } from "@/apis/method
 import { updateHits, updateArtistHitCount, getArtistsByIds, updateFav, getTrackHits } from '@/apis/methods/idb-locals'
 import { usePlaySeq } from "@/composables/play-seq"
 import useMediaSession from '@/composables/media-session';
+import WMessage from "@/composables/message"
 import { PlayChangeMode, SeqMode } from "@/constants/play-constants"
 import { LyricParser } from "@/utilies/lyric-parser";
-import WMessage from "@/composables/message"
 
 export function usePlayer(
   audioRef: Ref<HTMLAudioElement | null>, 
@@ -91,19 +91,18 @@ export function usePlayer(
 
   let timeUpdateFlag: NodeJS.Timeout | null
   /**
-   * 处理时间更新事件
-   * 此函数用于在特定间隔后执行回调函数，期间避免重复触发
-   * @param {Function} callback - 时间更新后的回调函数
+   * handle time update event
+   * execute callback function after a specific interval, avoid repeated triggering
+   * @param {Function} callback - callback function to be executed
    */
   function handleTimeUpdate(callback?: () => void){
-    // 检查时间更新标志，避免在间隔内重复触发
+    // check time update flag, avoid triggering repeatedly
     if(timeUpdateFlag) return
-    // 设置一个新的setTimeout调用，确保在指定间隔后执行回调
+    // set a new timeout to execute the callback after the specified interval
     timeUpdateFlag = setTimeout(() => {
-      if(callback) callback();
       if(audioRef.value){ 
-        const curTime = audioRef.value.currentTime
-        playInfo.playPortion = curTime / audioRef.value.duration
+        playInfo.playPortion = audioRef.value.currentTime / audioRef.value.duration
+        if(callback) callback();
         if(playInfo.playPortion > store.getParam('stat_percent') / 100 && !playInfo.playHitsChecked){
           try{
             if (store.isIDBReady) {
@@ -122,7 +121,7 @@ export function usePlayer(
         }
 
         if(lyric.value) {
-          const index = lyric.value.getCurrentLyricIndex(curTime)
+          const index = lyric.value.getCurrentLyricIndex(audioRef.value.currentTime)
           if(index !== lyricInfo.curLyricIndex) {
             lyricInfo.curLyricIndex = index
             lyricInfo.curLyric = index === -1 ? '' : lyrics.value[index]?.text || ''
@@ -148,7 +147,7 @@ export function usePlayer(
       metadata.value = lyricParser.getMetadata()
       clearLineRefs()
     } else {
-      lyricInfo.lyricError = '歌词加载失败'
+      lyricInfo.lyricError = 'Failed to load lyric.'
     }
     lyricInfo.lyricLoading = false
   }
@@ -163,7 +162,7 @@ export function usePlayer(
         audioRef.value.play().then(() => {
           nextTick(() => {
             if(opts.curTime){
-              // 播放到指定时间
+              // play from specific time
               if(audioRef.value == undefined) return reject()
               audioRef.value.currentTime = opts.curTime
             }
@@ -176,7 +175,8 @@ export function usePlayer(
           WMessage(err, 'error')
           if(err.code == 9){
             consecutiveError.value += 1
-            if(isAutoPlayNext && consecutiveError.value < store.getParam('max_fail_count')){// 连续错误次数超过10次，则停止自动播放下一首
+            if(isAutoPlayNext && consecutiveError.value < store.getParam('max_fail_count')){
+              // stop auto next when consecutive error times exceed 10
               setTimeout(() => {
                 playNext()
               }, store.getParam('switch_time'))
@@ -365,26 +365,26 @@ export function usePlayer(
       initSeq()
     }
     switch(newValue){
-      case PlayChangeMode.ADD_CUR://添加到当前播放文件之前并立即播放
+      case PlayChangeMode.ADD_CUR:  // add before the current playing file, and play immediately
         addSeqCur()
         switchPlay()
         break
-      case PlayChangeMode.ADD_NEXT://添加到当前播放文件之后
+      case PlayChangeMode.ADD_NEXT: // add after the current playing file
         addSeqNext()
         break
-      case PlayChangeMode.ADD_LAST://添加到当前播放文件之后并播放
+      case PlayChangeMode.ADD_LAST: // add after the current playing file, and play immediately
         addSeqLast()
         break
-      case PlayChangeMode.REPLACE_LIST://替换当前播放列表
+      case PlayChangeMode.REPLACE_LIST: // replace the current playing list
         replaceSeqList()
         switchPlay()
         break
-      case PlayChangeMode.REPLACE_LIST_RND://替换当前播放列表
+      case PlayChangeMode.REPLACE_LIST_RND: // replace the current playing list, and play randomly
         seqOrder.value = SeqMode.LIST_RND
         replaceSeqList()
         switchPlay()
         break
-      case PlayChangeMode.ADD_LIST_LAST://添加到当前播放列表末尾
+      case PlayChangeMode.ADD_LIST_LAST:  // add the list to the end of the current playing list
         addSeqListLast()
         break
       case PlayChangeMode.DIRECT_PLAY:

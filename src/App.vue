@@ -2,6 +2,7 @@
 import { onMounted } from 'vue';
 import { useMusicStore } from './store/music';
 import WMessage from './composables/message';
+import { t } from './utilies/use-i18n'
 
 const musicStore = useMusicStore();
 onMounted(async () => { 
@@ -11,14 +12,14 @@ onMounted(async () => {
   const response = await cache.match('/__db_ready');
   const idbReady = response ? (await response.text()) == 'true' : false;
   if (!idbReady) {
-    WMessage('未初始化本地数据库，不会产生播放记录。', 'warning');
+    WMessage(t('errors.idb_not_ready'), 'warning');
   }
   musicStore.isIDBReady = idbReady
 });
 </script>
 
 <template>
-  <div class=" container bg-gray-100">
+  <div class=" container bg-light dark:bg-dark text-gray-600 dark:text-teal-100">
     <RouterView />
   </div>
 </template>

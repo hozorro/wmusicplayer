@@ -1,11 +1,12 @@
-// type mappingItem = [string, string]
-import { indexedDbHelper } from "@/apis/idb-funcs";
-import regIdbApis from '@/apis/methods/idb-music'
+import { indexedDbHelper } from "../idb-funcs";
+import regIdbApis from './idb-music'
 
 export default function mappingIdbApis(idbHelper: indexedDbHelper): IdbApiDict { 
   const idbApis = regIdbApis(idbHelper)
   return {
-    GET: [  ////registerRoute will match sequently, so path with variables should be at the last place. i.e., getgenretracks first, getgenres followed, getgenre at last
+    GET: [  
+      // registerRoute will match sequently, so path with variables should be at the last place. 
+      // i.e., getgenretracks first, getgenres followed, getgenre at last
       {path: 'album/{id}', handler: idbApis.getAlbum},
       {path: 'artist/tenartists', handler: idbApis.getTenArtists},
       {path: 'artist/favoritedartists', handler: idbApis.getFavoritedArtists},

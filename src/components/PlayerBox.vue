@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import { ref, computed, useTemplateRef, watch } from 'vue';
-import { useColorEffect } from '@/composables/color-effect';
+import { useI18n } from 'vue-i18n';
 import { useMusicStore } from '@/store/music';
+import useTrackOperations from '@/composables/track-operations';
+import { useColorEffect } from '@/composables/color-effect';
 import { usePlayer } from '@/composables/player'
 import { secToHMS } from '@/utilies/general';
 import { parseHits } from "@/utilies/time-text"
-import useTrackOperations from '@/composables/track-operations';
 import trackCover from '@/assets/imgs/track_art.png'
 
 defineOptions({ inheritAttrs: false })
+
+const { t } = useI18n()
 const storeMusic = useMusicStore()
 const showSimple = ref<boolean>(true)
 const coverImg = useTemplateRef('coverImg')
@@ -101,7 +104,7 @@ watch(track, () => {
 
 <template>
   <div v-show="storeMusic.playerBoxShow">
-    <div v-show="showSimple" class=" fixed bottom-6 left-2 w-[calc(100%-(--spacing(4)))] h-12 z-50 bg-white rounded-3xl shadow-lg">
+    <div v-show="showSimple" class=" fixed bottom-6 left-2 w-[calc(100%-(--spacing(4)))] h-12 z-50 bg-white dark:bg-teal-800 rounded-3xl shadow-lg">
       <div class="flex">
         <div class=" flex-none w-12 h-12">
           <img :src="track.cover" crossorigin="anonymous" v-default-src="trackCover" class="w-full h-full rounded-3xl" />
@@ -131,7 +134,7 @@ watch(track, () => {
         <div class=" flex  text-stone-50">
           <div class=" flex-none" @click="showSimple = true"><span class="icon-[solar--alt-arrow-down-linear] text-2xl"></span></div>
           <div class=" flex-1 text-center text-lg">
-            <span @click="showLyric = false">歌曲</span> | <span @click="showLyric = true">歌词</span>
+            <span @click="showLyric = false">{{ t('player.track') }}</span> | <span @click="showLyric = true">{{ t('player.lyric') }}</span>
           </div>
           <div class=" flex-none text-lg mr-2">
             <span class="icon-[solar--info-circle-bold]" @click="handleHitsInfo"></span>
@@ -142,8 +145,8 @@ watch(track, () => {
         </div>
         <div v-show="showLyric" class=" flex justify-center items-center w-full aspect-square text-center relative">
           <div class=" absolute top-0 left-0 w-full aspect-square bg-white opacity-30 blur-xl z-65"></div> 
-          <div v-if="lyricInfo.lyricLoading">歌词加载中...</div>
-          <div v-else-if="lyricInfo.lyricError">歌词加载失败</div>
+          <div v-if="lyricInfo.lyricLoading">{{ t('player.lyric_loading') }}</div>
+          <div v-else-if="lyricInfo.lyricError">{{ t('player.lyric_error') }}</div>
           <div v-else ref="lyricContainer" class=" w-full aspect-square overflow-y-scroll z-70">
             <p 
               v-for="(line, index) in lyrics" 
@@ -153,7 +156,7 @@ watch(track, () => {
               :class="{' text-amber-400 font-semibold': index == lyricInfo.curLyricIndex}">{{line.text}}</p>
           </div>
         </div>
-        <div v-show="showHitsInfo" class=" absolute top-0 left-0 w-full h-full z-80" :style="bgColor" @click="showHitsInfo = false">
+        <div v-show="showHitsInfo" class=" absolute top-0 left-0 w-full h-full z-55" :style="bgColor" @click="showHitsInfo = false">
           <div class=" opacity-75 rounded-md w-full">
             <img src="/imgs/summer.jpg" class=" object-cover">
           </div>
@@ -180,9 +183,10 @@ watch(track, () => {
           </div>
         </div>
         <div class=" px-2 mt-4">
-          <div class=" relative w-full h-5 pt-2">
-            <div class=" w-full h-1 bg-stone-500" ref="progressWrap"></div>
-            <div class=" absolute top-2 left-0 w-full h-1 bg-stone-50" ref="progress"></div>
+          <div class=" w-full h-5 pt-2">
+            <div class=" relative w-full h-1 bg-stone-500" ref="progressWrap">
+              <div class=" absolute left-0 w-0 h-1 z-100 bg-stone-50" ref="progress"></div>
+            </div>
           </div>
           <div class=" flex justify-between text-sm">
             <div class=" flex-none text-stone-50">{{ curTime }}</div>
@@ -204,21 +208,24 @@ watch(track, () => {
       enter-active-class="transition-all duration-300 ease-in-out"
       leave-active-class="transition-all duration-300 ease-in-out"
     >
-      <div class=" fixed bottom-0 w-full max-h-72 z-50" v-show="playlistShow">
-        <div class=" mx-2 p-2 min-h-96 bg-white rounded-lg">
+      <div class=" fixed bottom-0 w-full max-h-72 z-60" v-show="playlistShow">
+        <div class=" mx-2 p-2 min-h-96 bg-light dark:bg-dark rounded-lg">
           <div class=" flex justify-between items-center border-b-[1px] border-b-gray-300 py-2">
-            <div>当前播放列表</div>
-            <div class=" text-cyan-500" @click="playlistShow = false">关闭</div>
+            <div>{{ t('player.current_playlist') }}</div>
+            <div class=" text-cyan-500" @click="playlistShow = false">{{ t('common.close') }}</div>
           </div>
           
           <div class=" max-h-60 overflow-y-auto">
             <div v-for="(trk, idx) in audioList" :key="idx" class=" flex justify-between items-center align-middle py-1">
               <div class=" flex-none w-10 text-center">{{ idx + 1 }}</div>
               <div class=" flex-1 min-w-0 content-center hover:cursor-pointer truncate" @click="playlistItemClick(idx,hidePlaylist)">
-                <span v-if="trk.id == storeMusic.curPlaylist[storeMusic.curPlayIndex].id" class=" icon-[svg-spinners--bars-scale-middle] mr-1 text-cyan-500 align-middle"></span>{{ trk.title }}
+                <span v-if="trk.id == storeMusic.curPlaylist[storeMusic.curPlayIndex].id" 
+                  class=" icon-[svg-spinners--bars-scale-middle] mr-1 text-cyan-500 align-middle"></span>{{ trk.title }}
               </div>
-              <span class=" inline-block h-8 flex-none text-xl icon-[solar--trash-bin-trash-linear] hover:cursor-pointer" @click="playRemove(trk.id)"></span>
-              <span class=" inline-block h-8 flex-none text-xl ml-2 icon-[solar--menu-dots-bold] hover:cursor-pointer" @click="handleCurPlaylistOperation(trk.id, trk.title)"></span>
+              <span class=" inline-block h-8 flex-none text-xl icon-[solar--trash-bin-trash-linear] hover:cursor-pointer"
+                @click="playRemove(trk.id)"></span>
+              <span class=" inline-block h-8 flex-none text-xl ml-2 icon-[solar--menu-dots-bold] hover:cursor-pointer" 
+                @click="handleCurPlaylistOperation(trk.id, trk.title)"></span>
             </div>
           </div>
         </div>

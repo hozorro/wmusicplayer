@@ -26,7 +26,7 @@ declare interface AlbumInfo extends Album {
   album_artist: Omit<Artist, 'pinyin_initial'>;
   artists: Omit<Artist, 'pinyin_initial'>[];
   tracks: Track[];
-  track_count?: number;  // transform生成属性
+  track_count?: number;  // transform generated property
   cover?: string;
 }
 // #endregion
@@ -85,7 +85,7 @@ declare interface TrackInfo {
   favorited_at?: string;
   hit_count?: number; 
   cover_art_hash?: string;
-  cover?: string; // transform生成属性
+  cover?: string; // transform generated property
 }
 declare interface TrackMoreInfo { 
   id: number;
@@ -105,7 +105,7 @@ declare interface Playlist {
   id: number | string;
   title: string;
   cover_art_hash?: string;
-  cover?: string; // transform生成属性
+  cover?: string; // transform generated property
 }
 declare interface PlaylistInfo extends Playlist {
   comment: string;

@@ -1,7 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
-import { keyRange } from "../idb-funcs";
+import { indexedDbHelper, keyRange } from "../idb-funcs";
 import { shuffle, dynamicSort, topWeightedLnRandom } from "@/utilies/general";
-import { indexedDbHelper } from "../idb-funcs";
 import { getISOWithOffset } from "@/utilies/time-text";
 
 function resSucc<T>(data: T) { 
@@ -409,9 +408,9 @@ export default function regIdbApis(idbHelper: indexedDbHelper) {
     // #region Advanced indexdb operations
 
     /**
-     * 获取随机歌手的歌曲，每个歌手的歌曲数为 numpa，总共返回不超过 num 首歌曲
-     * @param param0 url参数 num: 总数，numpa: 每个歌手的歌曲数
-     * @returns 
+     * Get tracks with random artists
+     * numpa - number of tracks of each artists
+     * num - total number
      */
     getRandomArtistTracks: async (options?: IdbApiOptions) => { 
       const num = options?.queryParams?.num
@@ -421,7 +420,7 @@ export default function regIdbApis(idbHelper: indexedDbHelper) {
       const func = async (count: number, num_per_artist: number): Promise<IDBTrack[]> => {
         return new Promise<IDBTrack[]>((resolve, reject) => {
           idbHelper.begin_transaction('track', 'readonly').then((tx) => { 
-            // 缓存每个artist_id的局部蓄水池（最多num_per_artist首歌）
+            // cache partial reservoir for each artist_id(at most num_per_artist tracks per artist_id)
             const artistSamples = new Map<string | number, IDBTrack[]>()
 
             const store = tx.objectStore('track')
@@ -432,44 +431,44 @@ export default function regIdbApis(idbHelper: indexedDbHelper) {
                 const track: IDBTrack = cursor.value
                 const artistId = track.artist_ids ? track.artist_ids[0] : null
 
-                // 初始化每个artist_id的蓄水池
+                // init reservoir for each artist_id
                 if(artistId) { 
                   if(!artistSamples.has(artistId)) { 
                     artistSamples.set(artistId, [])
                   }
                   const reservoir = artistSamples.get(artistId)!
 
-                  // 维护每个artist_id的蓄水池内部计数器（模拟数据流长度）
+                  // maitain a counter for each artist_id reservoir(simulate data stream length)
                   const countKey = '_count'
                   let currentCount = (reservoir as any)[countKey] || reservoir.length
 
-                  // 蓄水池抽样逻辑，最多保留num_per_artist首歌
+                  // reservoir sample logic, keep at most num_per_artist tracks per artist_id
                   if(reservoir.length < num_per_artist) { 
                     reservoir.push(track)
                   } else {
                     const rand = Math.random()
-                    // 概率 num_per_artist / (currentCount + 1) 决定是否被替换
+                    // determine whether to replace according to the probability num_per_artist / (currentCount + 1)
                     if(rand < num_per_artist / (currentCount + 1)) {
                       const replaceIndex = Math.floor(Math.random() * num_per_artist)
                       reservoir[replaceIndex] = track
                     }
                   }
-                  // 更新内部计数器
+                  // update the counter
                   (reservoir as any)[countKey] = currentCount + 1
                 }
                 cursor.continue()
               } else {
-                // 遍历结束，汇总结果, 有可能各个artist的样本数之和超过count
+                // complete traverse, collect results, summary of each artist sample may be more than the count.
                 const candidates: IDBTrack[] = []
                 for (const tracks of artistSamples.values()) {
                   candidates.push(...tracks)
                 }
 
-                // 如果总数不超过count，直接返回，否则从candidates中随机抽取count首歌返回
+                // if the total number is less than count, return directly, otherwise randomly select <count> songs from candidates
                 if(candidates.length <= count) {
                   resolve(candidates)
                 } else {
-                  // 继续使用水池抽样算法从candidates中抽取count首歌
+                  // continue using the reservoir sampling algorithm to select <count> songs from candidates
                   const finalReservior = candidates.slice(0, count)
                   for(let i = count; i < candidates.length; i++) {
                     const j = Math.floor(Math.random() * (i + 1))
@@ -506,7 +505,7 @@ export default function regIdbApis(idbHelper: indexedDbHelper) {
             const req = store.getAll()
             req.onsuccess = () => { 
               const artists = req.result as IDBArtist[]
-              // 按照加权随机算法选择若干歌手
+              // select artists by weighted random
               const selectedArtists = topWeightedLnRandom<IDBArtist, 'track_count'>(artists, count, 'track_count', weightRate)
               const artistIds = selectedArtists.map(item => item.id)
               const store_track = tx.objectStore('track')

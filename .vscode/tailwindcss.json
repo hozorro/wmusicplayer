@@ -12,12 +12,22 @@
       ]
     },
     {
+      "name": "@theme",
+      "description": "Use the @theme directive to define your project's custom design tokens, like fonts, colors, and breakpoints.",
+      "references": [
+        {
+          "name": "Tailwind Documentation",
+          "url": "https://tailwindcss.com/docs/functions-and-directives#theme-directive"
+        }
+      ]
+    },
+    {
       "name": "@apply",
       "description": "Use the `@apply` directive to inline any existing utility classes into your own custom CSS. This is useful when you find a common utility pattern in your HTML that you’d like to extract to a new component.",
       "references": [
         {
           "name": "Tailwind Documentation",
-          "url": "https://tailwindcss.com/docs/functions-and-directives#apply"
+          "url": "https://tailwindcss.com/docs/functions-and-directives#apply-directive"
         }
       ]
     },
@@ -27,7 +37,7 @@
       "references": [
         {
           "name": "Tailwind Documentation",
-          "url": "https://tailwindcss.com/docs/functions-and-directives#responsive"
+          "url": "https://tailwindcss.com/docs/functions-and-directives#responsive-directive"
         }
       ]
     },
@@ -37,7 +47,7 @@
       "references": [
         {
           "name": "Tailwind Documentation",
-          "url": "https://tailwindcss.com/docs/functions-and-directives#screen"
+          "url": "https://tailwindcss.com/docs/functions-and-directives#screen-directive"
         }
       ]
     },
@@ -47,7 +57,27 @@
       "references": [
         {
           "name": "Tailwind Documentation",
-          "url": "https://tailwindcss.com/docs/functions-and-directives#variants"
+          "url": "https://tailwindcss.com/docs/functions-and-directives#variants-directive"
+        }
+      ]
+    },
+    {
+      "name": "@plugin",
+      "description": "Use the `@plugin` directive to load a legacy JavaScript-based plugin into your CSS.",
+      "references": [
+        {
+          "name": "Tailwind Documentation",
+          "url": "https://tailwindcss.com/docs/functions-and-directives#plugin-directive"
+        }
+      ]
+    },
+    {
+      "name": "@custom-variant",
+      "description": "Use the `@custom-variant` directive to add a custom variant to your project.",
+      "references": [
+        {
+          "name": "Tailwind Documentation",
+          "url": "https://tailwindcss.com/docs/functions-and-directives#custom-variant-directive"
         }
       ]
     }

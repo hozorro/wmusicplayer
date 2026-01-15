@@ -8,7 +8,7 @@ const store = useOperationStore();
 </script>
 
 <template>
-  <div class=" relative mx-auto w-full min-h-svh text-gray-700">
+  <div class=" relative mx-auto w-full min-h-svh">
     <RouterView />
     <div class="  w-full h-24 mt-4 text-center text-gray-400">This is the bottom.</div>
     <PlayerBox />

@@ -3,10 +3,13 @@ import { ref, computed, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useMusicStore } from '@/store/music'
 import { usePagination } from 'alova/client';
+import { useI18n } from 'vue-i18n';
 import TrackItem from '@/components/TrackItem.vue';
 import useTrackOperations from '@/composables/track-operations';
 import { getGenre, getGenreTracks, getGenreRandomTracks } from '@/apis/methods/music';
 import { PlayChangeMode } from '@/constants/play-constants';
+
+const { t } = useI18n()
 
 const genreName = ref('')
 const route = useRoute()
@@ -86,12 +89,12 @@ const backLink = computed(() => {
 <template>
   <div class=" fixed top-0 left-0 p-2 bg-gray-100 w-full z-20">
     <router-link :to="backLink">
-      <span class=" icon-[solar--alt-arrow-left-linear] align-middle text-2xl"></span>流派：{{ genreName }} ({{ total }})
+      <span class=" icon-[solar--alt-arrow-left-linear] align-middle text-2xl"></span>{{ t('player.genre') }}: {{ genreName }} ({{ total }})
     </router-link>
     <div class=" mt-2 p-2 flex justify-between border-b-stone-200 border-b">
-      <button class=" px-2 h-8 block bg-cyan-600 text-white rounded-md" @click="handlePlayAll">播放全部</button>
-      <button class=" px-2 h-8 block bg-cyan-600 text-white rounded-md" @click="handlePlayRandom">随机播放</button>
-      <button class=" px-2 h-8 block bg-cyan-600 text-white rounded-md" @click="handleAddPlay">添加播放</button>
+      <button class=" px-2 h-8 block bg-cyan-600 text-white rounded-md" @click="handlePlayAll">{{ t('player.playall') }}</button>
+      <button class=" px-2 h-8 block bg-cyan-600 text-white rounded-md" @click="handlePlayRandom">{{ t('player.randomplay') }}</button>
+      <button class=" px-2 h-8 block bg-cyan-600 text-white rounded-md" @click="handleAddPlay">{{ t('player.addplay') }}</button>
     </div>
   </div>
   <div class=" mt-24 p-2">

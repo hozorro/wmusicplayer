@@ -13,7 +13,7 @@ export class indexedDbHelper {
       const request = indexedDB.open(dbName, version);
 
       request.onerror = () => { 
-        console.error(`[IndexedDB] 打开数据库失败：${request.error?.message}`);
+        console.error(`[IndexedDB] Failed to open idb：${request.error?.message}`);
         reject(request.error);
       };
 
@@ -70,7 +70,7 @@ export class indexedDbHelper {
       this.db.close();
       this.db = null;
       this.deferredDb = null;
-      console.log(`[IndexedDB] 数据库"${this.config.name}"连接已关闭`);
+      console.log(`[IndexedDB] idb "${this.config.name}" connection closed`);
     }
   }
 
@@ -79,7 +79,7 @@ export class indexedDbHelper {
       const req = indexedDB.deleteDatabase(dbName);
       req.onsuccess = () => resolve();
       req.onerror = () => reject(req.error);
-      req.onblocked = () => reject(new Error('数据库删除被阻止，请关闭其他标签页或连接！'));
+      req.onblocked = () => reject(new Error('Request blocked！Restart the app to retry.'));
     });
   }
 
@@ -88,12 +88,12 @@ export class indexedDbHelper {
     return new Promise<IDBTransaction>((resolve, reject) => { 
       const tx = db.transaction(storeName, mode);
       tx.onerror = () => {
-        console.log(`[IndexedDB] ${storeName} 事务错误: ${tx.error?.message}`);
+        console.log(`[IndexedDB] ${storeName} transaction error: ${tx.error?.message}`);
         reject(tx.error);
       }
       resolve(tx);
       tx.oncomplete = () => { 
-        console.log(`[IndexedDB] ${storeName} 事务完成`)
+        console.log(`[IndexedDB] ${storeName} transaction completed.`)
       };
     });
   }
@@ -250,10 +250,10 @@ export class indexedDbHelper {
   getIndexedPaginated<T extends (IDBAlbum | IDBArtist | IDBGenre | IDBTrack)>(storeName: string, indexName: string, rangeKeyName: keyof T, range: IDBKeyRange, pageSize: number, transaction?: IDBTransaction) {
     return new Promise<{tracks: T[], nextKey: T[keyof T] | null}>((resolve, reject) => { 
       const _getIndexedPaginated = (tx: IDBTransaction) => { 
-        // console.log('[IndexedDB] 分页查询:', {storeName, indexName, rangeKeyName, range, pageSize})
+        // console.log('[IndexedDB] paginated query:', {storeName, indexName, rangeKeyName, range, pageSize})
         const tracks: T[] = [];
         const req = tx.objectStore(storeName).index(indexName).openCursor(range, 'next');
-        // console.log('[IndexedDB] 分页查询游标:', req)
+        // console.log('[IndexedDB] paginated query cursor:', req)
         req.onsuccess = (event) => { 
           const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
           if(cursor && tracks.length < pageSize) {

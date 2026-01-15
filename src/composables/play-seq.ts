@@ -1,12 +1,14 @@
 import { ref } from "vue";
 import { storeToRefs } from "pinia";
 import { useMusicStore } from "@/store/music";
-import { shuffle } from "@/utilies/general";
 import { SeqMode } from "@/constants/play-constants";
+import { shuffle } from "@/utilies/general";
 
 export function usePlaySeq(){
-  //另设一套播放顺序系统，这样，显示播放列表时，列表顺序始终是原始顺序，不受播放模式切换的影响
-  const seqOrder = ref<SeqMode>(SeqMode.LIST_ORDER) //0-顺序播放 1-随机播放 2-单曲循环
+  // set another play order system.
+  // then the play list will be displayed in original order, regardless of play mode changes
+  const seqOrder = ref<SeqMode>(SeqMode.LIST_ORDER) 
+  // 0-sequently 1-shuffle 2-single loop
   const seqList = ref<number[]>([])
   const seqIndex = ref(0)
   const musicStore = useMusicStore()

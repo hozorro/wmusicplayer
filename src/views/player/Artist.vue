@@ -3,13 +3,15 @@ import { ref, computed, onMounted, useTemplateRef } from "vue";
 import { useRequest } from "alova/client";
 import { useRoute } from "vue-router";
 import { useMusicStore } from "@/store/music";
+import { useI18n } from "vue-i18n";
 import TrackItem from "@/components/TrackItem.vue";
 import CollectionItem from "@/components/CollectionItem.vue";
 import useCollectionOperations from '@/composables/collection-operations';
 import useTrackOperations from '@/composables/track-operations';
 import { getArtist, getArtistRandomTracks, getCollectionTracks } from "@/apis/methods/music";
-
 import { PlayChangeMode } from "@/constants/play-constants";
+
+const { t } = useI18n();
 
 const banner = useTemplateRef<HTMLImageElement>("banner");
 const artistNav = ref('')
@@ -87,19 +89,24 @@ const backLink = computed(() => {
     <div class=" w-full aspect-2/1">
       <img :src="artist.cover" v-default-src="defaultArt" class=" w-full h-full object-cover" ref="banner" />
     </div>
-    <div class=" -mt-4 -mb-6 mx-4 h-16 bg-stone-50 shadow-md rounded-md p-2 relative z-20 text-center">
+    <div class=" -mt-4 -mb-6 mx-4 h-16 bg-stone-50 dark:bg-teal-800 shadow-md rounded-md p-2 relative z-20 text-center">
       <div class=" text-lg">{{ artist.name }}</div>
-      <div class=" text-sm text-stone-400">已收录{{ artist.main_albums.length }} / {{ artist.track_albums.length }} 张专辑，{{ artist.track_count }}首歌</div>
+      <div class=" text-sm text-stone-400">
+        {{ t('player.artist_stats', {
+          main_album_count: artist.main_albums.length, 
+          track_album_count: artist.track_albums.length, 
+          track_count: artist.track_count}) }}
+      </div>
     </div>
-    <div class=" sticky top-0 px-2 pt-9 bg-gray-100 z-10">
+    <div class=" sticky top-0 px-2 pt-9 bg-light dark:bg-dark z-10">
       <div class=" flex justify-around mt-2">
-        <button class=" px-2 h-8 leading-8 bg-cyan-600 text-white rounded-md" @click="handlePlayTop">播放热门</button>
-        <button class=" px-2 h-8 leading-8 bg-cyan-600 text-white rounded-md" @click="handlePlayRandom">随机播放</button>
-        <button class=" px-2 h-8 leading-8 bg-cyan-600 text-white rounded-md" @click="handlePlayAll">播放全部</button>
+        <button class=" px-2 h-8 leading-8 bg-cyan-600 text-white rounded-md" @click="handlePlayTop">{{ t('player.playhot') }}</button>
+        <button class=" px-2 h-8 leading-8 bg-cyan-600 text-white rounded-md" @click="handlePlayRandom">{{ t('player.randomplay') }}</button>
+        <button class=" px-2 h-8 leading-8 bg-cyan-600 text-white rounded-md" @click="handlePlayAll">{{ t('player.playall') }}</button>
       </div>
       <div class=" mt-4 pb-2 text-lg">
-        <div class=" inline-block" @click="tab = 'tracks'" :class="tab == 'tracks' ? 'border-b-2 border-b-cyan-600' : ''">歌曲</div>
-        <div class=" inline-block ml-4" @click="tab = 'albums'" :class="tab == 'albums' ? 'border-b-2 border-b-cyan-600' : ''">专辑</div>
+        <div class=" inline-block" @click="tab = 'tracks'" :class="tab == 'tracks' ? 'border-b-2 border-b-cyan-600' : ''">{{ t('player.track') }}</div>
+        <div class=" inline-block ml-4" @click="tab = 'albums'" :class="tab == 'albums' ? 'border-b-2 border-b-cyan-600' : ''">{{ t('player.album') }}</div>
       </div>
     </div>
     <div v-show="tab == 'tracks'" class=" p-2 w-full">

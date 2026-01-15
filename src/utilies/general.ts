@@ -94,9 +94,9 @@ export async function getImageAsDataURI(url: string) {
 }
 
 /**
- * 判断 JWT token 是否已过期
- * @param token JWT 字符串（格式：header.payload.signature）
- * @returns true 表示已过期或无效，false 表示未过期
+ * check whether the JWT token has expired
+ * @param token JWT string（format: header.payload.signature）
+ * @returns true - expired，false - not expired
  */
 export function isTokenExpired(token: string): boolean {
   if (!token) {
@@ -104,13 +104,13 @@ export function isTokenExpired(token: string): boolean {
   }
 
   try {
-    // JWT 的 payload 是第二部分
+    // payload is the second part
     const payloadBase64 = token.split('.')[1];
     if (!payloadBase64) {
-      return true; // 无效 token 结构
+      return true; // invalid token structure
     }
 
-    // Base64Url 解码（需补齐 '=' 并替换字符）
+    // Base64Url decode（pad '=' and replace '-' and '_' with '+' and '/'）
     const base64 = payloadBase64.replace(/-/g, '+').replace(/_/g, '/');
     const jsonPayload = decodeURIComponent(
       atob(base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '='))
@@ -122,16 +122,16 @@ export function isTokenExpired(token: string): boolean {
     const payload = JSON.parse(jsonPayload) as { exp?: number };
 
     if (typeof payload.exp !== 'number') {
-      return true; // 没有 exp 字段，视为永不过期 or 无效？这里按过期处理更安全
+      return true; // no exp field，take as expired
     }
 
-    // exp 是 UNIX 时间戳（秒），转换为毫秒
+    // exp is UNIX timestamp (s), transform to milliseconds
     const expirationTime = payload.exp * 1000;
     const now = Date.now();
 
     return expirationTime < now;
   } catch (error) {
-    // 解码或解析失败，视为无效或已过期
+    // failed to parse token, take as expired
     return true;
   }
 }

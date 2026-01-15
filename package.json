@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "i18n:schema": "node scripts/generate-i18n-schema.cjs",
+    "i18n:check": "node scripts/check-i18n-missing-keys.cjs"
   },
   "dependencies": {
     "@alova/adapter-axios": "^2.0.14",
@@ -19,6 +21,7 @@
     "tailwindcss": "^4.1.8",
     "uuid": "^13.0.0",
     "vue": "^3.5.13",
+    "vue-i18n": "11",
     "vue-router": "^4.5.1",
     "workbox-core": "^6.0.0",
     "workbox-routing": "^7.4.0",
@@ -28,8 +31,11 @@
     "@iconify-json/solar": "^1.2.2",
     "@iconify-json/svg-spinners": "^1.2.2",
     "@iconify/tailwind4": "^1.0.6",
+    "@intlify/unplugin-vue-i18n": "^11.0.3",
     "@types/node": "^22.15.26",
     "@vitejs/plugin-vue": "^5.2.3",
+    "@vue/compiler-ssr": "^3.5.26",
+    "@vue/server-renderer": "^3.5.26",
     "@vue/tsconfig": "^0.7.0",
     "typescript": "~5.8.3",
     "vite": "^6.3.5",

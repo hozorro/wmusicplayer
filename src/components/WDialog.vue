@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { onMounted, useTemplateRef, type Component } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 const dlgRef = useTemplateRef('dlgRef');
 interface WDialogProps {
@@ -38,7 +41,7 @@ function handleSelect(value: {close: boolean; payload?: any}) {
   <dialog ref="dlgRef" class=" rounded-t-md p-2 w-full top-1/5 bottom-0 h-4/5" style="max-width: none;"> <!-- 'max-width: none;' is important -->
     <div class=" flex justify-between items-center p-2 border-b border-b-gray-200">
       <div>{{ title }}</div>
-      <div @click="handleClose" class="text-cyan-600">关闭</div>
+      <div @click="handleClose" class="text-cyan-600">{{ t('common.close') }}</div>
     </div>
     <div class="p-2">
       <component :is="content" v-bind="contentProps" @select="handleSelect" @confirm="handleConfirm" @close="handleClose" />

@@ -2,6 +2,7 @@
 import { ref, computed, onUnmounted } from "vue";
 import { useRoute } from "vue-router";
 import { usePagination } from "alova/client";
+import { useI18n } from "vue-i18n";
 import { search } from "@/apis/methods/music";
 import useTrackOperations from "@/composables/track-operations";
 import useCollectionOperations from "@/composables/collection-operations";
@@ -9,12 +10,14 @@ import Header from "@/views/part/Header.vue";
 import TrackItem from "@/components/TrackItem.vue";
 import CollectionItem from "@/components/CollectionItem.vue";
 
+const { t } = useI18n()
+
 const route = useRoute();
 const kw = computed(() => route.query.kw as string);
 const tabs = ref([
-  { name: "歌曲", count: 0 },
-  { name: "歌手", count: 0 },
-  { name: "专辑", count: 0 },
+  { name: t('player.track'), count: 0 },
+  { name: t('player.artist'), count: 0 },
+  { name: t('player.album'), count: 0 },
 ]);
 const curTab = ref(0);
 const lastKeys = ref<[string | null, string | null, string | null]>([null, null, null])
