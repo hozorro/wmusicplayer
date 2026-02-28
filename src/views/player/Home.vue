@@ -9,9 +9,9 @@ import { getTopPlaylists, getTenArtists, getRandomGenres, getRandomTracks, getLa
 import { getRandomHitsWeightedTracks } from '@/apis/methods/music';
 import { PlayChangeMode } from '@/constants/play-constants';
 
-import DefaultPlaylistCover from '@/assets/imgs/playlist.png'
-import FavoriteListCover from '@/assets/imgs/favorite.png'
-import FavoriteArtistsCover from '@/assets/imgs/fav_artists.png'
+import DefaultPlaylistCover from '@/assets/imgs/playlist.jpg'
+import FavoriteListCover from '@/assets/imgs/favorite.jpg'
+import FavoriteArtistsCover from '@/assets/imgs/fav_artists.jpg'
 
 const { t } = useI18n()
 

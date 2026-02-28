@@ -5,7 +5,7 @@ import { useRequest, useForm } from 'alova/client'
 import { useI18n } from 'vue-i18n'
 import { getPlaylists, addPlaylist} from '@/apis/methods/music'
 import { addPlaylist as addPlaylistLocal, updateLocalMeta } from '@/apis/methods/idb-locals'
-import DefaultCover from '@/assets/imgs/playlist.png'
+import DefaultCover from '@/assets/imgs/playlist.jpg'
 import WMessage from '@/composables/message'
 
 const { t } = useI18n()
@@ -82,7 +82,7 @@ const progress = computed(() => {
   return 0
 })
 onSuccess(() => {
-  imgSrc.value = '/imgs/playlist-1.png'
+  imgSrc.value = '/imgs/playlist-1.jpg'
   uploading.value.loaded = 0
   isShowCreate.value = false
   musicStore.playerBoxShow = true

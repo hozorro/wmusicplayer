@@ -9,7 +9,7 @@ import TrackItem from "@/components/TrackItem.vue";
 import { useColorEffect } from "@/composables/color-effect";
 import useTrackOperations from "@/composables/track-operations";
 import { getFavoriteTracks } from "@/apis/methods/music";
-import FavouriteCover from "@/assets/imgs/favorite.png";
+import FavouriteCover from "@/assets/imgs/favorite.jpg";
 import { shuffle } from "@/utilies/general";
 
 const { t } = useI18n();

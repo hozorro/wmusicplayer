@@ -1,6 +1,6 @@
 import type { Ref } from 'vue'
 import { getImageAsDataURI } from "@/utilies/general";
-import defaultTrackArt from '@/assets/imgs/track_art.png'
+import defaultTrackArt from '@/assets/imgs/track_art.jpg'
 
 export default function useMediaSession(audio: Ref<HTMLAudioElement>, track: TrackInfo, handlers:{[handler:string]: ()=>void}){
   if(!('mediaSession' in navigator)){

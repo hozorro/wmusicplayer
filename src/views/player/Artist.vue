@@ -15,7 +15,7 @@ const { t } = useI18n();
 
 const banner = useTemplateRef<HTMLImageElement>("banner");
 const artistNav = ref('')
-import defaultArtSketch from '@/assets/imgs/portrait_sketch.png'
+import defaultArtSketch from '@/assets/imgs/portrait_sketch.jpg'
 const route = useRoute()
 const store = useMusicStore()
 
@@ -56,7 +56,7 @@ onMounted(() => {
   })
 })
 
-import defaultArt from '@/assets/imgs/portrait.png'
+import defaultArt from '@/assets/imgs/portrait.jpg'
 
 const { handleOperation: handleAlbumOperation } = useCollectionOperations('album');
 const { handleClick, handleOperation: handleTrackOperation } = useTrackOperations();

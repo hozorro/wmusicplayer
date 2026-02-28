@@ -7,7 +7,7 @@ import { useColorEffect } from '@/composables/color-effect';
 import { usePlayer } from '@/composables/player'
 import { secToHMS } from '@/utilies/general';
 import { parseHits } from "@/utilies/time-text"
-import trackCover from '@/assets/imgs/track_art.png'
+import trackCover from '@/assets/imgs/track_art.jpg'
 
 defineOptions({ inheritAttrs: false })
 

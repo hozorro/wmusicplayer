@@ -11,7 +11,7 @@ import { useColorEffect } from "@/composables/color-effect";
 import useTrackOperations from "@/composables/track-operations";
 import { getPlaylist, editPlaylist, removeTrackFromPlaylist } from "@/apis/methods/music";
 import { updatePlaylist, updateHits } from "@/apis/methods/idb-locals";
-import defaultArt from "@/assets/imgs/playlist.png";
+import defaultArt from "@/assets/imgs/playlist.jpg";
 import { PlayChangeMode } from "@/constants/play-constants";
 import WMessage from "@/composables/message";
 import dayjs from "dayjs";

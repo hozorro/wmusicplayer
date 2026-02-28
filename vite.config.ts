@@ -59,6 +59,7 @@ export default defineConfig({
       }
     })
   ],
+  base: '/',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -74,5 +75,11 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
     },
+  },
+  build: {
+    target: ['es2022', 'chrome89', 'edge89', 'firefox88', 'safari15.4'],
+  },
+  esbuild: {
+    target: 'es2022',
   },
 })

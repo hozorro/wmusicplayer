@@ -10,7 +10,7 @@ import { getAlbum, getCollectionTracks } from "@/apis/methods/music";
 import useTrackOperations from '@/composables/track-operations';
 import { shuffle } from "@/utilies/general";
 import { PlayChangeMode } from "@/constants/play-constants";
-import defaultArt from '@/assets/imgs/album_art.png'
+import defaultArt from '@/assets/imgs/album_art.jpg'
 
 const { t } = useI18n()
 

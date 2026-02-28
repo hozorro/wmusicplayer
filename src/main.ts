@@ -23,9 +23,11 @@ pinia.use(piniaPluginPersistedState)
 
 app.use(router).use(pinia).use(i18n)
 
-const musicStore = useMusicStore()
-await loadLocaleMessages(musicStore.locale)
+;(async () => {
+  const musicStore = useMusicStore()
+  await loadLocaleMessages(musicStore.locale)
 
-document.documentElement.className = musicStore.isDark ? "dark" : "light"
+  document.documentElement.className = musicStore.isDark ? "dark" : "light"
 
-app.mount('#app')
+  app.mount('#app')
+})()
