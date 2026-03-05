@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import type { RouteRecordRaw } from "vue-router";
-// import { getCurrentUser } from "@/apis/methods/music";
+import { useAuthStore } from "@/store/auth";
 
 const routes: RouteRecordRaw[] = [
   { 
@@ -73,24 +73,25 @@ const router = createRouter({
 });
 
 router.beforeEach(async (to, _, next) => { 
+  const authStore = useAuthStore()
+
   if(to.path === '/login' || to.path === '/register') {
+    if (to.path === '/login' && authStore.isAuthenticated) {
+      return next('/')
+    }
     return next()
   }
 
-  const token = localStorage.getItem("token");
-  const refresh_token = localStorage.getItem("refresh_token");
-  if(!token && !refresh_token) {
-    return next('/login')
+  if (!authStore.isAuthenticated) {
+    const refreshed = await authStore.refresh()
+    if(!refreshed) {
+      return next({
+        path: '/login',
+        query: { redirect: to.fullPath }
+      })
+    }
   }
-  // if(token) {
-  //   try {
-  //     await getCurrentUser()
-  //     return next()
-  //   } catch (error) {
-  //     localStorage.removeItem("token")
-  //     return next('/login')
-  //   }
-  // }
+
   return next()
 });
 

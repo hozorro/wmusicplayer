@@ -7,26 +7,28 @@ import { refreshToken } from "./methods/music";
 import WMessage from "@/composables/message";
 import { isTokenExpired } from "@/utilies/general";
 import { t } from '@/utilies/use-i18n'
+import { TokenStorage } from "@/utilies/auth";
 
 const { onAuthRequired, onResponseRefreshToken } = createClientTokenAuthentication<typeof VueHook, typeof axiosRequestAdapter>({
   assignToken: (method) => {
-    if (method.meta?.authRole === 'refreshToken') { // ? after method.meta needed, or not error in IDE, but getCurrentUser() in router navigation will return undefined
-      method.config.headers.Authorization = `Bearer ${localStorage.getItem('refresh_token')}`
-    } else {
-      method.config.headers.Authorization = `Bearer ${localStorage.getItem('token')}`
-    }
+    const token = TokenStorage.getAccessToken()
+    method.config.headers.Authorization = `Bearer ${token}`
   },
   refreshToken: {
     isExpired: () => {
-      const token = localStorage.getItem('token')
+      const token = TokenStorage.getAccessToken()
       if (!token) return true
       return isTokenExpired(token)
     },
     handler: async () => {
       try {
-        const { access_token } = await refreshToken()
-        localStorage.setItem('token', access_token)
+        const do_refresh_token = TokenStorage.getRefreshToken()
+        if (!do_refresh_token) throw new Error('refresh_token not found')
+        const { access_token, refresh_token } = await refreshToken(do_refresh_token)
+        TokenStorage.setAccessToken(access_token)
+        TokenStorage.setRefreshToken(refresh_token)
       } catch (error) {
+        TokenStorage.clear()
         location.href = '/login'
         throw error
       }
@@ -34,8 +36,8 @@ const { onAuthRequired, onResponseRefreshToken } = createClientTokenAuthenticati
   },
   async login(response) {
     const { access_token, refresh_token } = await response.data.data
-    localStorage.setItem('token', access_token)
-    localStorage.setItem('refresh_token', refresh_token)
+    TokenStorage.setAccessToken(access_token)
+    TokenStorage.setRefreshToken(refresh_token)
   }
 });
 
@@ -45,7 +47,10 @@ export const generalAlova = createAlova({
   requestAdapter: axiosRequestAdapter(),
   cacheFor: { GET: 1000 * 60 * 5, POST: 0 },
   timeout: 1000 * 60 * 2,
-  beforeRequest: onAuthRequired(),
+  beforeRequest: onAuthRequired(method => {
+    method.config.headers['X-Client-Type'] = import.meta.env.VITE_CLIENT_TYPE || 'player'
+    method.config.headers['X-Device-ID'] = TokenStorage.getDeviceId()
+  }),
   responded: onResponseRefreshToken({
     onSuccess: async (response) => {
       const resData = await response.data
@@ -79,21 +84,3 @@ export const generalAlova = createAlova({
     }
   })
 });
-
-////// lyric request moved to backend ////////////////
-// export const lyricAlova = createAlova({
-//   baseURL: "http://localhost:28883/api/v1/lyrics/",
-//   statesHook: vueHook,
-//   requestAdapter: adapterFetch(),
-//   responded: {
-//     onSuccess: (response) => {
-//       if (response.status >= 400) {
-//         return 'error'
-//       }
-//       return response.text()
-//     },
-//     onError: (): any => {
-//       return 'error'
-//     }
-//   }
-// })
