@@ -1,7 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
-import { indexedDbHelper, keyRange } from "../idb-funcs";
-import { shuffle, dynamicSort, topWeightedLnRandom } from "@/utilies/general";
-import { getISOWithOffset } from "@/utilies/time-text";
+import { indexedDbHelper, keyRange } from "@/apis/idb-funcs";
+import { shuffle, dynamicSort, topWeightedLnRandom, getISOWithOffset } from "@/utilies/general";
 
 function resSucc<T>(data: T) { 
   return new Response(JSON.stringify({
@@ -26,7 +25,7 @@ function isNumberic(str: string) {
 }
 
 export default function regIdbApis(idbHelper: indexedDbHelper) {
-  const idbApis = {
+  const idbApis: IdbApiHandlerDict = {
     // #region Album
     getAlbum: async (options?: IdbApiOptions) => {
       // const id = url.pathname.split('/').pop()
@@ -50,7 +49,7 @@ export default function regIdbApis(idbHelper: indexedDbHelper) {
     // #region Artist
     getTenArtists: async () => { // get 6 top played artists and another 4 random artists
       const artists_top = await idbHelper.getIndexedRange<IDBArtist>('artist', 'hit_count', null, true, 6)
-      const last = artists_top[artists_top.length - 1].hit_count
+      const last = artists_top[artists_top.length - 1].hit_count || 0
       const artists_random = await idbHelper.getRandom<IDBArtist>('artist', 4, 'hit_count', keyRange.upperBound(last, false))
       const artists = artists_top.concat(artists_random)
       const result = artists.map((artist) => { 

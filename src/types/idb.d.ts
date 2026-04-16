@@ -116,3 +116,6 @@ declare type HTTPMethod = 'GET' | 'POST' | 'PUT' | 'DELETE'
 declare type IdbApiDict = {
   [key in HTTPMethod]?: MappingItem[]
 }
+declare type IdbApiHandlerDict = {
+  [prop: string]: (options?: IdbApiOptions) => Promise<Response>
+}

@@ -35,8 +35,9 @@ function handleOperation(oType: string, oId: number, oTitle: string) {
 
 <template>
   <div class=" fixed top-0 left-0 p-2 bg-light dark:bg-dark w-full z-20">
-    <router-link :to="folder.parent_id ? {name: 'folder', params: {id: folder.parent_id.toString()}} : '/'" class=" w-full text-lg font-semibold">
-      <span class=" icon-[solar--alt-arrow-left-linear] align-middle"></span>{{ t('player.folder') }}: {{ folder.name }}
+    <router-link :to="folder.parent_id ? {name: 'folder', params: {id: folder.parent_id.toString()}} : '/'" class=" w-full flex items-center text-lg font-semibold">
+      <div class=" flex-none icon-[solar--alt-arrow-left-linear] align-middle"></div>
+      <div class=" flex-1 truncate">{{ t('player.folder') }}: {{ folder.name }}</div>
     </router-link>
   </div>
   <div class=" w-full pt-12 px-2 pb-2">

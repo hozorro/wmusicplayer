@@ -1,6 +1,6 @@
 import { useMusicStore } from "@/store/music";
 import { indexedDbHelper, keyRange } from "../idb-funcs";
-import { getISOWithOffset } from "@/utilies/time-text";
+import { getISOWithOffset } from "@/utilies/general";
 
 const getIdbHelper = () => {
   const store = useMusicStore()

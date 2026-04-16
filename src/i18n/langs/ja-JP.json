@@ -119,7 +119,7 @@
     "comment": "個性的な音楽プレーヤー、wEyEcoから",
     "local_cache_status": "ローカルキャッシュの状態",
     "ready": "準備",
-    "not_ready": "未準備",
+    "not_ready": "未準備，ローカル同期待ち",
     "play": {
       "item": "再生設定",
       "ratio": "再生回数の割合",

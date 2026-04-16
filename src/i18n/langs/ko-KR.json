@@ -119,7 +119,7 @@
     "comment": "개성 있는 음악 플레이어, wEyEco에서 제공",
     "local_cache_status": "로컬 캐시 상태",
     "ready": "준비 완료",
-    "not_ready": "준비되지 않음",
+    "not_ready": "준비 안 됨, 데이터 동기화 대기",
     "play": {
       "item": "재생 설정",
       "ratio": "재생 횟수 비율",

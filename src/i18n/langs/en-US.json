@@ -119,7 +119,7 @@
     "comment": "A music player with personality, from wEyEco",
     "local_cache_status": "Local cache status",
     "ready": "ready",
-    "not_ready": "not ready",
+    "not_ready": "not ready, local data sync required",
     "play": {
       "item": "Play settings",
       "ratio": "effective play ratio",

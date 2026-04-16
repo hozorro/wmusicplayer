@@ -54,21 +54,25 @@ async function getLocalStatus() {
 
 async function getLocalMetaInfo() {
   const metaList = await idbHelper.getAll<IMeta<keyof MetaInfo>>('meta')
-  console.log(metaList)
+  if (metaList.length === 0) return;
   metaList.forEach(meta => {
     dbMeta.value[meta.name] = meta.total_count
   })
 }
 
-async function postIdbReadyMessage() {
+async function refreshIdbStatus() {
   if (!('caches' in window)) return;
-
-  const cache = await caches.open('pwa-state');
-  await cache.put('/__db_ready', new Response('true', {
-    headers: { 'Content-Type': 'text/plain', 'Cache-Control': 'no-store' }
-  }));
-  if('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-    navigator.serviceWorker.controller.postMessage({type: 'IDB_Ready'})
+  const hasLocalData = Object.values(dbMeta.value).some(count => count > 0);
+  if (hasLocalData && isIDBReady.value == false)
+  {
+    isIDBReady.value = true;
+    const cache = await caches.open('pwa-state');
+    await cache.put('/__db_ready', new Response('true', {
+      headers: { 'Content-Type': 'text/plain', 'Cache-Control': 'no-store' }
+    }));
+    if('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({type: 'IDB_Ready'})
+    }
   }
 }
 
@@ -104,7 +108,7 @@ async function changeLocale(locale: SupportedLocale) {
     <div class=" mt-4 p-2 bg-gray-200 dark:bg-teal-800/50 rounded-md text-sm">
       <div class=" flex justify-between">
         <div class=" flex-1">{{ t('settings.local_cache_status') }}: {{ isIDBReady ? t('settings.ready') : t('settings.not_ready') }}</div>
-        <div class=" flex-none text-cyan-500" @click="postIdbReadyMessage">{{ isIDBReady ? t('common.refresh') : t('common.init') }}</div>
+        <div class=" flex-none text-cyan-500" @click="refreshIdbStatus">{{ t('common.refresh') }}</div>
       </div>
       <div class=" mt-1 ml-4 flex justify-between">
         <div class=" flex-1">{{ t('player.directory') }}: {{ dbMeta.folder }}</div>

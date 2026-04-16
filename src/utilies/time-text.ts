@@ -54,18 +54,6 @@ const getMostHitHourNum = (hits: string[]) => {
   if (maxCountHour) return parseInt(maxCountHour)
   else return undefined
 }
-export function getISOWithOffset(date = new Date()) {
-  const pad = (num: number) => String(num).padStart(2, '0');
-  const offset = date.getTimezoneOffset(); // minitues
-  const absOffset = Math.abs(offset);
-  const sign = offset > 0 ? '-' : '+';
-  return [
-    date.getFullYear(), '-', pad(date.getMonth() + 1), '-', pad(date.getDate()),
-    'T', pad(date.getHours()), ':', pad(date.getMinutes()), ':', pad(date.getSeconds()),
-    '.', String(date.getMilliseconds()).padStart(3, '0'),
-    sign, pad(Math.floor(absOffset / 60)), ':', pad(absOffset % 60)
-  ].join('');
-}
 export function timeText (dt: dayjs.Dayjs) {
   if (dt.year() == nowTime.year()) {
     if (dt.month() == nowTime.month()) {

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useMusicStore } from '@/store/music';
-import defaultArt from '@/assets/imgs/track.png'
+import { getAssetImg } from '@/utilies/asset';
 
 interface ItemObject {
   id: number;
@@ -28,6 +28,7 @@ const emit = defineEmits<{
 }>()
 const store = useMusicStore()
 const playing = computed(() => id == store.curPlaylist[store.curPlayIndex]?.id)
+const defaultArt = computed(() => getAssetImg('track.png'))
 </script>
 
 <template>

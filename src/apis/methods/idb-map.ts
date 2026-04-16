@@ -1,4 +1,4 @@
-import { indexedDbHelper } from "../idb-funcs";
+import { indexedDbHelper } from "@/apis/idb-funcs";
 import regIdbApis from './idb-music'
 
 export default function mappingIdbApis(idbHelper: indexedDbHelper): IdbApiDict { 

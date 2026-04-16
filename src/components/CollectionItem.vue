@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { getAssetImg } from '@/utilies/general';
+import { getAssetImg } from '@/utilies/asset';
 
 interface ItemObject {
   colType: Exclude<PopType, 'track'>;

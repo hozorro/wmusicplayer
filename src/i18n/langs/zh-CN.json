@@ -119,7 +119,7 @@
     "comment": "有个性的音乐播放器，来自wEyEco",
     "local_cache_status": "本地缓存状态",
     "ready": "就绪",
-    "not_ready": "未就绪",
+    "not_ready": "未就绪，待同步本地数据",
     "play": {
       "item": "播放设置",
       "ratio": "播放计数比例",

@@ -2,11 +2,6 @@ export function isNumberic(str: string) {
   return /^\d+$/.test(str)
 }
 
-export const getAssetImg = (fileName: string) => {
-  let src = new URL(`../assets/imgs/${fileName}`, import.meta.url).href
-  return src
-}
-
 export function shuffle(arr: any[]){
   let i = arr.length
   while(i){
@@ -78,6 +73,19 @@ export function timeStampToDate(timestamp: number) {
   const minutes = date.getMinutes().toString().padStart(2, '0')
   const seconds = date.getSeconds().toString().padStart(2, '0');
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
+export function getISOWithOffset(date = new Date()) {
+  const pad = (num: number) => String(num).padStart(2, '0');
+  const offset = date.getTimezoneOffset(); // minitues
+  const absOffset = Math.abs(offset);
+  const sign = offset > 0 ? '-' : '+';
+  return [
+    date.getFullYear(), '-', pad(date.getMonth() + 1), '-', pad(date.getDate()),
+    'T', pad(date.getHours()), ':', pad(date.getMinutes()), ':', pad(date.getSeconds()),
+    '.', String(date.getMilliseconds()).padStart(3, '0'),
+    sign, pad(Math.floor(absOffset / 60)), ':', pad(absOffset % 60)
+  ].join('');
 }
 
 export async function getImageAsDataURI(url: string) {

@@ -92,6 +92,7 @@ const idbApis = mappingIdbApis(idbHelper)
 
 const idbHandler = (method: keyof IdbApiDict) => { 
   async function _idbOrNetwork({url, request}: {url: URL, request: Request}) {
+    if (!isIDBReady) return fetch(request)
     const actualPath = url.pathname.replace(/^\/api\/music\//, '')
     if (idbApis[method]) {
       // match handler

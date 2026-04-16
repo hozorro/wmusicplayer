@@ -35,6 +35,7 @@ export default defineConfig({
         name: 'WMusicPlayer',
         short_name: 'WPlayer',
         description: 'PWA Music Player from weyeco',
+        display: 'standalone',
         icons: [
           {
             src: '/imgs/manifest/web-app-manifest-48x48.png',
