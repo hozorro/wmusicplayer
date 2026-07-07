@@ -169,13 +169,11 @@ export function useSync(optInfo: Ref<string>) {
           dataUpsert.push(item)
         }
       }
-      dataUpsert.map(item => {  // delete the is_deleted flag, which is not needed in idb
-        if (model === 'track') {
-          const {is_deleted, ...minus_item} = item
-          return minus_item
+      if (model === 'track') {  // delete the is_deleted flag, which is not needed in idb
+        for (const item of dataUpsert) {
+          delete (item as any).is_deleted
         }
-        return item
-      })
+      }
       // 2.3 delete the divided dataDel(if incremental) or clear all local data
       if (!incremental) {
         // not incremental, all all data rebuild

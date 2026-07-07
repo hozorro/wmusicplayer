@@ -73,8 +73,8 @@ function handlePlayRandom() {
           </div>
         </div>
         <div class=" flex-1 flex justify-around items-center mt-2">
-          <button class=" btn">{{ t('player.playall') }}</button>
-          <button class=" btn">{{ t('player.randomplay') }}</button>
+          <button class=" btn" @click="handlePlayAll">{{ t('player.playall') }}</button>
+          <button class=" btn" @click="handlePlayRandom">{{ t('player.randomplay') }}</button>
         </div>
       </div>
     </div>

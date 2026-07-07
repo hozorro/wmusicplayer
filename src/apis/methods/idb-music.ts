@@ -40,6 +40,7 @@ export default function regIdbApis(idbHelper: indexedDbHelper) {
         title: album.title,
         album_artist: album.album_artist,
         artists: album.artists,
+        cover_art_hash: album.cover_art_hash,
         track_count: tracks.length,
         tracks: tracks.map(track => ({id: track.id, title: track.title, artists: track.artists?.map(artist => artist.name)})),
       })
@@ -49,11 +50,12 @@ export default function regIdbApis(idbHelper: indexedDbHelper) {
     // #region Artist
     getTenArtists: async () => { // get 6 top played artists and another 4 random artists
       const artists_top = await idbHelper.getIndexedRange<IDBArtist>('artist', 'hit_count', null, true, 6)
+      if(artists_top.length === 0) return resSucc([])
       const last = artists_top[artists_top.length - 1].hit_count || 0
-      const artists_random = await idbHelper.getRandom<IDBArtist>('artist', 4, 'hit_count', keyRange.upperBound(last, false))
+      const artists_random = await idbHelper.getRandom<IDBArtist>('artist', 4, 'hit_count', keyRange.upperBound(last, true))
       const artists = artists_top.concat(artists_random)
       const result = artists.map((artist) => { 
-        return {id: artist.id, name: artist.name}
+        return {id: artist.id, name: artist.name, face_art_hash: artist.face_art_hash}
       })
       shuffle(result)
       return resSucc(result)
@@ -79,7 +81,8 @@ export default function regIdbApis(idbHelper: indexedDbHelper) {
       return resSucc(result.map(artist => ({
         id: artist.id,
         name: artist.name,
-        pinyin_initial: artist.pinyin_initial
+        pinyin_initial: artist.pinyin_initial,
+        face_art_hash: artist.face_art_hash
       })).sort(dynamicSort('name_lower')))
     },
     getArtist: async(options?: IdbApiOptions) => { 
@@ -96,15 +99,18 @@ export default function regIdbApis(idbHelper: indexedDbHelper) {
       const top_tracks = tracks_sorted.slice(0,20).map(track => ({
         id: track.id,
         title: track.title,
-        artists: track.artists?.map(artist => artist.name)
+        artists: track.artists?.map(artist => artist.name),
+        cover_art_hash: track.cover_art_hash
       }))
       return resSucc({
         id,
         name: artist.name,
         pinyin_initial: artist.pinyin_initial,
         track_count: artist.track_count,
-        main_albums: main_albums.map(item => ({id: item.id, title: item.title})),
-        track_albums: track_albums.map(item => ({id: item.id, title: item.title})),
+        face_art_hash: artist.face_art_hash,
+        portrait_art_hash: artist.portrait_art_hash,
+        main_albums: main_albums.map(item => ({id: item.id, title: item.title, cover_art_hash: item.cover_art_hash})),
+        track_albums: track_albums.map(item => ({id: item.id, title: item.title, cover_art_hash: item.cover_art_hash})),
         top_tracks,
       })
     },
@@ -114,6 +120,7 @@ export default function regIdbApis(idbHelper: indexedDbHelper) {
       return resSucc(result.map(artist => ({
         id: artist.id,
         name: artist.name,
+        face_art_hash: artist.face_art_hash,
       })))
     },
     // #endregion
@@ -172,7 +179,7 @@ export default function regIdbApis(idbHelper: indexedDbHelper) {
       return resSucc({
         total, 
         tracks: res.tracks.map((track) => { 
-          return {id: track.id, title: track.title, artists: track.artists?.map(artist => artist.name)}
+          return {id: track.id, title: track.title, artists: track.artists?.map(artist => artist.name), cover_art_hash: track.cover_art_hash}
         }),
         next_key: res.nextKey
       })
@@ -183,14 +190,14 @@ export default function regIdbApis(idbHelper: indexedDbHelper) {
     getTopPlaylists: async () => {
       const playlists =  await idbHelper.getIndexedRange<IDBPlaylist>('playlist', 'hit_count', null, true, 5)
       const result = playlists.map((playlist) => {
-        return {id: playlist.id, title: playlist.title}
+        return {id: playlist.id, title: playlist.title, cover_art_hash: playlist.cover_art_hash}
       })
       return resSucc(result)
     },
     getPlaylists: async () => { 
       const playlists = await idbHelper.getAll<IDBPlaylist>('playlist')
       const result = playlists.map((playlist) => { 
-        return {id: playlist.id, title: playlist.title}
+        return {id: playlist.id, title: playlist.title, cover_art_hash: playlist.cover_art_hash}
       })
       return resSucc(result)
     },
@@ -207,8 +214,9 @@ export default function regIdbApis(idbHelper: indexedDbHelper) {
         title: result.title,
         comment: result.comment,
         created_at: result.created_at,
+        cover_art_hash: result.cover_art_hash,
         tracks: tracks.map((track) => { 
-          return {id: track.id, title: track.title, artists: track.artists?.map(artist => artist.name)}
+          return {id: track.id, title: track.title, artists: track.artists?.map(artist => artist.name), cover_art_hash: track.cover_art_hash}
         })
       })
     },
@@ -271,6 +279,7 @@ export default function regIdbApis(idbHelper: indexedDbHelper) {
         duration: track.duration,
         hit_count: track.hit_count,
         favorited_at: track.favorited_at,
+        cover_art_hash: track.cover_art_hash,
       })
     },
     getRandomTracks: async (options?: IdbApiOptions) => { 
@@ -305,20 +314,20 @@ export default function regIdbApis(idbHelper: indexedDbHelper) {
     getFavoriteTracks: async () => { 
       const tracks = await idbHelper.getIndexedRange<IDBTrack>('track', 'favorited_at', keyRange.lowerBound('', true))
       return resSucc(tracks.map((track) => { 
-        return {id: track.id, title: track.title, artists: track.artists?.map(artist => artist.name)}
+        return {id: track.id, title: track.title, artists: track.artists?.map(artist => artist.name), cover_art_hash: track.cover_art_hash}
       }))
     },
     getLatestTracks: async () => { 
       const tracks = await idbHelper.getIndexedRange<IDBTrack>('track', 'updated_at', null, true, 12)
       const result = tracks.map((track) => { 
-        return {id: track.id, title: track.title, artists: track.artists?.map(artist => artist.name)}
+        return {id: track.id, title: track.title, artists: track.artists?.map(artist => artist.name), cover_art_hash: track.cover_art_hash}
       })
       return resSucc(result)
     },
     getMostPlayedTracks: async () => { 
       const tracks = await idbHelper.getIndexedRange<IDBTrack>('track', 'hit_count', null, true, 12)
       const result = tracks.map((track) => { 
-        return {id: track.id, title: track.title, artists: track.artists?.map(artist => artist.name)}
+        return {id: track.id, title: track.title, artists: track.artists?.map(artist => artist.name), cover_art_hash: track.cover_art_hash}
       })
       return resSucc(result)
     },
@@ -379,21 +388,21 @@ export default function regIdbApis(idbHelper: indexedDbHelper) {
           let resultTracks = await idbHelper.search<IDBTrack>('track', 'title_lower', 'title_lower', range, kw, page, pageSize)
           return resSucc({
             total: resultTracks.total, 
-            data: resultTracks.data.map(track => ({id: track.id, title: track.title, artists: track.artists?.map(artist => artist.name)})), 
+            data: resultTracks.data.map(track => ({id: track.id, title: track.title, artists: track.artists?.map(artist => artist.name), cover_art_hash: track.cover_art_hash})),
             next_key: resultTracks.nextKey
           })
         case 'artist':
           let resultArtist = await idbHelper.search<IDBArtist>('artist', 'name_lower', 'name_lower', range, kw, page, pageSize)
           return resSucc({
             total: resultArtist.total,
-            data: resultArtist.data.map(artist => ({id: artist.id, name: artist.name})),
+            data: resultArtist.data.map(artist => ({id: artist.id, name: artist.name, face_art_hash: artist.face_art_hash})),
             next_key: resultArtist.nextKey
           })
         case 'album':
           let resultAlbum = await idbHelper.search<IDBAlbum>('album', 'title_lower', 'title_lower', range, kw, page, pageSize)
           return resSucc({
             total: resultAlbum.total,
-            data: resultAlbum.data.map(album => ({id: album.id, name: album.title})),
+            data: resultAlbum.data.map(album => ({id: album.id, name: album.title, cover_art_hash: album.cover_art_hash})),
             next_key: resultAlbum.nextKey
           })
         default:

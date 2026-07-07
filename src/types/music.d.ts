@@ -36,7 +36,8 @@ declare interface Artist {
   id: number;
   name: string;
   pinyin_initial: string;
-  cover_art_hash?: string;
+  face_art_hash?: string;
+  portrait_art_hash?: string;
 }
 declare interface ArtistInfo extends Artist { 
   main_albums: Album[];

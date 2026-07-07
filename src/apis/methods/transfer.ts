@@ -6,6 +6,7 @@ export const getDbMetaInfo = () => {
 export const getMusicUnsyncedCount = (model: MusicEntity, last_sync?: string) => {
   return generalAlova.Get<number>(`/music/transfer/unsynccount?entity=${model}` + (last_sync ? `&last_sync=${last_sync}` : ''), {
     name: 'db_model_info',
+    transform: (rawData) => (rawData as {count: number}).count,
   })
 }
 export const transferAlbums = (options: TransferOptions) => {

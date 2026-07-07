@@ -28,7 +28,7 @@ export const getAlbum = (id: number) => {
       return {
         ...rawData,
         track_count: rawData?.tracks.length || 0,
-        cover: `/api/artwork/album/${rawData?.id}?v=${rawData?.cover_art_hash || 'default'}`,
+        cover: `/media/albums/${rawData?.id}.jpg?v=${rawData?.cover_art_hash || 'default'}`,
       }
     }
   })
@@ -42,7 +42,7 @@ export const getTenArtists = () => {
     transform: (rawData: Omit<Artist, 'pinyin_initial'>[]) => {
       return rawData.map(artist => ({
         ...artist,
-        cover: `/api/artwork/artist/${artist.id}?img_cate=face&v=${artist?.cover_art_hash || 'default'}`,
+        cover: `/media/artists/${artist.id}_face.jpg?v=${artist?.face_art_hash || 'default'}`,
       }))
     },
     hitSource: /^transfer/
@@ -65,7 +65,7 @@ export const getArtists = (char: string) => {
     transform: (rawData: Artist[]) => {
       return rawData.map(artist => ({
         ...artist,
-        cover: `/api/artwork/artist/${artist.id}?img_cate=face&v=${artist?.cover_art_hash || 'default'}`,
+        cover: `/media/artists/${artist.id}_face.jpg?v=${artist?.face_art_hash || 'default'}`,
       }))
     }
   })
@@ -76,7 +76,7 @@ export const getFavoritedArtists = () => {
     transform: (rawData: Omit<Artist, 'pinyin_initial'>[]) => {
       return rawData.map(artist => ({
         ...artist,
-        cover: `/api/artwork/artist/${artist.id}?img_cate=face&v=${artist?.cover_art_hash || 'default'}`,
+        cover: `/media/artists/${artist.id}_face.jpg?v=${artist?.face_art_hash || 'default'}`,
       }))
     }
   })
@@ -87,10 +87,10 @@ export const getArtist = (id: number) => {
     transform: (rawData: ArtistInfo) => {
       return {
         ...rawData,
-        main_albums: rawData?.main_albums.map(item => ({...item, cover: `/api/artwork/album/${item.id}?v=${item?.cover_art_hash || 'default'}`})),
-        track_albums: rawData?.track_albums.map(item => ({...item, cover: `/api/artwork/album/${item.id}?v=${item?.cover_art_hash || 'default'}`})),
-        top_tracks: rawData?.top_tracks.map(item => ({...item, cover: `/api/artwork/track/${item.id}?v=${item?.cover_art_hash || 'default'}`})),
-        cover: `/api/artwork/artist/${rawData?.id}?img_cate=portrait&v=${rawData?.cover_art_hash || 'default'}`,        
+        main_albums: rawData?.main_albums.map(item => ({...item, cover: `/media/albums/${item.id}.jpg?v=${item?.cover_art_hash || 'default'}`})),
+        track_albums: rawData?.track_albums.map(item => ({...item, cover: `/media/albums/${item.id}.jpg?v=${item?.cover_art_hash || 'default'}`})),
+        top_tracks: rawData?.top_tracks.map(item => ({...item, cover: `/media/tracks/${item.id}.jpg?v=${item?.cover_art_hash || 'default'}`})),
+        cover: `/media/artists/${rawData?.id}_portrait.jpg?v=${rawData?.portrait_art_hash || 'default'}`,        
       }
     }
   })
@@ -146,7 +146,7 @@ export const getTopPlaylists = () => {
     transform: (rawData: Playlist[]) => {
       return rawData.map(playlist => ({
         ...playlist,
-        cover: `/api/artwork/playlist/${playlist.id}?v=${playlist?.cover_art_hash || 'default'}`,
+        cover: `/media/playlists/${playlist.id}.jpg?v=${playlist?.cover_art_hash || 'default'}`,
       }))
     },
     hitSource: /^transfer/
@@ -158,7 +158,7 @@ export const getPlaylists = () => {
     transform: (rawData: Playlist[]) => {
       return rawData.map(playlist => ({
         ...playlist,
-        cover: `/api/artwork/playlist/${playlist.id}?v=${playlist?.cover_art_hash || 'default'}`,
+        cover: `/media/playlists/${playlist.id}.jpg?v=${playlist?.cover_art_hash || 'default'}`,
       }))
     },
     hitSource: ['addplaylist', 'addnewplaylist', 'updateplaylist', /^transfer/]
@@ -170,8 +170,8 @@ export const getPlaylist = (id: number | string) => {
     transform: (rawData: PlaylistInfo) => {
       return {
         ...rawData,
-        cover: `/api/artwork/playlist/${rawData?.id}?v=${rawData?.cover_art_hash || 'default'}`,
-        tracks: rawData?.tracks.map(item => ({...item, cover: `/api/artwork/track/${item.id}?v=${item?.cover_art_hash || 'default'}`})),
+        cover: `/media/playlists/${rawData?.id}.jpg?v=${rawData?.cover_art_hash || 'default'}`,
+        tracks: rawData?.tracks.map(item => ({...item, cover: `/media/tracks/${item.id}.jpg?v=${item?.cover_art_hash || 'default'}`})),
       }
     },
     hitSource: ['addtracktoplaylist', 'removetrackfromplaylist', /^transfer/]
@@ -219,7 +219,7 @@ export const getFavoriteTracks = () => {
     transform: (rawData: Track[]) => {
       return rawData.map(track => ({
         ...track,
-        cover: `/api/artwork/track/${track.id}?v=${track?.cover_art_hash || 'default'}`,
+        cover: `/media/tracks/${track.id}.jpg?v=${track?.cover_art_hash || 'default'}`,
       }))
     }
   })
@@ -230,7 +230,7 @@ export const getLatestTracks = () => {
     transform: (rawData: Track[]) => {
       return rawData.map(track => ({
         ...track,
-        cover: `/api/artwork/track/${track.id}?v=${track?.cover_art_hash || 'default'}`
+        cover: `/media/tracks/${track.id}.jpg?v=${track?.cover_art_hash || 'default'}`
       }))
     }
   });
@@ -241,7 +241,7 @@ export const getMostPlayedTracks  = () => {
     transform: (rawData: Track[]) => {
       return rawData.map(track => ({
         ...track,
-        cover: `/api/artwork/track/${track.id}?v=${track?.cover_art_hash || 'default'}`
+        cover: `/media/tracks/${track.id}.jpg?v=${track?.cover_art_hash || 'default'}`
       }))
     }
   });
@@ -272,13 +272,13 @@ export const search = <T extends Track | Artist | Album>(cat: 'album' | 'artist'
           let cover
           switch(cat) { 
             case 'track':
-              cover = `/api/artwork/track/${item.id}?v=${item?.cover_art_hash || 'default'}`
+              cover = `/media/tracks/${item.id}.jpg?v=${(item as Track)?.cover_art_hash || 'default'}`
               break;
             case 'album':
-              cover = `/api/artwork/album/${item.id}?v=${item?.cover_art_hash || 'default'}`
+              cover = `/media/albums/${item.id}.jpg?v=${(item as Album)?.cover_art_hash || 'default'}`
               break
             case 'artist':
-              cover = `/api/artwork/artist/${item.id}?img_cate=face&v=${item?.cover_art_hash || 'default'}`
+              cover = `/media/artists/${item.id}_face.jpg?v=${(item as Artist)?.face_art_hash || 'default'}`
               break
           }
           return {...item, cover}

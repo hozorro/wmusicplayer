@@ -16,7 +16,6 @@ export function usePlayer(
 ){
   const store = useMusicStore()
   const { curPlaylist, curPlayIndex, playlistChanged } = storeToRefs(store)
-  const {isLoop, isAutoPlayNext, timeUpdateInterval} = store.params
   const {
     seqOrder,
     seqList,
@@ -134,7 +133,7 @@ export function usePlayer(
       }
       
       timeUpdateFlag = null
-    }, timeUpdateInterval)
+    }, store.getParam('timeUpdateInterval'))
   }
 
   const _getLyric = async (track_id: number) => { 
@@ -158,12 +157,12 @@ export function usePlayer(
   function play(opts: {curTime?: number}={curTime: 0}){
     return new Promise((resolve, reject) => {
       let _handlePlay = () => {
-        if(audioRef.value == undefined) return reject()
+        if(audioRef.value == undefined) return reject(new Error('Audio element not available'))
         audioRef.value.play().then(() => {
           nextTick(() => {
             if(opts.curTime){
               // play from specific time
-              if(audioRef.value == undefined) return reject()
+              if(audioRef.value == undefined) return reject(new Error('Audio element not available'))
               audioRef.value.currentTime = opts.curTime
             }
             playStatus.value = true
@@ -175,7 +174,7 @@ export function usePlayer(
           WMessage(err, 'error')
           if(err.code == 9){
             consecutiveError.value += 1
-            if(isAutoPlayNext && consecutiveError.value < store.getParam('max_fail_count')){
+            if(store.getParam('isAutoPlayNext') && consecutiveError.value < store.getParam('max_fail_count')){
               // stop auto next when consecutive error times exceed 10
               setTimeout(() => {
                 playNext()
@@ -213,7 +212,7 @@ export function usePlayer(
     track.album = data.album
     track.duration = data.duration
     track.favorited_at = data.favorited_at
-    track.cover = `/api/artwork/track/${tid}?v=${track.cover_art_hash || 'default'}`
+    track.cover = `/media/tracks/${tid}.jpg?v=${data.cover_art_hash || 'default'}`
     
     nextTick(() => { 
       if(audioRef.value && !isNaN(audioRef.value.currentTime)) {
@@ -254,7 +253,7 @@ export function usePlayer(
   function playNext(){
     if(seqOrder.value == SeqMode.SINGLE_LOOP) return
     if(seqIndex.value + 1 >= seqList.value.length){
-      if(isLoop){
+      if(store.getParam('isLoop')){
         seqIndex.value = 0
       }else{
         return
@@ -268,7 +267,7 @@ export function usePlayer(
   function playPrev(){
     if(seqOrder.value == SeqMode.SINGLE_LOOP) return
     if(seqIndex.value - 1 < 0){
-      if(isLoop){
+      if(store.getParam('isLoop')){
         seqIndex.value = seqList.value.length - 1
       }else{
         return
@@ -282,14 +281,14 @@ export function usePlayer(
   function playEnded(){
     setTimeout(() => {
       pause()
-      if(isAutoPlayNext){
+      if(store.getParam('isAutoPlayNext')){
         if(seqOrder.value !== 2){
           playNext()
-        }else(
+        }else{
           switchPlay()
-        )
+        }
       }
-    }, timeUpdateInterval)
+    }, store.getParam('timeUpdateInterval'))
   }
 
   function handleOrder(){
@@ -419,7 +418,7 @@ export function usePlayer(
           track.album = data.album
           track.duration = data.duration
           track.favorited_at = data.favorited_at
-          track.cover = `/api/artwork/track/${tid}`
+          track.cover = `/media/tracks/${tid}.jpg?v=${data.cover_art_hash || 'default'}`
         })
         getStreamingUrl(tid).then(streamUrl => {
           if (audioRef.value) audioRef.value.src = `/api/${streamUrl}`

@@ -43,7 +43,7 @@ self.addEventListener('message', (event) => {
 })
 
 const isStaticResourcesFetch = (url: URL) => {
-  return url.pathname.startsWith('/api/artwork')
+  return url.pathname.startsWith('/media')
 }
 
 registerRoute(

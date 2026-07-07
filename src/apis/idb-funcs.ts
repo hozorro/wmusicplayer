@@ -150,12 +150,8 @@ export class indexedDbHelper {
   upsertMany<T extends Record<string,any>>(storeName: string, data: ({id: T['id']} & Partial<Omit<T, 'id'>>)[], transaction?: IDBTransaction) {
     return new Promise((resolve, reject) => { 
       const _upsert = (tx: IDBTransaction) => { 
-        try {
-          data.forEach(item => this.update(storeName, item.id, item, true, tx))
-          resolve(true);
-        } catch (error) {
-          reject(error);
-        }
+        const promises = data.map(item => this.update(storeName, item.id, item, true, tx))
+        Promise.all(promises).then(() => resolve(true)).catch(reject)
       }
       transaction ? _upsert(transaction) : this.begin_transaction(storeName).then(tx => _upsert(tx));
     });
@@ -173,12 +169,8 @@ export class indexedDbHelper {
   deleteMany(storeName: string, keys: any[], transaction?: IDBTransaction) { 
     return new Promise((resolve, reject) => { 
       const _delete = (tx: IDBTransaction) => { 
-        try {
-          keys.forEach(key => this.delete(storeName, key, tx));
-          resolve(true);
-        } catch (error) {
-          reject(error);
-        }
+        const promises = keys.map(key => this.delete(storeName, key, tx))
+        Promise.all(promises).then(() => resolve(true)).catch(reject)
       }
       transaction ? _delete(transaction) : this.begin_transaction(storeName).then(tx => _delete(tx));
     })
