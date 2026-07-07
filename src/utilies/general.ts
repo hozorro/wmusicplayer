@@ -5,7 +5,7 @@ export function isNumberic(str: string) {
 export function shuffle(arr: any[]){
   let i = arr.length
   while(i){
-      let j = Math.floor(Math.random() * i--)
+      let j = Math.floor(Math.random() * --i)
       let t = arr[j]
       arr[j] = arr[i]
       arr[i] = t
@@ -54,7 +54,7 @@ export function dynamicSort(property: string, order = 'asc') {
 
 export function secToHMS(secs: number){
   let h = Math.floor(secs / 3600)
-  let m = Math.floor((secs - h * 60) / 60)
+  let m = Math.floor((secs - h * 3600) / 60)
   let s = Math.floor(secs % 60)
   let fstr = m.toString().padStart(2, '0') + ':' + s.toString().padStart(2, '0')
   if(h != 0){

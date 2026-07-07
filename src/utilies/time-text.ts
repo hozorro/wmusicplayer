@@ -1,8 +1,7 @@
 import dayjs from "dayjs";
 import { t } from "./use-i18n";
 
-const nowTime = dayjs()
-const monthDict: Record<number, string> = {
+const getMonthDict = (): Record<number, string> => ({
   1: t('sentence.month_1'),
   2: t('sentence.month_2'),
   3: t('sentence.month_3'),
@@ -15,8 +14,9 @@ const monthDict: Record<number, string> = {
   10: t('sentence.month_10'),
   11: t('sentence.month_11'),
   12: t('sentence.month_12')
-}
-const timeDict = [
+})
+
+const getTimeDict = () => [
   { label: t('sentence.early_morning'), value: [1,2,3,4,5] },
   { label: t('sentence.dawn'), value: [6,7] },
   { label: t('sentence.morning'), value: [8,9,10,11] },
@@ -26,8 +26,10 @@ const timeDict = [
   { label: t('sentence.evening'), value: [20,21,22] },
   { label: t('sentence.night'), value: [23,0]}
 ]
+
 const timeWord = (timeNum: number | undefined) => {
   if (timeNum === undefined) return t('sentence.unknown_time')
+  const timeDict = getTimeDict()
   for (let i = 0; i < timeDict.length; i++) {
     const time = timeDict[i]
     if (time.value.includes(timeNum)) return time.label
@@ -37,7 +39,7 @@ const timeWord = (timeNum: number | undefined) => {
 
 const yearWord = (dt: dayjs.Dayjs) => {
   const dtYear = dt.year()
-  const nowYear = nowTime.year()
+  const nowYear = dayjs().year()
   if (dtYear === nowYear) return t('sentence.this_year')
   if (dtYear === nowYear - 1) return t('sentence.last_year')
   if (dtYear === nowYear - 2) return t('sentence.before_last_year')
@@ -55,6 +57,7 @@ const getMostHitHourNum = (hits: string[]) => {
   else return undefined
 }
 export function timeText (dt: dayjs.Dayjs) {
+  const nowTime = dayjs()
   if (dt.year() == nowTime.year()) {
     if (dt.month() == nowTime.month()) {
       if (dt.date() == nowTime.date()) {
@@ -67,7 +70,7 @@ export function timeText (dt: dayjs.Dayjs) {
     }
   }
   const yrWord = yearWord(dt)
-  const monWord = monthDict[dt.month() + 1]
+  const monWord = getMonthDict()[dt.month() + 1]
   const hrNum = dt.hour()
   const tmWord = timeWord(hrNum)
   return t('sentence.time_detail', { year: yrWord, month: monWord, time: tmWord })
@@ -88,13 +91,14 @@ export function parseHits(hits: string[] | undefined) {
   
   if (earliest.isSame(latest)) return hitText + `\n${t('sentence.then_not_listened')}`
 
+  const nowTime = dayjs()
   const count = hits.length
   if (count == 2) {
     if (latest.year() === earliest.year() && nowTime.month() - latest.month() < 2) 
       return `${hitText}\n${t('sentence.recent_listened')}`
-    else return hitText + t('sentence.then_second_listened', { full_time: timeText(latest) })
+    else return `${hitText}${t('sentence.then_second_listened', { full_time: timeText(latest) })}`
   } else if (count < 6) {
-    return `${hitText}${t('sentence.then_recent_listened'), { full_time: timeText(latest) }}`
+    return `${hitText}${t('sentence.then_recent_listened', { full_time: timeText(latest) })}`
   } else if (count > 5) {
     const mostHitHourNum = getMostHitHourNum(hits)
     return `${hitText}${t('sentence.then_often_listened', { 

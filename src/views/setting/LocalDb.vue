@@ -56,11 +56,14 @@ async function rebuildLocalData() {
   optInfo.value += '\nBegin to rebuild local database...'
   await getServerDbMetaInfo()
   try {
+    optInfo.value += '\nCalling syncAllMusicEntityData...'
     await syncAllMusicEntityData()
+    optInfo.value += '\nsyncAllMusicEntityData completed.'
     await initialLocalDbPlaybackMetaInfo()
     await postIdbReadyMessage()
   }catch (error) { 
-    optInfo.value += '\nError, try again later.'
+    console.error('[LocalDb] rebuildLocalData error:', error)
+    optInfo.value += `\nError: ${error instanceof Error ? error.message : String(error)}`
   }
 }
 

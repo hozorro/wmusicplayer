@@ -1,9 +1,8 @@
 import { computed, watch } from "vue";
 import { useMusicStore } from "@/store/music";
 
-const musicStore = useMusicStore()
-
 export const useTheme = () => {
+  const musicStore = useMusicStore()
   const theme = computed({
     get() { return musicStore.isDark ? "dark" : "light" },
     set(newTheme) { musicStore.isDark = newTheme === "dark" } 

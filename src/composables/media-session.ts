@@ -8,7 +8,7 @@ export default function useMediaSession(audio: Ref<HTMLAudioElement>, track: Tra
   }
 
   function updateMediaSessionState() {
-    navigator.mediaSession.playbackState = audio.value.paused ? 'playing' : 'paused';
+    navigator.mediaSession.playbackState = audio.value.paused ? 'paused' : 'playing';
     navigator.mediaSession.setPositionState({
       duration: audio.value.duration,
       position: audio.value.currentTime,

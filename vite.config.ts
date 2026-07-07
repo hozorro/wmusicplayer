@@ -75,6 +75,10 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
+      '/media': {
+        target: env.VITE_BASE_URL.replace(/\/api\/.*$/, ''),
+        changeOrigin: true,
+      },
     },
   },
   build: {

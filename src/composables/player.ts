@@ -8,6 +8,7 @@ import useMediaSession from '@/composables/media-session';
 import WMessage from "@/composables/message"
 import { PlayChangeMode, SeqMode } from "@/constants/play-constants"
 import { LyricParser } from "@/utilies/lyric-parser";
+import { audioCache } from '@/composables/audio-cache'
 
 export function usePlayer(
   audioRef: Ref<HTMLAudioElement | null>, 
@@ -16,7 +17,6 @@ export function usePlayer(
 ){
   const store = useMusicStore()
   const { curPlaylist, curPlayIndex, playlistChanged } = storeToRefs(store)
-  const {isLoop, isAutoPlayNext, timeUpdateInterval} = store.params
   const {
     seqOrder,
     seqList,
@@ -131,10 +131,17 @@ export function usePlayer(
             })
           }
         }
+
+        if(playInfo.playPortion > 0.8){
+          const nextId = _getNextTrackId()
+          if(nextId && !audioCache.has(nextId)){
+            audioCache.preloadTrack(nextId)
+          }
+        }
       }
       
       timeUpdateFlag = null
-    }, timeUpdateInterval)
+    }, store.getParam('timeUpdateInterval'))
   }
 
   const _getLyric = async (track_id: number) => { 
@@ -158,12 +165,12 @@ export function usePlayer(
   function play(opts: {curTime?: number}={curTime: 0}){
     return new Promise((resolve, reject) => {
       let _handlePlay = () => {
-        if(audioRef.value == undefined) return reject()
+        if(audioRef.value == undefined) return reject(new Error('Audio element not available'))
         audioRef.value.play().then(() => {
           nextTick(() => {
             if(opts.curTime){
               // play from specific time
-              if(audioRef.value == undefined) return reject()
+              if(audioRef.value == undefined) return reject(new Error('Audio element not available'))
               audioRef.value.currentTime = opts.curTime
             }
             playStatus.value = true
@@ -175,7 +182,7 @@ export function usePlayer(
           WMessage(err, 'error')
           if(err.code == 9){
             consecutiveError.value += 1
-            if(isAutoPlayNext && consecutiveError.value < store.getParam('max_fail_count')){
+            if(store.getParam('isAutoPlayNext') && consecutiveError.value < store.getParam('max_fail_count')){
               // stop auto next when consecutive error times exceed 10
               setTimeout(() => {
                 playNext()
@@ -200,20 +207,74 @@ export function usePlayer(
     }
   }
 
+  let preloadTimer: ReturnType<typeof setTimeout> | null = null
+  const PRELOAD_DELAY = 3000
+
+  function _getNextTrackId(): number | null {
+    if (seqOrder.value === SeqMode.SINGLE_LOOP) return null
+    if (seqList.value.length === 0) return null
+    let nextSeqIdx: number
+    if (seqIndex.value + 1 >= seqList.value.length) {
+      if (store.getParam('isLoop')) {
+        nextSeqIdx = 0
+      } else {
+        return null
+      }
+    } else {
+      nextSeqIdx = seqIndex.value + 1
+    }
+    const nextPlaylistIndex = seqList.value[nextSeqIdx]
+    if (nextPlaylistIndex === undefined) return null
+    return curPlaylist.value[nextPlaylistIndex]?.id ?? null
+  }
+
+  function _schedulePreloadNext(): void {
+    if (preloadTimer) clearTimeout(preloadTimer)
+    preloadTimer = setTimeout(() => {
+      preloadTimer = null
+      const nextId = _getNextTrackId()
+      if (nextId !== null && nextId !== track.id) {
+        const conn = (navigator as any).connection
+        if (conn && (conn.saveData || (conn.effectiveType && ['slow-2g','2g'].includes(conn.effectiveType)))) {
+          return
+        }
+        audioCache.preloadTrack(nextId)
+      }
+    }, PRELOAD_DELAY)
+  }
+
+  function _invalidatePreload(): void {
+    if (preloadTimer) {
+      clearTimeout(preloadTimer)
+      preloadTimer = null
+    }
+    const stats = audioCache.getStats()
+    for (const id of stats.trackIds) {
+      if (id !== track.id) {
+        audioCache.invalidate(id)
+      }
+    }
+  }
+
   async function switchPlay(directChange=false){
     // only when click track in playbox playlist to switch play, directChange is true.
     if(!directChange){
       curPlayIndex.value = seqList.value[seqIndex.value]
     }
     let tid = curPlaylist.value[curPlayIndex.value].id
-    const data = await getTrackInfo(tid)
+    const trackInfoPromise = getTrackInfo(tid)
+    let cachedBlobUrl = audioCache.getCachedUrlSync(tid)
+    if(!cachedBlobUrl){
+      cachedBlobUrl = await audioCache.getCachedUrl(tid)
+    }
+    const data = await trackInfoPromise
     track.id = tid
     track.title = data.title
     track.artists = data.artists
     track.album = data.album
     track.duration = data.duration
     track.favorited_at = data.favorited_at
-    track.cover = `/api/artwork/track/${tid}?v=${track.cover_art_hash || 'default'}`
+    track.cover = `/media/tracks/${tid}.jpg?v=${data.cover_art_hash || 'default'}`
     
     nextTick(() => { 
       if(audioRef.value && !isNaN(audioRef.value.currentTime)) {
@@ -225,12 +286,19 @@ export function usePlayer(
       pause()
     }
     if(audioRef.value !== null) {
-      const streamUrl = await getStreamingUrl(tid)
-      audioRef.value.src = `/api/${streamUrl}`
+      if(cachedBlobUrl){
+        audioRef.value.src = cachedBlobUrl
+      } else {
+        const streamUrl = await getStreamingUrl(tid)
+        audioRef.value.src = `/api/${streamUrl}`
+      }
       _getLyric(tid)
       hitsInfo.value = undefined
     }
-    play().then(() => switchCallback()).catch((err) =>{
+    play().then(() => {
+      switchCallback()
+      _schedulePreloadNext()
+    }).catch((err) =>{
       WMessage(err.message, 'error')
     })
   }
@@ -254,7 +322,7 @@ export function usePlayer(
   function playNext(){
     if(seqOrder.value == SeqMode.SINGLE_LOOP) return
     if(seqIndex.value + 1 >= seqList.value.length){
-      if(isLoop){
+      if(store.getParam('isLoop')){
         seqIndex.value = 0
       }else{
         return
@@ -268,7 +336,7 @@ export function usePlayer(
   function playPrev(){
     if(seqOrder.value == SeqMode.SINGLE_LOOP) return
     if(seqIndex.value - 1 < 0){
-      if(isLoop){
+      if(store.getParam('isLoop')){
         seqIndex.value = seqList.value.length - 1
       }else{
         return
@@ -281,19 +349,26 @@ export function usePlayer(
 
   function playEnded(){
     setTimeout(() => {
-      pause()
-      if(isAutoPlayNext){
-        if(seqOrder.value !== 2){
+      if(store.getParam('isAutoPlayNext')){
+        if(seqOrder.value !== SeqMode.SINGLE_LOOP){
+          pause()
           playNext()
-        }else(
-          switchPlay()
-        )
+        }else{
+          if(audioRef.value){
+            audioRef.value.currentTime = 0
+            play()
+          }
+        }
+      }else{
+        pause()
       }
-    }, timeUpdateInterval)
+    }, store.getParam('timeUpdateInterval'))
   }
 
   function handleOrder(){
     nextSeqMode()
+    _invalidatePreload()
+    _schedulePreloadNext()
   }
 
   async function handleFav(){
@@ -348,12 +423,14 @@ export function usePlayer(
         return number
       }
     })
+    _invalidatePreload()
     if(curPlayIndex.value == removeIndex){
       playNext()
     }
   }
 
   function playlistItemClick(index: number, callback: () => void) {
+    _invalidatePreload()
     curPlayIndex.value = index
     seqIndex.value = seqList.value.indexOf(index)
     switchPlay(true)
@@ -361,6 +438,9 @@ export function usePlayer(
   }
 
   watch(playlistChanged, (newValue) => {
+    if(newValue !== PlayChangeMode.DONOTHING){
+      _invalidatePreload()
+    }
     if(seqList.value.length == 0){
       initSeq()
     }
@@ -371,9 +451,11 @@ export function usePlayer(
         break
       case PlayChangeMode.ADD_NEXT: // add after the current playing file
         addSeqNext()
+        _schedulePreloadNext()
         break
       case PlayChangeMode.ADD_LAST: // add after the current playing file, and play immediately
         addSeqLast()
+        _schedulePreloadNext()
         break
       case PlayChangeMode.REPLACE_LIST: // replace the current playing list
         replaceSeqList()
@@ -386,6 +468,7 @@ export function usePlayer(
         break
       case PlayChangeMode.ADD_LIST_LAST:  // add the list to the end of the current playing list
         addSeqListLast()
+        _schedulePreloadNext()
         break
       case PlayChangeMode.DIRECT_PLAY:
         seqIndex.value = seqList.value.indexOf(curPlayIndex.value)
@@ -419,12 +502,13 @@ export function usePlayer(
           track.album = data.album
           track.duration = data.duration
           track.favorited_at = data.favorited_at
-          track.cover = `/api/artwork/track/${tid}`
+          track.cover = `/media/tracks/${tid}.jpg?v=${data.cover_art_hash || 'default'}`
         })
         getStreamingUrl(tid).then(streamUrl => {
           if (audioRef.value) audioRef.value.src = `/api/${streamUrl}`
         })
       }
+      _schedulePreloadNext()
     })
   })
   onBeforeUnmount(() => {
@@ -435,6 +519,8 @@ export function usePlayer(
       audioRef.value.pause()
       audioRef.value.removeAttribute('src')
     }
+    if(preloadTimer) clearTimeout(preloadTimer)
+    audioCache.clearAll()
   })
 
   return {
