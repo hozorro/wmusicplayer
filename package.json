@@ -8,7 +8,10 @@
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
     "i18n:schema": "node scripts/generate-i18n-schema.cjs",
-    "i18n:check": "node scripts/check-i18n-missing-keys.cjs"
+    "i18n:check": "node scripts/check-i18n-missing-keys.cjs",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@alova/adapter-axios": "^2.0.14",
@@ -34,12 +37,14 @@
     "@intlify/unplugin-vue-i18n": "^11.0.3",
     "@types/node": "^22.15.26",
     "@vitejs/plugin-vue": "^5.2.3",
+    "@vitest/coverage-v8": "4.1.10",
     "@vue/compiler-ssr": "^3.5.26",
     "@vue/server-renderer": "^3.5.26",
     "@vue/tsconfig": "^0.7.0",
     "typescript": "~5.8.3",
     "vite": "^6.3.5",
     "vite-plugin-pwa": "^1.0.3",
+    "vitest": "4.1.10",
     "vue-tsc": "^2.2.8"
   }
 }

@@ -1,0 +1,52 @@
+name: Deploy Vue3 WMusicPlayer
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Create .env file dynamically
+        run: |
+          echo "VITE_APP_NAME=WMusicPlayer" >> .env
+          echo "VITE_TOKEN_PREFIX=player_" >> .env
+          echo "VITE_CLIENT_TYPE=player" >> .env
+
+      - name: Build project
+        run: yarn build
+
+      - name: Clean target files on server
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          port: ${{ secrets.SERVER_PORT }}
+          key: ${{ secrets.SERVER_KEY }}
+          script: |
+            find /var/www/wmusic/player/ -mindepth 1 -delete || true
+
+      - name: Sync files to server
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          port: ${{ secrets.SERVER_PORT }}
+          key: ${{ secrets.SERVER_KEY }}
+          source: "dist/"
+          target: /var/www/wmusic/player/
+          strip_components: 1
