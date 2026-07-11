@@ -1,11 +1,9 @@
-import { defineConfig, loadEnv } from 'vite'
+import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
-
-const env = loadEnv('development', process.cwd())
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -71,12 +69,12 @@ export default defineConfig({
     port: 5174,
     proxy: {
       '/api': {
-        target: env.VITE_BASE_URL,
+        target: 'http://127.0.0.1:8000',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
       '/media': {
-        target: env.VITE_BASE_URL.replace(/\/api\/.*$/, ''),
+        target: 'http://127.0.0.1:8000',
         changeOrigin: true,
       },
     },
