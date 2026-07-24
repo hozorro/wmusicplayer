@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n';
 import { useMusicStore } from '@/store/music';
 import useTrackOperations from '@/composables/track-operations';
 import { useColorEffect } from '@/composables/color-effect';
-import { usePlayer } from '@/composables/player'
+import { usePlayer } from '@/player'
 import { secToHMS } from '@/utilies/general';
 import { parseHits } from "@/utilies/time-text"
 import trackCover from '@/assets/imgs/track_art.jpg'
@@ -15,36 +15,14 @@ const { t } = useI18n()
 const storeMusic = useMusicStore()
 const showSimple = ref<boolean>(true)
 const coverImg = useTemplateRef('coverImg')
-const audioRef = useTemplateRef('audioRef')
+const audioARef = useTemplateRef('audioA')
+const audioBRef = useTemplateRef('audioB')
 const lyricContainerRef = useTemplateRef('lyricContainer')
 const { bgColor, refresh } = useColorEffect(coverImg, trackCover)
-const {
-  track,
-  hitsInfo,
-  loadHitsInfo,
-  lyrics,
-  lyricInfo,
-  setLyricLineRef,
-  playStatus,
-  playInfo,
-  audioList,
-  seqOrder,
-  handleTimeUpdate,
-  playAudio,
-  playNext,
-  playPrev,
-  playEnded,
-  playRemove,
-  handleOrder,
-  handleFav,
-  artistsFavStatus,
-  artistsFavs,
-  artistsFavsShow,
-  fetchArtistsFavStatus,
-  handleArtistFavs,
-  handleArtistFavSelected,
-  playlistItemClick
-} = usePlayer(audioRef, lyricContainerRef, refresh)
+
+const player = usePlayer(audioARef, audioBRef, lyricContainerRef, refresh)
+const { state } = player
+const track = state.currentTrack
 const progressWrap = useTemplateRef('progressWrap')
 const progress = useTemplateRef('progress')
 const progress_s = useTemplateRef('progress_s')
@@ -54,8 +32,8 @@ const artists = computed(() => {
   if(!track.artists) return
   return track.artists.map(a => a.name).join(',')
 });
-const playIcon_s = computed(() => playStatus.value ? 'icon-[solar--pause-bold]' : 'icon-[solar--play-bold]')
-const playIcon = computed(() => playStatus.value ? 'icon-[solar--pause-circle-bold]' : 'icon-[solar--play-circle-bold]')
+const playIcon_s = computed(() => state.isPlaying.value ? 'icon-[solar--pause-bold]' : 'icon-[solar--play-bold]')
+const playIcon = computed(() => state.isPlaying.value ? 'icon-[solar--pause-circle-bold]' : 'icon-[solar--play-circle-bold]')
 const seqOrderIcon = ['icon-[solar--repeat-linear]', 'icon-[solar--shuffle-linear]', 'icon-[solar--repeat-one-linear]']
 const favoritedTrackIcon = computed(() => track.favorited_at ? 'icon-[solar--heart-bold]' : 'icon-[solar--heart-linear]')
 const playlistShow = ref(false)
@@ -63,21 +41,19 @@ const showLyric = ref(false)
 const showHitsInfo = ref(false)
 
 function playing(){
-  if(audioRef.value){
-    curTime.value = secToHMS(audioRef.value.currentTime)
-    let offsetLeft = playInfo.playPortion * (progressWrap.value?.offsetWidth || 0)
-    if(progress.value) progress.value.style.width = offsetLeft + 'px'
-    if(progress_s.value) progress_s.value.style.width = (playInfo.playPortion * 100) + '%'
-  }
+  curTime.value = secToHMS(state.currentTime.value)
+  let offsetLeft = state.playPortion.value * (progressWrap.value?.offsetWidth || 0)
+  if(progress.value) progress.value.style.width = offsetLeft + 'px'
+  if(progress_s.value) progress_s.value.style.width = (state.playPortion.value * 100) + '%'
 }
 function onTimeUpdate(){
-  handleTimeUpdate(playing)
+  player.handleTimeUpdate(playing)
 }
 function handleHitsInfo() {
   if (showHitsInfo.value) showHitsInfo.value = false
   else {
-    if (track.id) loadHitsInfo(track.id)
-    else loadHitsInfo(storeMusic.curPlaylist[storeMusic.curPlayIndex].id)
+    if (track.id) player.loadHitsInfo(track.id)
+    else player.loadHitsInfo(storeMusic.curPlaylist[storeMusic.curPlayIndex].id)
     showHitsInfo.value = true
   }
 }
@@ -87,16 +63,16 @@ function hidePlaylist(){
 const { handleCurPlaylistOperation } = useTrackOperations()
 
 const favoritedArtistIcon = computed(() => {
-  if(!track.artists || artistsFavStatus.value == 'pending') return 'icon-[solar--user-block-linear]'
-  else if(artistsFavStatus.value == 'hasFav') return 'icon-[solar--user-heart-bold]'
-  else if(artistsFavStatus.value == 'noneFav') return 'icon-[solar--user-heart-linear]'
+  if(!track.artists || state.artistsFavStatus.value == 'pending') return 'icon-[solar--user-block-linear]'
+  else if(state.artistsFavStatus.value == 'hasFav') return 'icon-[solar--user-heart-bold]'
+  else if(state.artistsFavStatus.value == 'noneFav') return 'icon-[solar--user-heart-linear]'
   else return 'icon-[solar--user-cross-outline]'
 })
 
 watch(track, () => {
   setTimeout(() => {
     refresh()
-    fetchArtistsFavStatus()
+    player.fetchArtistsFavStatus()
   }, 300)
 })
 
@@ -116,8 +92,8 @@ watch(track, () => {
           </div>
         </div>
         <div class=" flex-none mr-4">
-          <span class=" inline-block h-12 align-middle ml-4 text-2xl" :class="playIcon_s" @click="playAudio"></span>
-          <span class=" inline-block icon-[solar--skip-next-bold] h-12 align-middle ml-4 text-2xl" @click="playNext"></span>
+          <span class=" inline-block h-12 align-middle ml-4 text-2xl" :class="playIcon_s" @click="player.togglePlay"></span>
+          <span class=" inline-block icon-[solar--skip-next-bold] h-12 align-middle ml-4 text-2xl" @click="player.playNext"></span>
         </div>
       </div>
       <div class=" w-[calc(100%-(--spacing(12)))] mx-auto -mt-[2px] h-[2px]">
@@ -145,22 +121,22 @@ watch(track, () => {
         </div>
         <div v-show="showLyric" class=" flex justify-center items-center w-full aspect-square text-center relative">
           <div class=" absolute top-0 left-0 w-full aspect-square bg-white opacity-30 blur-xl z-65"></div> 
-          <div v-if="lyricInfo.lyricLoading">{{ t('player.lyric_loading') }}</div>
-          <div v-else-if="lyricInfo.lyricError">{{ t('player.lyric_error') }}</div>
+          <div v-if="state.lyricLoading">{{ t('player.lyric_loading') }}</div>
+          <div v-else-if="state.lyricError">{{ t('player.lyric_error') }}</div>
           <div v-else ref="lyricContainer" class=" w-full aspect-square overflow-y-scroll z-70">
             <p 
-              v-for="(line, index) in lyrics" 
+              v-for="(line, index) in state.lyrics.value" 
               :key="index"
-              :ref="el => setLyricLineRef(el as HTMLElement | null, index)"
+              :ref="el => player.setLyricLineRef(el as HTMLElement | null, index)"
               class=" text-sm leading-5 my-1 text-shadow-md"
-              :class="{' text-amber-400 font-semibold': index == lyricInfo.curLyricIndex}">{{line.text}}</p>
+              :class="{' text-amber-400 font-semibold': index == state.curLyricIndex}">{{line.text}}</p>
           </div>
         </div>
         <div v-show="showHitsInfo" class=" absolute top-0 left-0 w-full h-full z-55" :style="bgColor" @click="showHitsInfo = false">
           <div class=" opacity-75 rounded-md w-full">
             <img src="/imgs/summer.jpg" class=" object-cover">
           </div>
-          <div class=" mt-4 mx-2 p-2 rounded-md bg-gray-200/30 text-stone-600 whitespace-pre-line">{{ parseHits(hitsInfo) }}</div>
+          <div class=" mt-4 mx-2 p-2 rounded-md bg-gray-200/30 text-stone-600 whitespace-pre-line">{{ parseHits(state.hitsInfo.value) }}</div>
         </div>
         <div class=" w-full flex justify-between items-center p-2 text-stone-50">
           <div class=" flex-1 min-w-0">
@@ -168,14 +144,14 @@ watch(track, () => {
             <div class=" text-gray-200 text-sm truncate">{{ artists }}</div>
           </div>
           <div class=" flex-none flex ml-2">
-            <div :class="favoritedTrackIcon" class=" align-middle text-xl" @click="handleFav"></div>
+            <div :class="favoritedTrackIcon" class=" align-middle text-xl" @click="player.handleFav"></div>
             <div class=" relative ml-4 align-middle text-xl z-50">
-              <div :class="favoritedArtistIcon" @click="handleArtistFavs"></div>
-              <div class=" absolute top-6 right-0 w-32 max-h-48 p-1 z-55 bg-white rounded-md shadow overflow-y-auto" v-show="artistsFavsShow">
-                <div v-for="(artist, index) in artistsFavs" :key="index" 
+              <div :class="favoritedArtistIcon" @click="player.handleArtistFavs"></div>
+              <div class=" absolute top-6 right-0 w-32 max-h-48 p-1 z-55 bg-white rounded-md shadow overflow-y-auto" v-show="state.artistsFavsShow.value">
+                <div v-for="(artist, index) in state.artistsFavs.value" :key="index" 
                   class=" truncate border-b border-b-gray-200 last:border-b-0 m-1 p-1 text-base text-gray-600"
                   :class="{'bg-cyan-100': artist.favorited_at}"
-                  @click="handleArtistFavSelected(artist.id)"
+                  @click="player.handleArtistFavSelected(artist.id)"
                 >{{artist.name}}</div>
               </div>
             </div>
@@ -194,10 +170,10 @@ watch(track, () => {
           </div>
         </div>
         <div class=" w-full flex justify-around items-center mt-8">
-          <span class=" text-2xl text-stone-50" :class="seqOrderIcon[seqOrder]" @click="handleOrder"></span>
-          <span class=" icon-[solar--skip-previous-bold] text-2xl text-stone-50" @click="playPrev"></span> 
-          <span class=" text-5xl text-stone-50" :class="playIcon" @click="playAudio"></span>
-          <span class=" icon-[solar--skip-next-bold] text-2xl text-stone-50" @click="playNext"></span>
+          <span class=" text-2xl text-stone-50" :class="seqOrderIcon[state.seqMode.value]" @click="player.handleOrder"></span>
+          <span class=" icon-[solar--skip-previous-bold] text-2xl text-stone-50" @click="player.playPrev"></span> 
+          <span class=" text-5xl text-stone-50" :class="playIcon" @click="player.togglePlay"></span>
+          <span class=" icon-[solar--skip-next-bold] text-2xl text-stone-50" @click="player.playNext"></span>
           <span class=" icon-[solar--plaaylist-minimalistic-linear] text-2xl text-stone-50" @click="playlistShow = !playlistShow"></span>
         </div>
       </div>
@@ -216,14 +192,14 @@ watch(track, () => {
           </div>
           
           <div class=" max-h-60 overflow-y-auto">
-            <div v-for="(trk, idx) in audioList" :key="idx" class=" flex justify-between items-center align-middle py-1">
+            <div v-for="(trk, idx) in player.audioList.value" :key="idx" class=" flex justify-between items-center align-middle py-1">
               <div class=" flex-none w-10 text-center">{{ idx + 1 }}</div>
-              <div class=" flex-1 min-w-0 content-center hover:cursor-pointer truncate" @click="playlistItemClick(idx,hidePlaylist)">
+              <div class=" flex-1 min-w-0 content-center hover:cursor-pointer truncate" @click="player.playlistItemClick(idx,hidePlaylist)">
                 <span v-if="trk.id == storeMusic.curPlaylist[storeMusic.curPlayIndex].id" 
                   class=" icon-[svg-spinners--bars-scale-middle] mr-1 text-cyan-500 align-middle"></span>{{ trk.title }}
               </div>
               <span class=" inline-block h-8 flex-none text-xl icon-[solar--trash-bin-trash-linear] hover:cursor-pointer"
-                @click="playRemove(trk.id)"></span>
+                @click="player.playRemove(trk.id)"></span>
               <span class=" inline-block h-8 flex-none text-xl ml-2 icon-[solar--menu-dots-bold] hover:cursor-pointer" 
                 @click="handleCurPlaylistOperation(trk.id, trk.title)"></span>
             </div>
@@ -232,5 +208,6 @@ watch(track, () => {
       </div>
     </transition>
   </div>
-  <audio ref="audioRef" v-bind="$attrs" @timeupdate="onTimeUpdate" @ended="playEnded"></audio>
+  <audio ref="audioA" v-bind="$attrs" @timeupdate="onTimeUpdate" @ended="player.playEnded"></audio>
+  <audio ref="audioB" v-bind="$attrs" @timeupdate="onTimeUpdate"></audio>
 </template>

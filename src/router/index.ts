@@ -64,6 +64,12 @@ const routes: RouteRecordRaw[] = [
   ]
   }, {
     path: "/login", name: "login", component: () => import("@/views/auth/Login.vue"),
+  }, {
+    path: "/test",
+    component: () => import("@/layouts/Blank.vue"),
+    children: [
+      { path: "lockscreen", name: "test-lockscreen", component: () => import("@/views/test/LockScreenTest.vue") }
+    ]
   }
 ]
 
