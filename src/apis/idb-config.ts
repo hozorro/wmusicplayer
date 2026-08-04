@@ -89,6 +89,13 @@ export default  {
         { name: 'track_ids', keyPath: 'track_ids', options: { multiEntry: true }},
         { name: 'hit_count', keyPath: 'hit_count', options: { unique: false }}
       ]
+    },{
+      name: 'pending',
+      keyPath: 'key',
+      isClear: true,
+      indexes: [
+        { name: 'key', keyPath: 'key', options: { unique: true }}
+      ]
     }
   ],
   init: () => { console.log('[IndexDB] idb init completed.') }

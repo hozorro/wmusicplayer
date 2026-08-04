@@ -1,6 +1,5 @@
 import { ref } from "vue";
 import { defineStore } from "pinia";
-import { PlayChangeMode } from "@/constants/play-constants";
 import { indexedDbHelper } from "@/apis/idb-funcs";
 import idbConfig from "@/apis/idb-config";
 import { loadLocaleMessages } from "@/i18n";
@@ -11,7 +10,6 @@ export const useMusicStore = defineStore("music", () => {
   const playerBoxShow = ref(true)
   const curPlaylist = ref<Track[]>([])
   const curPlayIndex = ref(0)
-  const playlistChanged = ref<PlayChangeMode>(PlayChangeMode.DONOTHING)
   const idbHelper = ref(new indexedDbHelper(idbConfig))
   const isIDBReady = ref(false)
   const params = ref<PlayerOptions>({
@@ -23,51 +21,31 @@ export const useMusicStore = defineStore("music", () => {
     timeUpdateInterval: 500,
     transferBatchSize: 500,
   })
+
   async function setLocale(newLocale: SupportedLocale) {
     if (locale.value === newLocale) return
     await loadLocaleMessages(newLocale)
     locale.value = newLocale
   }
-  function addToCurPlaylist(track: Track, addMode: PlayChangeMode) { 
-    switch (addMode) {
-      case PlayChangeMode.ADD_CUR:
-        curPlaylist.value.splice(curPlayIndex.value, 0, track)
-        break
-      case PlayChangeMode.ADD_NEXT:
-        curPlaylist.value.splice(curPlayIndex.value + 1, 0, track)
-        break
-      case PlayChangeMode.ADD_LAST:
-        curPlaylist.value.push(track)
-        break
-      default:
-        break
-    }
-    playlistChanged.value = addMode
-  }
-  function addListToCurPlaylist(trackList: Track[], addMode: PlayChangeMode) {
-    if (addMode === PlayChangeMode.REPLACE_LIST) curPlaylist.value = [...trackList]
-    else if (addMode === PlayChangeMode.ADD_LIST_LAST) curPlaylist.value.push(...trackList)
-    playlistChanged.value = addMode
-  }
+
   function getParam<K extends keyof PlayerOptions>(key:K):PlayerOptions[K]{
     return params.value[key]
   }
+
   function setParam<K extends keyof PlayerOptions>(key:K, value:PlayerOptions[K]):void{
     params.value[key] = value
   }
+  
   return { 
     locale,
     isDark,
     playerBoxShow,
     curPlaylist,
     curPlayIndex,
-    playlistChanged,
     idbHelper,
     isIDBReady,
     params,
     setLocale,
-    addToCurPlaylist,
-    addListToCurPlaylist,
     getParam,
     setParam
   }

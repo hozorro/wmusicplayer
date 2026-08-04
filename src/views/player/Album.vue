@@ -1,146 +1,174 @@
 <script setup lang="ts">
-import { ref, computed, useTemplateRef, onMounted } from "vue";
-import { useRoute } from "vue-router";
-import { useMusicStore } from "@/store/music"
-import { useRequest } from "alova/client";
+import { computed, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import AmbientBackground from "@/components/AmbientBackground.vue";
+import TrackList from "@/components/TrackList.vue";
+import { toPlayTrack } from "@/services/transform";
+import { usePlayer } from "@/composables/playback";
+import { usePlayerQueue } from "@/composables/player-queue";
+import { useCollapseHeader } from "@/composables/collapse-header";
+
 import { useI18n } from "vue-i18n";
-import TrackItem from "@/components/TrackItem.vue";
-import { useColorEffect } from "@/composables/color-effect";
-import { getAlbum, getCollectionTracks } from "@/apis/methods/music";
-import useTrackOperations from '@/composables/track-operations';
-import { shuffle } from "@/utilies/general";
-import { PlayChangeMode } from "@/constants/play-constants";
+import { getAlbum } from "@/apis/methods/music";
+import { shuffled } from "@/utilies/general";
 import defaultArt from '@/assets/imgs/album_art.jpg'
 
 const { t } = useI18n()
 
 const route = useRoute();
-const store = useMusicStore();
-const imgRef = useTemplateRef("coverImg");
-const { bgColor, scrollOut, refresh } = useColorEffect(imgRef, defaultArt)
+const router = useRouter();
+const player = usePlayer();
+const playQueue = usePlayerQueue();
 
-const artists = computed(() => {
-  return album.value.artists.map(a => a.name).join(',')
+const album = ref<AlbumInfo | null>(null)
+
+const playTracks = computed(() => 
+  album.value?.tracks.map(t => toPlayTrack(t,{
+    album: album.value!.title,
+    cover: album.value!.cover
+  })) ?? [],
+)
+
+// —— 折叠页头：单一 collapse ref(0..1)驱动全部插值 ——
+const { heroStyle, compactStyle, reset:resetCollapse } = useCollapseHeader({ range: 220 })
+
+// —— artists 展开 / 收起 ——
+const ARTIST_VISIBLE = 3
+const artistExpanded = ref(false)
+const visibleArtists = computed(() => {
+  const all = album.value?.artists ?? []
+  return artistExpanded.value ? all : all.slice(0, ARTIST_VISIBLE)
 })
+const hiddenCount = computed(() => Math.max(0, (album.value?.artists.length ?? 0) - ARTIST_VISIBLE))
 
-// import albumSketch from "@/assets/imgs/album_sketch.png";
-const { data: album, onSuccess } = useRequest(getAlbum(parseInt(route.params.id as string)),{
-  initialData: {
-    id: '',
-    name: '',
-    artists: [],
-    track_count: 0,
-    tracks: [],
-  }
-})
-onSuccess(async (res) => {
-  if (!res.data.cover) res.data.cover = defaultArt
-  setTimeout(() => refresh(), 300)
-})
-
-const { handleClick, handleOperation } = useTrackOperations()
-
-function handlePlayAll() {
-  getCollectionTracks(parseInt(route.params.id as string), 'album').then(data => {
-    store.addListToCurPlaylist(data, PlayChangeMode.REPLACE_LIST)
-  })
-}
-function handlePlayRandom() {
-  const tracks = [...album.value.tracks]
-  shuffle(tracks)
-  store.addListToCurPlaylist(tracks, PlayChangeMode.REPLACE_LIST)
-}
-const backLink = computed(() => {
-  let backQuery = {...route.query}
-  if (route.query.back == 'artist') {
-    delete backQuery.back
-    return { name: 'artist', params: { id: route.query.id as string }, query: backQuery }
-  } else {
-    if (route.query.back) delete backQuery.back
-    return { name: route.query.back as string || 'album-list', query: backQuery }
-  }
-});
-
-const needShowMoreArtists = ref(false)
-const showMoreArtists = ref(false)
-const artistsIconDiv = useTemplateRef('artistsIconDiv')
-const allArtistsDiv = useTemplateRef('allArtistsDiv')
-
-onMounted(() => {
-  if (artistsIconDiv.value && allArtistsDiv.value) {
-    const height = artistsIconDiv.value.getBoundingClientRect().height
-    const allHeight = allArtistsDiv.value.getBoundingClientRect().height
-    if (allHeight > height) {
-      needShowMoreArtists.value = true
-    }
-  }
-})
+watch(() => route.params.id, async id => {
+  if (!id) return
+  album.value = null
+  artistExpanded.value = false
+  resetCollapse()
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+  album.value = await getAlbum(Number(id)).send()
+}, { immediate: true })
 </script>
 
 <template>
-  <div class=" fixed flex items-center top-2 left-0 right-0 z-30" 
-    :style="{
-      background: scrollOut ? '#f3f4f6' : 'transparent',
-      borderBottom: scrollOut ? '1px solid #d1d2d4' : 'none'}">
-    <div class=" flex-none">
-      <RouterLink :to="backLink"><span class=" icon-[solar--alt-arrow-left-linear] align-middle text-2xl mix-blend-difference"></span></RouterLink>
+  <div class=" min-h-dvh">
+    <!-- 氛围背景：fixed 包裹，内容之下 -->
+    <div class=" fixed inset-0 -z-10">
+      <AmbientBackground :cover="album?.cover" />
     </div>
-    <div class=" flex-1 min-w-0 align-middle truncate mix-blend-difference">
-      <RouterLink :to="backLink">{{scrollOut ? `${t('player.album')}: ` + album.title : t('player.album')}}</RouterLink>
+
+    <!-- 固定顶栏：返回键 + 折叠标题 -->
+    <div class=" fixed inset-x-0 top-0 z-30 bg-gradient-to-b from-black/60 via-black/30 to-transparent pb-6 pt-[calc(env(safe-area-inset-top)+10px)]">
+      <div class=" mx-auto flex max-w-2xl items-center gap-3 px-4">
+        <button
+          class=" shrink-0 rounded-l-full bg-black/30 p-2 text-zinc-100 ring-1 ring-white/10 transition hover:bg-black/50 active:scale-90"
+          aria-label="返回"
+          @click="router.back()"
+        >
+          <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 6l-6 6 6 6" />
+          </svg>
+        </button>
+        <h2 :style="compactStyle" class=" min-w-0 flex-1 truncate text-base font-bold text-zinc-50">
+          {{ album?.title ?? '...' }}
+        </h2>
+      </div>
     </div>
-    <div class=" flex-none text-stone-200" :class="{'hidden': !scrollOut}">
-      <div class=" btn-bar" @click="handlePlayAll">{{ t('player.playall') }}</div>
-      <div class=" btn-bar ml-2" @click="handlePlayRandom">{{ t('player.randomplay') }}</div>
-    </div>
-  </div>
-  <div class=" w-full min-h-full" :style="bgColor">
-    <div class=" flex pt-12 px-2 w-full">
-      <div class=" flex-1 w-32 flex flex-col justify-between">
-        <div class=" flex-none pl-2">
-          <div class=" w-full text-lg font-bold text-stone-100 truncate">{{ album.title || '' }}</div>
-          <div class=" w-full flex text-sm text-stone-300 items-start">
-            <div class=" py-1" ref="artistsIconDiv">
-              <span class=" align-middle icon-[solar--user-speak-linear]"></span>
+
+    <!-- 内容 -->
+    <main class=" mx-auto max-w-2xl px-4 pb-32 pt-[calc(env(safe-area-inset-top)+64px)]">
+      <template v-if="album">
+        <!-- hero：封面 + 标题 + artists + 动作（折叠时整体淡出） -->
+        <header :style="heroStyle" class=" will-change-transform">
+          <div class=" flex items-end gap-4">
+            <div class=" h-28 w-28 shrink-0 overflow-hidden rounded-xl bg-zinc-900 shadow-2xl shadow-black/60 ring-1 ring-white/10">
+              <img v-if="album.cover" :src="album.cover" alt="" class=" h-full w-full object-cover" />
+              <img v-else :src="defaultArt" alt="" class=" h-full w-full object-cover" />
             </div>
-            <div class=" flex-1 flex relative min-w-0 align-middle">
-              <div class=" flex-1 min-w-0 p-1 truncate">{{ artists }}</div>
-              <div class=" flex-none text-cyan-500 py-1" 
-                v-if="needShowMoreArtists" v-show="!showMoreArtists" @click="showMoreArtists = true">{{ t('common.more') }}</div>
-              <div class=" absolute top-0 left-0 right-0 max-h-48 overflow-y-auto p-1 rounded-md text-wrap bg-cyan-50 shadow" 
-                ref="allArtistsDiv" 
-                :class="{'visible': showMoreArtists, 'invisible': !showMoreArtists}"
-                :style="bgColor">
-                {{ artists }} <span class=" ml-2 text-cyan-500" @click="showMoreArtists = false">{{ t('common.closeup') }}</span>
-              </div>
+            <div class=" min-w-0 flex-1 pb-1">
+              <p class=" text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-400">专辑</p>
+              <h1 class=" mt-1 text-2xl font-extrabold leading-tight text-zinc-50">{{ album.title }}</h1>
             </div>
           </div>
-          <div class=" mt-2 text-sm text-stone-300">
-            <span class=" mr-1 align-middle icon-[solar--music-notes-linear]"></span>
-            <span class=" align-middle">{{ t('player.total_tracks', {count: album.track_count}) }}</span>
+
+          <!-- artists: 可展开 chips -->
+          <div v-if="album.artists.length" class=" mt-4">
+            <div
+              class=" flex flex-wrap gap-2 overflow-hidden transition-[max-height] duration-300 ease-out"
+              :class=" artistExpanded ? 'max-h-60' : 'max-h-8'"
+            >
+              <button
+                v-for="a in visibleArtists"
+                :key="a.id"
+                class=" rounded-full bg-white/8 px-3 py-1.5 text-xs font-medium text-zinc-200 ring-1 ring-white/10 transition hover:bg-white/15 active:scale-95"
+                @click="router.push(`/artist/${a.id}`)"
+              >
+                {{ a.name }}
+              </button>
+              <button
+                v-if="hiddenCount > 0 && !artistExpanded"
+                class=" rounded-full bg-white/4 px-3 py-1.5 text-xs font-medium text-zinc-400 ring-1 ring-white/5 transition hover:bg-white/10 active:scale-95"
+                @click="artistExpanded = true"
+              >
+                +{{ hiddenCount }} more
+              </button>
+              <button
+                v-if="hiddenCount > 0 && artistExpanded"
+                class=" rounded-full bg-white/4 px-3 py-1.5 text-xs font-medium text-zinc-400 ring-1 ring-white/5 transition hover:bg-white/10 active:scale-95"
+                @click="artistExpanded = false"
+              >
+                collapse
+              </button>
+            </div>
+          </div>
+
+          <!-- actions: 播放全部 / 随机播放 -->
+          <div class=" mt-5 flex gap-2.5">
+            <button
+              class=" rounded-full bg-amber-400 px-5 py-2 text-sm font-bold text-zinc-950 shadow-lg shadow-amber-400/20 transition hover:bg-amber-300 active:scale-95 disabled:pointer-events-none disabled:opacity-40"
+              :disabled="playTracks.length === 0"
+              @click="player.playAll(playTracks)"
+            >
+              {{ t('player.playall') }}
+            </button>
+            <button
+              class=" rounded-full px-5 py-2 text-sm font-semibold text-zinc-200 ring-1 ring-white/15 transition hover:bg-white/10 active:scale-95 disabled:pointer-events-none disabled:opacity-40"
+              @click="playQueue.addMany(shuffled(playTracks))"
+            >
+              {{ t('player.randomplay') }}
+            </button>
+          </div>
+        </header>
+
+        <!-- 曲目列表 -->
+        <h2 class=" pb-2 pt-7 text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
+          曲目 <span class=" tabular-nums"> {{ playTracks.length }}</span>
+        </h2>
+        <TrackList :tracks="playTracks" :show-art="true" />
+      </template>
+
+      <!-- skeleton -->
+      <div v-else class=" animate-pulse">
+        <div class="flex items-end gap-4">
+          <div class="h-28 w-28 rounded-xl bg-zinc-800/80" />
+          <div class="flex-1 space-y-2.5 pb-1">
+            <div class="h-3 w-10 rounded bg-zinc-800/80" />
+            <div class="h-7 w-3/4 rounded bg-zinc-800/80" />
           </div>
         </div>
-        <div class=" flex-1 flex justify-around items-center mt-2">
-          <button class=" btn" @click="handlePlayAll">{{ t('player.playall') }}</button>
-          <button class=" btn" @click="handlePlayRandom">{{ t('player.randomplay') }}</button>
+        <div class="mt-4 flex gap-2">
+          <div class="h-7 w-20 rounded-full bg-zinc-800/80" />
+          <div class="h-7 w-24 rounded-full bg-zinc-800/80" />
+        </div>
+        <div class="mt-6 flex gap-2.5">
+          <div class="h-9 w-24 rounded-full bg-zinc-800/80" />
+          <div class="h-9 w-28 rounded-full bg-zinc-800/80" />
+        </div>
+        <div class="mt-10 space-y-3">
+          <div v-for="n in 8" :key="n" class="h-12 rounded-xl bg-zinc-800/50" />
         </div>
       </div>
-      <div class=" flex-none w-7/15">
-        <img :src="album.cover" class=" w-25/34 aspect-square object-cover rounded-md inline-block" ref="coverImg" />
-        <img src="@/assets/imgs/album_part.png" class=" w-4/17 inline-block" />
-      </div>
-    </div>
-    <div class="  w-full mt-4 p-2 bg-light dark:bg-dark rounded-t-lg">
-      <div class=" flex items-center w-full" v-for="(track,index) in album.tracks">
-        <div class=" flex-none w-6 text-center text-stone-500">{{ index + 1 }}</div>
-        <TrackItem
-          :id="track.id"
-          :title="track.title"
-          :sub-info="track.artists?.join(', ')"
-          @item-click="handleClick"
-          @operation="handleOperation"
-          class=" my-2 flex-1 min-w-0"
-        />
-      </div>
-    </div>
-  </div>
+    </main>
+  </div>  
 </template>

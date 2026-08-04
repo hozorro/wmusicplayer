@@ -6,6 +6,7 @@ import router from '@/router'
 import App from './App.vue'
 import i18n, { loadLocaleMessages} from '@/i18n'
 import { useMusicStore } from '@/store/music'
+import { initPlayer } from '@/player/facade/index.ts'
 
 const app = createApp(App)
 
@@ -22,6 +23,8 @@ const pinia = createPinia()
 pinia.use(piniaPluginPersistedState)
 
 app.use(router).use(pinia).use(i18n)
+
+initPlayer()
 
 ;(async () => {
   const musicStore = useMusicStore()

@@ -1,96 +1,141 @@
 <script setup lang="ts">
-import { ref, computed, useTemplateRef } from "vue";
-import { useRoute } from "vue-router";
+/**
+ * 歌单详情页：曲库系列唯一编辑形态
+ * 曲目移除 / 排序（乐观更新 + 失败回滚）
+ */
+import { computed, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import TrackList from "@/components/TrackList.vue";
+import { useCollapseHeader } from "@/composables/collapse-header";
+import { usePlayer } from "@/composables/playback";
+import { toPlayTrack } from "@/services/transform";
+import type { MenuSource } from "@/player/menu/types";
+import type { PlayTrack } from "@/player/types";
 import { invalidateCache } from "alova";
 import { useRequest, useForm } from "alova/client";
-import { useMusicStore } from "@/store/music";
 import { useI18n } from "vue-i18n";
-import { shuffle, isNumberic } from "@/utilies/general";
-import TrackItem from "@/components/TrackItem.vue";
-import { useColorEffect } from "@/composables/color-effect";
-import useTrackOperations from "@/composables/track-operations";
-import { getPlaylist, editPlaylist, removeTrackFromPlaylist } from "@/apis/methods/music";
-import { updatePlaylist, updateHits } from "@/apis/methods/idb-locals";
-import defaultArt from "@/assets/imgs/playlist.jpg";
-import { PlayChangeMode } from "@/constants/play-constants";
+import { shuffled, isNumberic } from "@/utilies/general";
+import { playbackWriter } from "@/services/playback-data";
+import { getPlaylist, updatePlaylist, removeTrackFromPlaylist, movePlaylistTrack, updatePlaylistHit } from "@/apis/methods/music";
+import { updateHits, removeTrackFromPlaylist as idbRemoveTrackFromPlaylist, movePlaylistTrack as idbMovePlaylistTrack } from "@/apis/methods/idb-locals";
 import WMessage from "@/composables/message";
 import dayjs from "dayjs";
 
 const { t } = useI18n()
-
-const musicStore = useMusicStore()
-const imgRef = useTemplateRef("coverImg");
-const { bgColor, scrollOut, refresh } = useColorEffect(imgRef, defaultArt)
-
 const route = useRoute()
-const {data: playlist, send: getData, onComplete} = useRequest(() => {
+const router = useRouter()
+const player = usePlayer()
+const { heroStyle, compactStyle, reset: resetCollapse } = useCollapseHeader({ range: 220, parallax: 56 })
+
+const editing = ref(false)
+
+const {data: playlist, send: getData} = useRequest(() => {
   let pid: number | string = route.params.id as string
   if (isNumberic(route.params.id as string)) pid = parseInt(route.params.id as string)
   return getPlaylist(pid)
 },{
-  initialData: { id: '',name: '', tracks: [] }
+  initialData: { id: '', name: '', tracks: [] },
+  immediate: false
 })
-onComplete(() => { 
-  setTimeout(() => refresh(), 300)
-})
-const { handleClick, handleOperation } = useTrackOperations()
 
-function handlePlayAll(){
-  musicStore.addListToCurPlaylist(playlist.value.tracks, PlayChangeMode.REPLACE_LIST)
-  if (musicStore.isIDBReady) {
-    setTimeout(() => {
-      updateHits('playlist', playlist.value.id!)
-    }, 500)
+watch(() => route.params.id, async id => {
+  if (!id) return
+  editing.value = false
+  resetCollapse()
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+  getData()
+}, { immediate: true })
+
+const tracks = computed(() => 
+  playlist.value?.tracks.map(t => toPlayTrack(t)) ?? []
+)
+
+// 编辑操作：乐观更新 + 失败精确回滚，API接口预留
+function removeTrack(id: number) {
+  const arr = playlist.value!.tracks
+  const idx = arr.findIndex(t => t.id === id)
+  if (idx === -1) return
+  const [removed] = arr.splice(idx, 1)
+  const ok = playbackWriter.write({
+    key: `playlist:${playlist.value.id}:track:${id}`,
+    label: `移除曲目 ${removed.title}`,
+    opType: 'remove-track-from-playlist',
+    payload: { id: playlist.value.id, track_id: id },
+    local: async () => { await idbRemoveTrackFromPlaylist(playlist.value!.id, id) },
+    remote: async () => { await removeTrackFromPlaylist(playlist.value!.id, id) },
+  })
+  invalidateCache(getPlaylist(playlist.value!.id))
+  if (!ok) arr.splice(idx, 0, removed)
+}
+
+function moveTrack(id: number, direction: -1 | 1) {
+  const arr = playlist.value!.tracks
+  const idx = arr.findIndex(t => t.id === id)
+  const targetIdx = idx + direction
+  if (idx === -1 || targetIdx < 0 || targetIdx >= arr.length) return
+  ;[arr[idx], arr[targetIdx]] = [arr[targetIdx], arr[idx]]
+  const ok = playbackWriter.write({
+    key: `playlist:${playlist.value.id}:track:${id}`,
+    label: `移动曲目 ${arr[idx].title}`,
+    opType: 'move-playlist-track',
+    payload: { id: playlist.value.id, track_id: id, target_id: arr[targetIdx].id },
+    local: async () => { await idbMovePlaylistTrack(playlist.value!.id, id, arr[targetIdx].id) },
+    remote: async () => { await movePlaylistTrack(playlist.value!.id, id, arr[targetIdx].id) },
+  })
+  invalidateCache(getPlaylist(playlist.value!.id))
+  if (!ok) {
+    [arr[idx], arr[targetIdx]] = [arr[targetIdx], arr[idx]]
   }
 }
-function handlePlayRandom(){
-  const tracks = [...playlist.value.tracks]
-  shuffle(tracks)
-  musicStore.addListToCurPlaylist(tracks, PlayChangeMode.REPLACE_LIST)
-  if (musicStore.isIDBReady) {
-    setTimeout(() => {
-      updateHits('playlist', playlist.value.id!)
-    }, 500)
-  }
+
+// TrackList 菜单注入： playlist-track 类型携带移除回调
+const playlistMenuSource = (t: PlayTrack): MenuSource => ({
+  kind: "playlist-track",
+  track: t,
+  onRemove: () => removeTrack(t.id)
+})
+
+async function writePlaylistHits() {
+  playbackWriter.write({
+    key: `playlist:${playlist.value.id}:hits`,
+    label: `播放计次 ${playlist.value.title}`,
+    opType: 'hit-playlist',
+    payload: { id: playlist.value.id, at: dayjs().format() },
+    local: async () => { await updateHits('playlist', playlist.value!.id) },
+    remote: async () => { await updatePlaylistHit(playlist.value!.id) },
+  })
+}
+
+async function handlePlayAll(){
+  player.playAll(tracks.value)
+  await writePlaylistHits()
+}
+async function handlePlayRandom(){
+  player.playAll(shuffled(tracks.value))
+  await writePlaylistHits()
 }
 
 // edit playlist
-const isShowEdit = ref(false)
-const imgSrc = ref('')
-const coverFile = useTemplateRef('coverFile')
-function showEdit() {
-  musicStore.playerBoxShow = false
-  imgSrc.value = playlist.value.cover
+const editOpened = ref(false)
+const coverPreview = ref<string>()
+const coverFile = ref<File | null>(null)
+const fileInput = ref<HTMLInputElement>()
+function openEdit() {
+  coverPreview.value = playlist.value?.cover ?? ''
   form.value.title = playlist.value.title
   form.value.comment = playlist.value.comment
-  isShowEdit.value = true
+  editOpened.value = true
 }
-function cancelEdit() {
-  isShowEdit.value = false
-  musicStore.playerBoxShow = true
-}
-function triggleCoverSelect() {
-  if(!!coverFile.value){
-    coverFile.value.click()
-  }
-}
-function handleCoverChange(e: Event) {
-  const target = e.target as HTMLInputElement
-  if(target.files && target.files.length > 0){
-    const coverSeleted = target.files[0]
-    form.value.cover = coverSeleted
-    const reader = new FileReader()
-    reader.readAsDataURL(coverSeleted)
-    reader.onload = function(e) {
-      if(e.target){
-        imgSrc.value = e.target.result as string
-      }
-    }
-  }
+function onFileChange(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  if (coverPreview.value?.startsWith('blob:')) URL.revokeObjectURL(coverPreview.value)
+  coverFile.value = file
+  coverPreview.value = URL.createObjectURL(file)
+  form.value.cover = file
 }
 const {
   loading,
-  data: updatedPlaylist,
   form,
   send: submit,
   uploading,
@@ -105,7 +150,7 @@ const {
     if(data.cover){
       formData.append('cover', data.cover)
     }
-    return editPlaylist(formData)
+    return updatePlaylist(formData)
   },
   {
     initialForm:{
@@ -124,19 +169,7 @@ const progress = computed(() => {
 })
 onSuccess(() => {
   uploading.value.loaded = 0
-  isShowEdit.value = false
-  musicStore.playerBoxShow = true
-
-  if (musicStore.isIDBReady) { 
-    setTimeout(() => {
-      if (playlist.value.id){
-        updatePlaylist(playlist.value.id, {
-          title: updatedPlaylist.value.title,
-          comment: updatedPlaylist.value.comment,
-        })
-      }
-    }, 500)
-  }
+  editOpened.value = false
   getData()
 })
 onError(() => {
@@ -149,127 +182,215 @@ function handleSubmit() {
   }
   submit()
 }
-function handleRemove(id: number){
-  removeTrackFromPlaylist(playlist.value.id!, id).then(res => {
-    if(res == 'ok') {
-      invalidateCache(getPlaylist(playlist.value.id!))
-      getData()
-    }
-  })
-}
-const backLink = computed(() => {
-  let backQuery = {...route.query}
-  if (route.query.back) delete backQuery.back
-  return { name: route.query.back as string || 'playlist-all', query: backQuery };
-});
 </script>
 
 <template>
-  <div class=" fixed flex justify-between w-full top-0 left-0 p-2 z-30" 
-    :style="{
-      background: scrollOut ? '#f3f4f6' : 'transparent',
-      borderBottom: scrollOut ? '1px solid #d1d2d4' : 'none'}">
-    <router-link :to="backLink" class=" flex-none" :style="{color: scrollOut ? '#364153' : '#f5f5f4'}">
-      <span class=" icon-[solar--alt-arrow-left-linear] align-middle text-2xl mix-blend-difference"></span>
-      <span class=" align-middle">{{scrollOut ? `${t('player.playlist')}: ` + playlist.title : t('player.playlist')}}</span>
-    </router-link>
-    <div class=" text-stone-200" :style="{display: scrollOut ? 'block' : 'none'}">
-      <div class=" btn-bar" @click="handlePlayAll">{{ t('player.playall') }}</div>
-      <div class=" btn-bar ml-2" @click="handlePlayRandom">{{ t('player.randomplay') }}</div>
+  <div class=" min-h-dvh">
+    <!-- 固定顶栏 -->
+    <div class=" fixed inset-x-0 top-0 z-30 bg-gradient-to-b from-black/60 via-black/30 to-transparent pb-6 pt-[calc(env(safe-area-inset-top)+10px)]">
+      <div class=" mx-auto flex max-w-2xl items-center gap-3 px-4">
+        <button
+          class="shrink-0 rounded-full bg-black/30 p-2 text-zinc-100 ring-1 ring-white/10 transition hover:bg-black/50 active:scale-90"
+          aria-label="返回" @click="router.back()"
+        >
+          <span class=" icon-[solar--alt-arrow-left-linear] text-2xl"></span>
+        </button>
+        <h2 :style="compactStyle" class="min-w-0 flex-1 truncate text-base font-bold text-zinc-50">
+          {{ playlist?.title ?? '...' }}
+        </h2>
+      </div>
+    </div>
+
+    <template v-if="playlist">
+      <!-- ═══ hero：封面 + 信息 + 编辑 + 动作 ═══ -->
+      <header :style="heroStyle" class=" will-change-transform">
+        <div class="mx-auto max-w-2xl px-4 pb-5 pt-[calc(env(safe-area-inset-top)+64px)]">
+          <div class="flex items-start gap-4">
+            <div class="h-28 w-28 shrink-0 overflow-hidden rounded-xl bg-zinc-900 shadow-2xl shadow-black/60 ring-1 ring-white/10">
+              <img v-if="playlist.cover" :src="playlist.cover" alt="" class="h-full w-full object-cover" />
+              <svg v-else viewBox="0 0 24 24" class="m-auto mt-9 h-10 w-10 text-zinc-700" fill="currentColor">
+                <path d="M9 18V6l10-2v11.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                <circle cx="6.5" cy="18" r="2.5" /><circle cx="16.5" cy="15.5" r="2.5" />
+              </svg>
+            </div>
+            <div class="min-w-0 flex-1 pt-0.5">
+              <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-400">歌单</p>
+              <h1 class="mt-1 text-2xl font-extrabold leading-tight text-zinc-50">{{ playlist.title }}</h1>
+              <p class="mt-1.5 line-clamp-2 text-xs leading-relaxed text-zinc-400">
+                {{ playlist.comment || '暂无介绍' }}
+              </p>
+              <p class="mt-1.5 text-[11px] tabular-nums text-zinc-500">
+                {{ dayjs(playlist.created_at).format('YYYY-MM-DD HH:mm') }} 创建 · {{ playlist.tracks.length }} 首
+              </p>
+            </div>
+            <button
+              class="shrink-0 rounded-full p-2 text-zinc-400 transition hover:bg-white/8 hover:text-zinc-100 active:scale-90"
+              aria-label="编辑歌单" @click="openEdit"
+            >
+              <svg viewBox="0 0 24 24" class="h-4.5 w-4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z" />
+              </svg>
+            </button>
+          </div>
+
+          <div class="mt-5 flex gap-2.5">
+            <button
+              class="rounded-full bg-amber-400 px-5 py-2 text-sm font-bold text-zinc-950 shadow-lg shadow-amber-400/20 transition hover:bg-amber-300 active:scale-95 disabled:pointer-events-none disabled:opacity-40"
+              :disabled="!tracks.length"
+              @click="handlePlayAll"
+            >
+              {{ t('player.playall') }}
+            </button>
+            <button
+              class="rounded-full px-5 py-2 text-sm font-semibold text-zinc-200 ring-1 ring-white/15 transition hover:bg-white/10 active:scale-95 disabled:pointer-events-none disabled:opacity-40"
+              :disabled="!tracks.length"
+              @click="handlePlayRandom"
+            >
+              {{ t('player.randomplay') }}
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- ═══ 曲目区：普通 / 编辑 双形态 ═══ -->
+      <main class="mx-auto max-w-2xl px-4 pb-32">
+        <div class="flex items-center justify-between pb-2 pt-5">
+          <h2 class="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
+            曲目 <span class="tabular-nums">· {{ tracks.length }}</span>
+          </h2>
+          <button
+            v-if="tracks.length"
+            class="rounded-full px-3 py-1 text-xs font-semibold transition active:scale-95"
+            :class="editing ? 'bg-amber-400 text-zinc-950' : 'text-amber-400 hover:bg-white/5'"
+            @click="editing = !editing"
+          >
+            {{ editing ? '完成' : '管理' }}
+          </button>
+        </div>
+
+        <!-- 普通模式：TrackList + playlist-track 菜单 -->
+        <TrackList v-if="!editing" :tracks="tracks" :menu-source="playlistMenuSource" :show-art="true" />
+
+        <!-- 编辑模式：上移 / 下移 / 删除 -->
+        <div v-else class="space-y-1">
+          <div
+            v-for="(t, i) in tracks"
+            :key="t.id"
+            class="flex items-center gap-1.5 rounded-xl bg-white/[0.03] px-2 py-2 ring-1 ring-white/5"
+          >
+            <svg viewBox="0 0 24 24" class="h-5 w-5 shrink-0 text-zinc-600" fill="currentColor">
+              <circle cx="9" cy="6" r="1.5" /><circle cx="15" cy="6" r="1.5" />
+              <circle cx="9" cy="12" r="1.5" /><circle cx="15" cy="12" r="1.5" />
+              <circle cx="9" cy="18" r="1.5" /><circle cx="15" cy="18" r="1.5" />
+            </svg>
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-sm font-medium text-zinc-100">{{ t.title }}</p>
+              <p class="truncate text-xs text-zinc-500">{{ t.artists ? t.artists.map(a => a.name).join(', ') : '未知艺术家' }}</p>
+            </div>
+            <button
+              class="rounded-md p-1.5 text-zinc-400 transition hover:bg-white/10 active:scale-90 disabled:pointer-events-none disabled:opacity-25"
+              :disabled="i === 0" aria-label="上移" @click="moveTrack(t.id, -1)"
+            >
+              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
+            </button>
+            <button
+              class="rounded-md p-1.5 text-zinc-400 transition hover:bg-white/10 active:scale-90 disabled:pointer-events-none disabled:opacity-25"
+              :disabled="i === tracks.length - 1" aria-label="下移" @click="moveTrack(t.id, 1)"
+            >
+              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7" /></svg>
+            </button>
+            <button
+              class="rounded-md p-1.5 text-rose-400 transition hover:bg-rose-400/10 active:scale-90"
+              aria-label="移除" @click="removeTrack(t.id)"
+            >
+              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+            </button>
+          </div>
+          <p class="pt-3 text-center text-[11px] text-zinc-600">调整即时生效</p>
+        </div>
+
+        <p v-if="!tracks.length" class="py-16 text-center text-sm text-zinc-500">
+          歌单为空——在任意曲目菜单选择"添加到歌单"即可收集
+        </p>
+      </main>
+    </template>
+
+    <!-- 骨架 -->
+    <div v-else class="animate-pulse">
+      <div class="mx-auto max-w-2xl px-4 pt-[calc(env(safe-area-inset-top)+64px)]">
+        <div class="flex items-start gap-4">
+          <div class="h-28 w-28 rounded-xl bg-zinc-800/80" />
+          <div class="flex-1 space-y-2.5 pt-1">
+            <div class="h-3 w-10 rounded bg-zinc-800/80" />
+            <div class="h-7 w-2/3 rounded bg-zinc-800/80" />
+            <div class="h-3 w-full rounded bg-zinc-800/80" />
+            <div class="h-3 w-1/2 rounded bg-zinc-800/80" />
+          </div>
+        </div>
+        <div class="mt-5 flex gap-2.5">
+          <div class="h-9 w-24 rounded-full bg-zinc-800/80" />
+          <div class="h-9 w-28 rounded-full bg-zinc-800/80" />
+        </div>
+        <div class="mt-10 space-y-3">
+          <div v-for="n in 6" :key="n" class="h-12 rounded-xl bg-zinc-800/50" />
+        </div>
+      </div>
     </div>
   </div>
-  <div class=" w-full min-h-full" :style="bgColor">
-    <div class=" flex pt-12 px-3 w-full">
-      <div class=" flex-none w-1/3">
-        <img :src="playlist.cover" v-default-src="defaultArt" class=" w-full aspect-square object-cover rounded-md" ref="coverImg" />
-      </div>
-      <div class=" flex-1 flex flex-col justify-between ml-4">
-        <div class=" flex-none">
-          <div class=" text-lg font-bold mr-2 text-stone-100">{{ playlist.title }}
-            <span class=" text-stone-300 icon-[solar--gallery-edit-linear] align-middle" @click="showEdit"></span>
-          </div>
-          <div class=" text-sm text-stone-200">
-            <span class=" mr-1 align-middle icon-[solar--calendar-linear]"></span>
-            <span class=" align-middle">{{ dayjs(playlist.created_at).format('YYYY-MM-DD HH:mm') }}</span> 
-            <span class=" ml-2 mr-1 align-middle icon-[solar--music-notes-linear]"></span>
-            <span class=" align-middle">{{ playlist.tracks.length }}</span>
-          </div>
-        </div>
-        <div class=" flex-1 flex justify-around items-center mt-2">
-          <button class=" btn" @click="handlePlayAll">{{ t('player.playall') }}</button>
-          <button class=" btn" @click="handlePlayRandom">{{ t('player.randomplay') }}</button>
-        </div>
-      </div>
-    </div>
-    <div class=" mt-2 mx-3 rounded-md p-2 text bg-stone-300/10 text-stone-200">{{ playlist.comment ? playlist.comment : t('playlist.default_comment') }}</div>
-    <div class=" w-full mt-4 p-2 bg-gray-100 rounded-t-lg">
-      <div class=" flex items-center w-full" v-for="(track,index) in playlist.tracks">
-        <div class=" flex-none w-6 text-center text-stone-500">{{ index + 1 }}</div>
-        <div class=" flex-1 min-w-0">
-          <TrackItem
-            :id="track.id"
-            :title="track.title"
-            :sub-info="track.artists?.join(', ')"
-            :show-art="true"
-            :art="track.cover"
-            :show-delete="true"
-            @delete="handleRemove"
-            @item-click="handleClick"
-            @operation="handleOperation"
-            class=" my-2"
-          />
-        </div>
-      </div>
-    </div>
-  </div>
+  
   <!-- edit playlist -->
   <transition
-    enter-from-class=" translate-y-full"
-    leave-to-class="translate-y-full"
-    enter-active-class="transition-all duration-300 ease-in-out"
-    leave-active-class="transition-all duration-300 ease-in-out"
+    enter-active-class="transition-opacity duration-250" enter-from-class="opacity-0"
+    leave-active-class="transition-opacity duration-200" leave-to-class="opacity-0"
   >
-    <div class=" absolute bottom-0 left-0 w-full h-[calc(100%-(--spacing(12)))] rounded-t-2xl p-2 bg-white" v-show="isShowEdit">
-      <div class=" flex justify-between">
-        <div class="  flex-none text-lg text-amber-500" @click="cancelEdit">{{ t('common.cancel') }}</div>
+    <section 
+      v-if="editOpened" 
+      class=" absolute inset-x-0 bottom-0 h-[calc(100%-(--spacing(12)))] pb-[env(safe-area-inset-bottom)] rounded-t-2xl bg-zinc-900 shadow-2xl shadow-black/60 ring-1 ring-white/10""
+    >
+      <div class=" flex justify-baseline pt-3"><div class=" h-1 w-10 rounded-full bg-zinc-600" /></div>
+      <div class=" flex justify-between px-4 pt-2 pb-4">
+        <div class="  flex-none text-lg text-zinc-300" @click="editOpened = false">{{ t('common.cancel') }}</div>
         <div class=" flex-1 text-lg text-center font-semibold">{{ t('playlist.edit') }}</div>
-        <div class="  flex-none text-lg text-cyan-700" @click="handleSubmit">
+        <div class="  flex-none text-lg text-amber-500" @click="handleSubmit">
           <span v-if="loading" class="icon-[svg-spinners--3-dots-scale]"></span>
           <span v-else>{{ t('common.submit') }}</span>
         </div>
       </div>
-      <div class=" p-2">
-        <div class=" flex mt-4">
-          <div class=" flex-none place-content-center">{{ t('playlist.title')}}: </div>
-          <input type="text" 
-            v-model.trim="form.title" 
-            class=" w-full h-8 rounded-md bg-stone-100 px-2 focus:outline-0 focus:bg-stone-200" 
-            :placeholder="t('playlist.title_placeholder')" />
-        </div>
-        <div class=" mt-4">
-          <div>{{ t('playlist.cover') }}: </div>
-          <div class=" mt-2 mx-auto w-1/2 aspect-square" @click="triggleCoverSelect">
-            <img :src="imgSrc" v-default-src="defaultArt" class="w-full h-full rounded-lg object-cover shadow-md" />
-            <div class=" mx-2 w-[calc(100%-(--spacing(4)))] h-[2px]">
+
+      <div class=" flex gap-4 px-4">
+        <button
+          class=" group relative h-24 w-24 shrink-0 overflow-hidden rounded-xl ring-1 ring-white/10 transition active:scale-95"
+          :class="coverPreview ? '' : 'border-2 border-dashed border-zinc-600 bg-zinc-800/50'"
+          @click="fileInput?.click()"
+        >
+          <img v-if="coverPreview" :src="coverPreview" alt="" class="h-full w-full object-cover" />
+          <div v-else class="flex h-full flex-col items-center justify-center gap-1 text-zinc-500">
+            <svg viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" />
+            </svg>
+            <span class="text-[10px] font-medium">添加封面</span>
+          </div>
+          <div v-if="coverPreview" class="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition group-hover:opacity-100 group-active:opacity-100">
+            <span class="text-[11px] font-medium text-zinc-100">更换</span>
+          </div>
+          <div v-if="progress !== 0" class=" mx-2 w-[calc(100%-(--spacing(4)))] h-[2px]">
               <div class=" h-[2px] bg-cyan-500" :style="{width: progress + '%'}"></div>
             </div>
-          </div>
-          <input type="file" class=" hidden" ref="coverFile" @change="handleCoverChange" />
-          <div class=" mt-1 mx-auto text-center text-xs text-stone-300">
-            <span class="icon-[solar--info-circle-linear] align-middle"></span> {{ t('playlist.cover_tip') }}
-          </div>
-        </div>
-        <div class=" mt-4">
-          <div>{{ t('playlist.comment') }}: </div>
-          <div class=" mt-2 w-full h-60">
-            <textarea
-              class="w-full h-full rounded-lg p-2 bg-stone-100 focus:outline-0 focus:bg-stone-200"
-              v-model="form.comment"
-              :placeholder="t('playlist.comment_placeholder')"
-            ></textarea>
-          </div>
+        </button>
+        <input type="file" class=" hidden" ref="fileInput" accept="image/*" @change="onFileChange" />
+
+        <div class=" max-w-0 flex-1 space-y-2.5">
+          <input 
+            v-model.trim="form.title" maxlength="50" class=" 
+            w-full rounded-lg bg-white/5 px-3.5 py-2 text-sm text-zinc-100 outline-none ring-1 ring-white/10 transition placeholder:text-zinc-500 focus:ring-2 focus:ring-amber-400/60" 
+            :placeholder="`${t('playlist.title_placeholder')} *`"
+          />
+          <textarea 
+            v-model="form.comment" rows="2" maxlength="200" :placeholder="t('playlist.comment_placeholder')"
+            class=" w-full resize-none rounded-lg bg-white/5 px-3.5 py-2 text-sm text-zinc-100 outline-none ring-1 ring-white/10 transition placeholder:text-zinc-500 focus:ring-2 focus:ring-amber-400/60"
+          />
         </div>
       </div>
-    </div>
+    </section>
   </transition>
 </template>

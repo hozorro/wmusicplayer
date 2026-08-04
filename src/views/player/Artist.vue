@@ -1,145 +1,249 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, useTemplateRef } from "vue";
-import { useRequest } from "alova/client";
-import { useRoute } from "vue-router";
-import { useMusicStore } from "@/store/music";
+import { computed, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import AmbientBackground from "@/components/AmbientBackground.vue";
+import TrackList from "@/components/TrackList.vue";
+import CollectionList from "@/components/CollectionList.vue";
+import type { CollectionItem } from "@/player/menu/types";
+import { toPlayTrack } from "@/services/transform";
+import { usePlayer } from "@/composables/playback";
+import { useCollapseHeader } from "@/composables/collapse-header";
+import { playbackWriter } from "@/services/playback-data";
+import type { PlayTrack } from "@/player/types";
 import { useI18n } from "vue-i18n";
-import TrackItem from "@/components/TrackItem.vue";
-import CollectionItem from "@/components/CollectionItem.vue";
-import useCollectionOperations from '@/composables/collection-operations';
-import useTrackOperations from '@/composables/track-operations';
-import { getArtist, getArtistRandomTracks, getCollectionTracks } from "@/apis/methods/music";
-import { PlayChangeMode } from "@/constants/play-constants";
+import { getArtist, getCollectionTracks, getArtistRandomTracks, getFavoritedArtists, favArtist } from "@/apis/methods/music";
+import { updateFav } from "@/apis/methods/idb-locals";
 
 const { t } = useI18n();
+const route = useRoute();
+const router = useRouter();
+const player = usePlayer();
 
-const banner = useTemplateRef<HTMLImageElement>("banner");
-const artistNav = ref('')
-import defaultArtSketch from '@/assets/imgs/portrait_sketch.jpg'
-const route = useRoute()
-const store = useMusicStore()
+const artist = ref<ArtistInfo | null>(null)
+const artistFav = ref(false)
+const activeTab = ref<'tracks' | 'albums'>('tracks')
 
-const artist_id = ref(parseInt(route.params.id as string))
-const { data: artist } = useRequest(getArtist(artist_id.value),{
-    initialData: {
-      cover: defaultArtSketch,
-      top_tracks: [],
-      main_albums: [],
-      track_albums: []
-  }
+// ── 折叠页头：与 Album 同一插值模型（A52），视差量加大以匹配全出血 hero ──
+const { heroStyle, compactStyle, reset:resetCollapse } = useCollapseHeader({ range: 260, parallax: 70 })
+
+// 路由参数变化(艺人 -> 艺人)：watch immediately 覆盖首次载入与切换，复位全部状态
+watch(() => route.params.id, async id => {
+  if (!id) return
+  artist.value = null
+  activeTab.value = 'tracks'
+  resetCollapse()
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+  artist.value = await getArtist(Number(id)).send()
+  const favArtists = await getFavoritedArtists().send()
+  artistFav.value = favArtists.some(a => a.id === artist.value?.id)
+}, { immediate: true })
+
+// —— 派生数据 ——
+const topTracks = computed<PlayTrack[]>(() =>
+  artist.value?.top_tracks.map(t => toPlayTrack(t)) ?? []
+)
+const albumCount = computed(() => 
+  (artist.value?.main_albums.length ?? 0) + (artist.value?.track_albums.length ?? 0)
+)
+const toAlbumItem = (a: Album) => ({
+  id: a.id,
+  title: a.title,
+  cover: a.cover,
+  subinfo: a.track_count !== undefined ? `${a.track_count} 首` : '',
+  to: { name: 'album', params: { id: a.id } }
 })
-function handlePlayTop() {
-  store.addListToCurPlaylist(artist.value.top_tracks, PlayChangeMode.REPLACE_LIST)
-}
-function handlePlayRandom() {
-  getArtistRandomTracks(artist_id.value).then(data => {
-    store.addListToCurPlaylist(data, PlayChangeMode.REPLACE_LIST)
-  })
-}
-function handlePlayAll() {
-  getCollectionTracks(artist_id.value, 'artist').then(data => {
-    store.addListToCurPlaylist(data, PlayChangeMode.REPLACE_LIST)
-  })
-}
-const tab = ref<'tracks'|'albums'>('tracks')
-onMounted(() => {
-  if (route.query.tab == 'albums') tab.value = 'albums'
-  window.addEventListener('scroll', function(){
-    if(banner !== null){
-      const rect = banner.value?.getBoundingClientRect();
-      if (rect !== undefined && rect.bottom < 0){
-        artistNav.value = artist.value.name
-      } else {
-        artistNav.value = ''
-      }
-    }
-  })
-})
+const mainAlbumItems = computed(() => artist.value?.main_albums.map(toAlbumItem) ?? [])
+const trackAlbumItems = computed(() => artist.value?.track_albums.map(toAlbumItem) ?? [])
 
-import defaultArt from '@/assets/imgs/portrait.jpg'
-
-const { handleOperation: handleAlbumOperation } = useCollectionOperations('album');
-const { handleClick, handleOperation: handleTrackOperation } = useTrackOperations();
-
-function handleOperation(oType: string, oId: string | number, oTitle: string) {
-  if (oType === 'album') {
-    handleAlbumOperation(oId as number, oTitle);
-  } else {
-    handleTrackOperation(oId as number, oTitle);
-  }
+/** resolveTracks 端口接线：合集菜单的曲目解析 */
+async function resolveAlbumTracks(c: CollectionItem): Promise<PlayTrack[]> {
+  const detail = await getCollectionTracks(c.id, 'album').send()
+  return detail.map(t => toPlayTrack(t, { album: c.title, cover: c.cover }))
 }
-const backLink = computed(() => {
-  let backQuery = {...route.query}
-  if (route.query.back) {
-    delete backQuery.back
-    return { name: route.query.back as string || 'artist-list', query: backQuery };
-  } else {
-    return { name: 'artist-list', query: {char: artist.value.pinyin_initial} };
-  }
-});
+
+async function playRandomTracks() {
+  const tracks = await getArtistRandomTracks(artist.value!.id).send()
+  player.playAll(tracks.map(t => toPlayTrack(t)))
+}
+
+async function toggleFavorite() {
+  if (!artist.value) return
+  const next = !artistFav.value
+  artistFav.value = next
+  const ok = await playbackWriter.write({
+    key: `fav:artist:${artist.value.id}`,
+    label: `收藏 / 取消收藏 ${artist.value.name}`,
+    opType: 'fav-artist',
+    payload: { id: artist.value.id, is_favorited: next },
+    local: async () => { await updateFav('artist', artist.value!.id, next) },
+    remote: async () => { await favArtist(artist.value!.id, next) },
+  })
+  if (!ok) artistFav.value = !next
+}
 </script>
 
 <template>
-  <div class=" fixed top-0 left-0 mt-2 px-2 z-30">
-    <router-link :to="backLink">
-      <span class=" icon-[solar--alt-arrow-left-linear] align-middle text-2xl mix-blend-difference"></span>{{artistNav}}
-    </router-link>
-  </div>
-  <div class=" w-full min-h-full">
-    <div class=" w-full aspect-2/1">
-      <img :src="artist.cover" v-default-src="defaultArt" class=" w-full h-full object-cover" ref="banner" />
+  <div class="min-h-dvh">
+    <!-- 氛围背景：以 portrait 为色源 -->
+    <div class="fixed inset-0 -z-10">
+      <AmbientBackground :cover="artist?.portrait" />
     </div>
-    <div class=" -mt-4 -mb-6 mx-4 h-16 bg-stone-50 dark:bg-teal-800 shadow-md rounded-md p-2 relative z-20 text-center">
-      <div class=" text-lg">{{ artist.name }}</div>
-      <div class=" text-sm text-stone-400">
-        {{ t('player.artist_stats', {
-          main_album_count: artist.main_albums.length, 
-          track_album_count: artist.track_albums.length, 
-          track_count: artist.track_count}) }}
+
+    <!-- ═══ 固定顶栏：返回 + 折叠标题 ═══ -->
+    <div class="fixed inset-x-0 top-0 z-30 bg-gradient-to-b from-black/60 via-black/30 to-transparent pb-6 pt-[calc(env(safe-area-inset-top)+10px)]">
+      <div class="mx-auto flex max-w-2xl items-center gap-3 px-4">
+        <button
+          class="shrink-0 rounded-full bg-black/30 p-2 text-zinc-100 ring-1 ring-white/10 transition hover:bg-black/50 active:scale-90"
+          aria-label="返回"
+          @click="router.back()"
+        >
+          <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
+        </button>
+        <h2 :style="compactStyle" class="min-w-0 flex-1 truncate text-base font-bold text-zinc-50">
+          {{ artist?.name ?? '…' }}
+        </h2>
       </div>
     </div>
-    <div class=" sticky top-0 px-2 pt-9 bg-light dark:bg-dark z-10">
-      <div class=" flex justify-around mt-2">
-        <button class=" px-2 h-8 leading-8 bg-cyan-600 text-white rounded-md" @click="handlePlayTop">{{ t('player.playhot') }}</button>
-        <button class=" px-2 h-8 leading-8 bg-cyan-600 text-white rounded-md" @click="handlePlayRandom">{{ t('player.randomplay') }}</button>
-        <button class=" px-2 h-8 leading-8 bg-cyan-600 text-white rounded-md" @click="handlePlayAll">{{ t('player.playall') }}</button>
+
+    <template v-if="artist">
+      <!-- ═══ hero：portrait 全出血 + 重叠信息卡 + 动作 ═══ -->
+      <header :style="heroStyle" class="will-change-transform">
+        <!-- portrait：全宽 2:1，桌面端限高防巨幅 -->
+        <div class="relative aspect-[2/1] max-h-[420px] w-full overflow-hidden bg-zinc-900">
+          <img v-if="artist.portrait" :src="artist.portrait" alt="" class="h-full w-full object-cover" />
+          <div v-else class="flex h-full items-center justify-center">
+            <span class="text-7xl font-black uppercase text-zinc-800">{{ artist.pinyin_initial }}</span>
+          </div>
+          <!-- 底部渐变：为重叠卡托底 -->
+          <div class="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+        </div>
+
+        <div class="mx-auto max-w-2xl px-4">
+          <!-- 重叠信息卡：-mt-12 没入 portrait 下缘 -->
+          <div class="relative z-10 -mt-12 flex items-center gap-3.5 rounded-xl bg-zinc-900/85 p-4 shadow-xl shadow-black/40 ring-1 ring-white/10 backdrop-blur-md">
+            <div class="h-14 w-14 shrink-0 overflow-hidden rounded-full bg-zinc-800 ring-2 ring-white/10">
+              <img v-if="artist.face" :src="artist.face" alt="" class="h-full w-full object-cover" />
+              <span v-else class="flex h-full items-center justify-center text-lg font-bold uppercase text-zinc-500">
+                {{ artist.pinyin_initial }}
+              </span>
+            </div>
+            <div class="min-w-0">
+              <h1 class="truncate text-xl font-extrabold text-zinc-50">{{ artist.name }}</h1>
+              <p class="mt-1 text-xs tabular-nums text-zinc-400">
+                {{ albumCount }} 张专辑 · {{ artist.track_count }} 首曲目
+              </p>
+            </div>
+          </div>
+
+          <!-- 动作区：作用于 top_tracks -->
+          <div class="mt-4 flex gap-2.5">
+            <button
+              class="rounded-full bg-amber-400 px-5 py-2 text-sm font-bold text-zinc-950 shadow-lg shadow-amber-400/20 transition hover:bg-amber-300 active:scale-95 disabled:pointer-events-none disabled:opacity-40"
+              :disabled="topTracks.length === 0"
+              @click="player.playAll(topTracks)"
+            >
+              {{ t('player.playall') }}
+            </button>
+            <button
+              class="rounded-full px-5 py-2 text-sm font-semibold text-zinc-200 ring-1 ring-white/15 transition hover:bg-white/10 active:scale-95 disabled:pointer-events-none disabled:opacity-40"
+              :disabled="topTracks.length === 0"
+              @click="playRandomTracks"
+            >
+              {{ t('player.randomplay') }}
+            </button>
+            <button
+              class="flex h-9 w-9 items-center justify-center self-center rounded-full ring-1 transition active:scale-90"
+              :class="artistFav
+                ? 'bg-rose-400/15 text-rose-400 ring-rose-400/30'
+                : 'text-zinc-300 ring-white/15 hover:bg-white/10'"
+              :aria-label="artistFav ? '取消收藏艺人' : '收藏艺人'"
+              @click="toggleFavorite"
+            >
+              <svg viewBox="0 0 24 24" class="h-4.5 w-4.5" :fill="artistFav ? 'currentColor' : 'none'"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- ═══ 标签 + 内容区 ═══ -->
+      <main class="mx-auto max-w-2xl px-4 pb-32 pt-6">
+        <!-- 分段式标签 -->
+        <div class="flex rounded-full bg-white/5 p-1 ring-1 ring-white/10">
+          <button
+            v-for="tab in ([['tracks', 'Top 50'], ['albums', '专辑']] as const)"
+            :key="tab[0]"
+            class="flex-1 rounded-full py-1.5 text-sm font-medium transition"
+            :class="activeTab === tab[0]
+              ? 'bg-white/12 text-zinc-50 shadow-sm'
+              : 'text-zinc-400 hover:text-zinc-200'"
+            @click="activeTab = tab[0]"
+          >
+            {{ tab[1] }}
+          </button>
+        </div>
+
+        <Transition
+          mode="out-in"
+          enter-active-class="transition duration-200 ease-out"
+          enter-from-class="opacity-0 translate-y-1"
+          leave-active-class="transition duration-150 ease-in"
+          leave-to-class="opacity-0 -translate-y-1"
+        >
+          <!-- Top 50：序号即排名 -->
+          <div v-if="activeTab === 'tracks'" key="tracks" class="pt-4">
+            <TrackList v-if="topTracks.length" :tracks="topTracks" :show-art="true" />
+            <p v-else class="py-16 text-center text-sm text-zinc-500">暂无曲目</p>
+          </div>
+
+          <!-- 专辑：主专辑 / 参与专辑，分隔呈现 -->
+          <div v-else key="albums" class="pt-2">
+            <template v-if="mainAlbumItems.length">
+              <h3 class="px-3 pb-2 pt-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
+                主专辑
+              </h3>
+              <CollectionList kind="album" :collections="mainAlbumItems" :resolve-tracks="resolveAlbumTracks" />
+            </template>
+
+            <div v-if="mainAlbumItems.length && trackAlbumItems.length" class="mx-4 my-3 h-px bg-white/8" />
+
+            <template v-if="trackAlbumItems.length">
+              <h3 class="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
+                参与的专辑
+              </h3>
+              <CollectionList kind="album" :collections="trackAlbumItems" :resolve-tracks="resolveAlbumTracks" />
+            </template>
+
+            <p v-if="!mainAlbumItems.length && !trackAlbumItems.length" class="py-16 text-center text-sm text-zinc-500">
+              暂无专辑
+            </p>
+          </div>
+        </Transition>
+      </main>
+    </template>
+
+    <!-- skeleton -->
+    <div v-else class="animate-pulse">
+      <div class="aspect-[2/1] max-h-[420px] w-full bg-zinc-800/60" />
+      <div class="mx-auto max-w-2xl px-4">
+        <div class="-mt-12 flex items-center gap-3.5 rounded-xl bg-zinc-800/80 p-4">
+          <div class="h-14 w-14 rounded-full bg-zinc-700/80" />
+          <div class="space-y-2">
+            <div class="h-5 w-32 rounded bg-zinc-700/80" />
+            <div class="h-3 w-24 rounded bg-zinc-700/80" />
+          </div>
+        </div>
+        <div class="mt-4 flex gap-2.5">
+          <div class="h-9 w-24 rounded-full bg-zinc-800/80" />
+          <div class="h-9 w-28 rounded-full bg-zinc-800/80" />
+        </div>
+        <div class="mt-6 h-9 rounded-full bg-zinc-800/60" />
+        <div class="mt-6 space-y-3">
+          <div v-for="n in 6" :key="n" class="h-12 rounded-xl bg-zinc-800/50" />
+        </div>
       </div>
-      <div class=" mt-4 pb-2 text-lg">
-        <div class=" inline-block" @click="tab = 'tracks'" :class="tab == 'tracks' ? 'border-b-2 border-b-cyan-600' : ''">{{ t('player.track') }}</div>
-        <div class=" inline-block ml-4" @click="tab = 'albums'" :class="tab == 'albums' ? 'border-b-2 border-b-cyan-600' : ''">{{ t('player.album') }}</div>
-      </div>
-    </div>
-    <div v-show="tab == 'tracks'" class=" p-2 w-full">
-      <TrackItem v-for="track in artist.top_tracks"
-        :id="track.id"
-        :title="track.title"
-        :art="track.cover"
-        :show-art="true"
-        :sub-info="track.artists?.join(', ')"
-        @item-click="handleClick"
-        @operation="(id:number, title:string) => handleOperation('track', id, title)"
-      />
-    </div>
-    <div v-show="tab == 'albums'" class=" p-2 w-full">
-      <CollectionItem v-for="album in artist.main_albums"
-        col-type="album"
-        :id="album.id"
-        :name="album.title"
-        :art="album.cover"
-        :query="{back: 'artist', id: artist.id.toString(),tab: 'albums'}"
-        @operation="(id:string|number, name:string) => handleOperation('album', id, name)"
-      />
-    </div>
-    <div v-show="tab == 'albums'" class=" p-2 w-full">
-      <div class=" w-full mb-2 border-t border-t-gray-200"></div>
-      <CollectionItem v-for="album in artist.track_albums"
-        col-type="album"
-        :id="album.id"
-        :name="album.title"
-        :art="album.cover"
-        :query="{back: 'artist', id: artist.id.toString(),tab: 'albums'}"
-        @operation="(id:string|number, name:string) => handleOperation('album', id, name)"
-      />
     </div>
   </div>
 </template>

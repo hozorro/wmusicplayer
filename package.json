@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "i18n:schema": "node scripts/generate-i18n-schema.cjs",
     "i18n:check": "node scripts/check-i18n-missing-keys.cjs",
+    "typecheck": "vue-tsc --noEmit",
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage"
@@ -41,6 +42,7 @@
     "@vue/compiler-ssr": "^3.5.26",
     "@vue/server-renderer": "^3.5.26",
     "@vue/tsconfig": "^0.7.0",
+    "happy-dom": "^20.11.1",
     "typescript": "~5.8.3",
     "vite": "^6.3.5",
     "vite-plugin-pwa": "^1.0.3",

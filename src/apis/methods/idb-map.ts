@@ -22,6 +22,7 @@ export default function mappingIdbApis(idbHelper: indexedDbHelper): IdbApiDict {
       {path: 'track/artistrandomtracks', handler: idbApis.getArtistRandomTracks},
       {path: 'track/genrerandomtracks', handler: idbApis.getGenreRandomTracks},
       {path: 'track/favoritetracks', handler: idbApis.getFavoriteTracks},
+      {path: 'track/favoritetrackids', handler: idbApis.getFavoriteTrackIds},
       {path: 'track/latesttracks', handler: idbApis.getLatestTracks},
       {path: 'track/mostplayedtracks', handler: idbApis.getMostPlayedTracks},
       {path: 'track/collection/{collection_type}/{collection_id}', handler: idbApis.getCollectionTracks},
@@ -29,18 +30,10 @@ export default function mappingIdbApis(idbHelper: indexedDbHelper): IdbApiDict {
       {path: 'track/rndwgttracks', handler: idbApis.getRandomWeightedArtistTracks},
       {path: 'track/rndhitswgttracks', handler: idbApis.getRandomHitsWeightedTracks},
       {path: 'track/{id}', handler: idbApis.getTrack},
-      {path: 'playlist/topplaylists', handler: idbApis.getTopPlaylists},
-      {path: 'playlist/playlists', handler: idbApis.getPlaylists},
-      {path: 'playlist/{id}', handler: idbApis.getPlaylist},
-      {path: 'search', handler: idbApis.search},
-    ],
-    POST: [
-      {path: 'playlist/addplaylistsimple', handler: idbApis.addNewPlaylist},
-    ],
-    PUT: [
-      {path: 'track/favorite/{track_id}', handler: idbApis.favoriteTrack},
-      {path: 'playlist/addtracktoplaylist', handler: idbApis.addTrackToPlaylist},
-      {path: 'playlist/removetrackfromplaylist', handler: idbApis.removeTrackFromPlaylist},
+      {path: 'playback/topplaylists', handler: idbApis.getTopPlaylists},
+      {path: 'playback/playlists', handler: idbApis.getPlaylists},
+      {path: 'playback/{id}', handler: idbApis.getPlaylist},
+      {path: 'search', handler: idbApis.searchLibrary},
     ]
   }
 }

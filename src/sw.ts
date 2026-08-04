@@ -8,6 +8,7 @@ import { registerRoute } from 'workbox-routing'
 import { indexedDbHelper } from './apis/idb-funcs'
 import idbConfig from './apis/idb-config'
 import mappingIdbApis from './apis/methods/idb-map'
+import { mediaStreamCacheHandler } from './services/media-stream-handler'
 
 cleanupOutdatedCaches()
 precacheAndRoute(self.__WB_MANIFEST)
@@ -141,6 +142,11 @@ for (const method of Object.keys(idbApis) as HTTPMethod[]) {
     method
   )
 }
+registerRoute(
+  ({url}: {url: URL}) => {
+    return url.pathname.startsWith('/api/stream')
+  }, mediaStreamCacheHandler
+)
 
 self.skipWaiting()
 clientsClaim()

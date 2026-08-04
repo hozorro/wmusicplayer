@@ -5,9 +5,10 @@ import { useMusicStore } from '@/store/music';
 import { useI18n } from 'vue-i18n';
 import TrackListSlider from '@/views/part/TrackListSlider.vue';
 import Header from '@/views/part/Header.vue';
-import { getTopPlaylists, getTenArtists, getRandomGenres, getRandomTracks, getLatestTracks, getMostPlayedTracks } from '@/apis/methods/music';
+import { getTopPlaylists, getTenArtists, getRandomGenres, getRandomTracks, getLatestTracks, getHotTracks } from '@/apis/methods/music';
 import { getRandomHitsWeightedTracks } from '@/apis/methods/music';
 import { PlayChangeMode } from '@/constants/play-constants';
+import { toPlayTrack } from '@/services/transform';
 
 import DefaultPlaylistCover from '@/assets/imgs/playlist.jpg'
 import FavoriteListCover from '@/assets/imgs/favorite.jpg'
@@ -22,7 +23,7 @@ import defaultArtistArt from '@/assets/imgs/artist.png'
 
 const { data: genres } = useRequest(getRandomGenres)
 
-const { data: mostPlayedTracks } = useRequest(getMostPlayedTracks);
+const { data: mostPlayedTracks } = useRequest(getHotTracks);
 const { data: latestTracks } = useRequest(getLatestTracks);
 const curTab = ref(0)
 const tabs = [
@@ -32,11 +33,11 @@ const tabs = [
 const slideTracks = computed(() => {
   switch (curTab.value) {
     case 0:
-      return latestTracks.value
+      return latestTracks.value?.map(t => toPlayTrack(t)) ?? []
     case 1:
-      return mostPlayedTracks.value
+      return mostPlayedTracks.value?.map(t => toPlayTrack(t)) ?? []
     default:
-      return latestTracks.value
+      return latestTracks.value?.map(t => toPlayTrack(t)) ?? []
   }
 })
 

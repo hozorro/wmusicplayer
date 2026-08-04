@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useMusicStore } from '@/store/music';
 import { useTheme } from '@/composables/themes';
 import { appInfo } from '@/constants/app-info';
-import MenuItem from '@/components/MenuItem.vue';
+import RouteMenuItem from '@/components/RouteMenuItem.vue';
 import { langsMap, loadLocaleMessages } from '@/i18n';
 import { useI18n } from 'vue-i18n';
 
@@ -12,13 +12,21 @@ const { theme, toggleTheme } = useTheme();
 
 const appName = appInfo.VUE_APP_NAME
 const appVersion = appInfo.VUE_APP_VERSION
-const menuList = computed(() => [ // must be computed, or the menu will not update when language changes
-  { title: t('settings.play.item'), to: '/setting/play', icon: 'icon-[solar--tuning-square-2-outline]' },
-  { title: t('settings.localdb.item'), to: '/setting/localdb', icon: 'icon-[solar--database-outline]' },
-  { title: t('settings.help'), to: '/setting/help', icon: 'icon-[solar--notebook-bookmark-outline]' },
-  { title: t('settings.test'), to: '/setting/test', icon: 'icon-[solar--flashlight-outline] origin-center rotate-180' },
-  { title: t('settings.about.item'), to: '/setting/about', icon: 'icon-[solar--cassette-outline]' },
-]);
+const menuList = computed(() => {// must be computed, or the menu will not update when language changes
+  const menuItems = [ 
+    { title: t('settings.play.item'), to: '/setting/play', icon: 'icon-[solar--tuning-square-2-outline]' },
+    { title: t('settings.localdb.item'), to: '/setting/localdb', icon: 'icon-[solar--database-outline]' },
+    { title: t('settings.help'), to: '/setting/help', icon: 'icon-[solar--notebook-bookmark-outline]' },
+    { title: t('settings.test'), to: '/setting/test', icon: 'icon-[solar--flashlight-outline] origin-center rotate-180' },
+    { title: t('settings.about.item'), to: '/setting/about', icon: 'icon-[solar--cassette-outline]' },
+  ]
+  const devItems = [
+    { title: t('dev-runtime'), to: '/dev/runtime', icon: 'icon-[solar--test-tube-linear]' },
+    { title: t('dev-player'), to: '/dev/player', icon: 'icon-[solar--play-stream-linear]' },
+  ]
+  if (import.meta.env.DEV) menuItems.push(...devItems) 
+  return menuItems;
+});
 
 interface MetaInfo {
   folder: number;
@@ -144,7 +152,7 @@ async function changeLocale(locale: SupportedLocale) {
           </select>
         </div>
       </div>
-      <MenuItem v-for="item in menuList" :key="item.title" 
+      <RouteMenuItem v-for="item in menuList" :key="item.title" 
         :title="item.title" 
         :to-url="item.to" 
         :icon="item.icon"

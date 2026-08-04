@@ -28,6 +28,7 @@ declare interface IDBArtist extends Artist {  // for idb store and data transfer
   track_count: number;
   is_deleted?: boolean;
   favorited_at?: string;  // initialized at local when rebuild, updated when download artist favs
+  hits?: string[];        // initialized at local when rebuild, updated when download track hits
   hit_count?: number;     // initialized at local when rebuild, updated when download artist hits
   name_lower?: string;    // create by transform, used for not case sensitive search
 }
@@ -64,6 +65,22 @@ declare interface IDBPlaylist extends Playlist {  // only for idb data reading, 
   track_ids: number[];
   hits?: string[],        // initialized at local when rebuild, updated when download playlist hits
   hit_count?: number;     // initialized at local when rebuild, updated when download playlist hits
+}
+
+/** 失败同步清单操作类型 */
+declare type PlaybackOpType =
+  | 'fav-track' | 'fav-artist'
+  | 'hit-track' | 'hit-artist' | 'hit-playlist'
+  | 'add-track-to-playlist' | 'remove-track-from-playlist' | 'move-playlist-track'
+
+/** 失败同步清单IDB数据结构 */
+declare interface PendingOp {
+  key: string
+  opType: PlaybackOpType
+  payload: Record<string, unknown>
+  label: string   // 用户可读描述，供对话框明细
+  attempts: number
+  failedAt: number
 }
 
 declare type IDBModel = IDBAlbum | IDBTrack | IDBArtist | IDBGenre | IDBFolder

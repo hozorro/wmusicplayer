@@ -147,6 +147,16 @@ export class indexedDbHelper {
       transaction ? _update(transaction) : this.begin_transaction(storeName).then(tx => _update(tx));
     });
   }
+  upsert<T extends Record<string, any>>(storeName: string, data: T, transaction?: IDBTransaction): Promise<IDBValidKey> {
+    return new Promise((resolve, reject) => { 
+      const _upsert = (tx: IDBTransaction) => { 
+        const req = tx.objectStore(storeName).put(data);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      }
+      transaction ? _upsert(transaction) : this.begin_transaction(storeName).then(tx => _upsert(tx));
+    });
+  }
   upsertMany<T extends Record<string,any>>(storeName: string, data: ({id: T['id']} & Partial<Omit<T, 'id'>>)[], transaction?: IDBTransaction) {
     return new Promise((resolve, reject) => { 
       const _upsert = (tx: IDBTransaction) => { 

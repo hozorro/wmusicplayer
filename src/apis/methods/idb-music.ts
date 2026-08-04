@@ -1,6 +1,5 @@
-import { v4 as uuidv4 } from "uuid";
 import { indexedDbHelper, keyRange } from "@/apis/idb-funcs";
-import { shuffle, dynamicSort, topWeightedLnRandom, getISOWithOffset } from "@/utilies/general";
+import { shuffle, dynamicSort, topWeightedLnRandom } from "@/utilies/general";
 
 function resSucc<T>(data: T) { 
   return new Response(JSON.stringify({
@@ -42,7 +41,14 @@ export default function regIdbApis(idbHelper: indexedDbHelper) {
         artists: album.artists,
         cover_art_hash: album.cover_art_hash,
         track_count: tracks.length,
-        tracks: tracks.map(track => ({id: track.id, title: track.title, artists: track.artists?.map(artist => artist.name)})),
+        tracks: tracks.map(track => ({
+          id: track.id, 
+          title: track.title, 
+          artists: track.artists?.map(artist => artist.name),
+          duration: track.duration,
+          album: track.album?.title || '',
+          cover_art_hash: track.cover_art_hash
+        })),
       })
     },
     // #endregion
@@ -94,12 +100,26 @@ export default function regIdbApis(idbHelper: indexedDbHelper) {
       const main_album_ids = main_albums.map(album => album.id)
       const track_albums_all = await idbHelper.getIndexedRange<IDBAlbum>('album', 'artist_ids', keyRange.only(aid))
       const track_albums = track_albums_all.filter(album => !main_album_ids.includes(album.id))
+      const main_albums_with_count = await Promise.all(main_albums.map(async item => ({
+        id: item.id,
+        title: item.title,
+        cover_art_hash: item.cover_art_hash,
+        track_count: await idbHelper.getCount('track', 'album_id', keyRange.only(item.id))
+      })))
+      const track_albums_with_count = await Promise.all(track_albums.map(async item => ({
+        id: item.id,
+        title: item.title,
+        cover_art_hash: item.cover_art_hash,
+        track_count: await idbHelper.getCount('track', 'album_id', keyRange.only(item.id))
+      })))
       const tracks = await idbHelper.getIndexedAll<IDBTrack>('track', 'artist_ids', aid)
       const tracks_sorted = tracks.sort(dynamicSort('hit_count', 'desc'))
       const top_tracks = tracks_sorted.slice(0,20).map(track => ({
         id: track.id,
         title: track.title,
         artists: track.artists?.map(artist => artist.name),
+        album: track.album?.title || '',
+        duration: track.duration,
         cover_art_hash: track.cover_art_hash
       }))
       return resSucc({
@@ -109,8 +129,8 @@ export default function regIdbApis(idbHelper: indexedDbHelper) {
         track_count: artist.track_count,
         face_art_hash: artist.face_art_hash,
         portrait_art_hash: artist.portrait_art_hash,
-        main_albums: main_albums.map(item => ({id: item.id, title: item.title, cover_art_hash: item.cover_art_hash})),
-        track_albums: track_albums.map(item => ({id: item.id, title: item.title, cover_art_hash: item.cover_art_hash})),
+        main_albums: main_albums_with_count,
+        track_albums: track_albums_with_count,
         top_tracks,
       })
     },
@@ -133,16 +153,38 @@ export default function regIdbApis(idbHelper: indexedDbHelper) {
       if(!id) fid = 1
       else fid = parseInt(id)
       const curFolder = await idbHelper.get<IDBFolder>('folder', fid)
+      // build ancestor chain from root(exclude self)
+      const ancestors: {id: number, name: string}[] = []
+      let pid = curFolder.parent_id
+      while(pid) {
+        const parent = await idbHelper.get<IDBFolder>('folder', pid)
+        if(!parent) break
+        ancestors.unshift({id: parent.id, name: parent.name})
+        pid = parent.parent_id
+      }
       const range = keyRange.bound([fid, ''], [fid, '\u{10FFFF}'], false, true)
       const folders = await idbHelper.getIndexedRange<IDBFolder>('folder', 'parent_child', range)
+      const subfolders = await Promise.all(folders.map(async f => ({
+        id: f.id,
+        name: f.name,
+        subfolder_count: await idbHelper.getCount('folder', 'parent_id', keyRange.only(f.id)),
+        track_count: await idbHelper.getCount('track', 'folder_id', keyRange.only(f.id))
+      })))
       const tracks_raw = await idbHelper.getIndexedRange<IDBTrack>('track', 'folder_id', keyRange.only(fid))
       const tracks = tracks_raw.sort(dynamicSort('title_lower'))
       return resSucc({
         id: curFolder.id,
         name: curFolder.name,
-        parent_id: curFolder.id == 1 ? 0 :  curFolder.parent_id,
-        children: folders.map(f => ({id: f.id, name: f.name})),
-        tracks: tracks.map(t => ({id: t.id, title: t.title, artists: t.artists?.map(a => (a.name))}))
+        ancestors,
+        subfolders,
+        tracks: tracks.map(t => ({
+          id: t.id,
+          title: t.title,
+          artists: t.artists?.map(a => (a.name)),
+          duration: t.duration,
+          album: t.album?.title || '',
+          cover_art_hash: t.cover_art_hash
+        }))
       })
     },
     // #endregion
@@ -153,13 +195,20 @@ export default function regIdbApis(idbHelper: indexedDbHelper) {
       return resSucc(result)
     },
     getGenres: async () => { 
-      return resSucc(await idbHelper.getAll<IDBGenre>('genre'))
+      const genres = await idbHelper.getAll<IDBGenre>('genre')
+      const result = await Promise.all(genres.map(async genre => ({
+        ...genre,
+        track_count: await idbHelper.getCount('track', 'genre_ids', keyRange.only(genre.id))
+      })))
+      return resSucc(result)
     },
     getGenre: async (options?: IdbApiOptions) => {
       const id = options?.pathParams?.id
       if (!id) return resError(400, 'Bad request')
       const gid = parseInt(id)
-      return resSucc(await idbHelper.get<IDBGenre>('genre', gid))
+      const genre = await idbHelper.get<IDBGenre>('genre', gid)
+      const track_count = await idbHelper.getCount('track', 'genre_ids', keyRange.only(gid))
+      return resSucc({...genre, track_count})
     },
     getGenreTracks: async (options?: IdbApiOptions) => { 
       const id = options?.pathParams?.id
@@ -179,7 +228,14 @@ export default function regIdbApis(idbHelper: indexedDbHelper) {
       return resSucc({
         total, 
         tracks: res.tracks.map((track) => { 
-          return {id: track.id, title: track.title, artists: track.artists?.map(artist => artist.name), cover_art_hash: track.cover_art_hash}
+          return {
+            id: track.id, 
+            title: track.title, 
+            artists: track.artists?.map(artist => artist.name), 
+            duration: track.duration,
+            album: track.album?.title || '',
+            cover_art_hash: track.cover_art_hash
+          }
         }),
         next_key: res.nextKey
       })
@@ -190,14 +246,14 @@ export default function regIdbApis(idbHelper: indexedDbHelper) {
     getTopPlaylists: async () => {
       const playlists =  await idbHelper.getIndexedRange<IDBPlaylist>('playlist', 'hit_count', null, true, 5)
       const result = playlists.map((playlist) => {
-        return {id: playlist.id, title: playlist.title, cover_art_hash: playlist.cover_art_hash}
+        return {id: playlist.id, title: playlist.title, cover_art_hash: playlist.cover_art_hash, track_count: playlist.track_ids.length}
       })
       return resSucc(result)
     },
     getPlaylists: async () => { 
       const playlists = await idbHelper.getAll<IDBPlaylist>('playlist')
       const result = playlists.map((playlist) => { 
-        return {id: playlist.id, title: playlist.title, cover_art_hash: playlist.cover_art_hash}
+        return {id: playlist.id, title: playlist.title, cover_art_hash: playlist.cover_art_hash, track_count: playlist.track_ids.length}
       })
       return resSucc(result)
     },
@@ -215,53 +271,18 @@ export default function regIdbApis(idbHelper: indexedDbHelper) {
         comment: result.comment,
         created_at: result.created_at,
         cover_art_hash: result.cover_art_hash,
-        tracks: tracks.map((track) => { 
-          return {id: track.id, title: track.title, artists: track.artists?.map(artist => artist.name), cover_art_hash: track.cover_art_hash}
+        tracks: tracks.map((track, index) => { 
+          return {
+            id: track.id, 
+            title: track.title, 
+            artists: track.artists?.map(artist => artist.name), 
+            duration: track.duration,
+            album: track.album?.title || '',
+            cover_art_hash: track.cover_art_hash,
+            position: index
+          }
         })
       })
-    },
-    addNewPlaylist: async (options?: IdbApiOptions) => { 
-      const title = options?.body?.title
-      if(!title) return resError(400, 'Playlist title is required')
-      const newPlaylist: IDBPlaylist = {
-        id: 'tmp_' + uuidv4(),  // tmp_uuid for new playlist created and saved in frontend, treated when synced to backend
-        title,
-        cover: '',
-        comment: '',
-        track_ids: [],
-        created_at: (new Date()).toISOString(),
-        updated_at: (new Date()).toISOString(),
-        hits: [],
-        hit_count: 0
-      }
-      return resSucc(await idbHelper.add('playlist', newPlaylist))
-    },
-    addTrackToPlaylist: async (options?: IdbApiOptions) => {
-      let pid = options?.body?.playlist_id
-      let tid = options?.body?.track_id
-      if(!pid || !tid) return resError(400, 'Invalid params')
-      if (isNumberic(pid)) {
-        pid = parseInt(pid)
-      } 
-      tid = parseInt(tid)
-      const playlist = await idbHelper.get<IDBPlaylist>('playlist', pid)
-      if(playlist.track_ids.includes(tid)) return resError(400, 'Track already in playlist')
-      playlist.track_ids.push(tid)
-      await idbHelper.update('playlist', pid, {track_ids: playlist.track_ids})
-      return resSucc(true)
-    },
-    removeTrackFromPlaylist: async (options?: IdbApiOptions) => {
-      let pid = options?.body?.playlist_id
-      let tid = options?.body?.track_id
-      if(!pid || !tid) return resError(400, 'Invalid params')
-      if (isNumberic(pid)) {
-        pid = parseInt(pid)
-      } 
-      tid = parseInt(tid)
-      const playlist = await idbHelper.get<IDBPlaylist>('playlist', pid)
-      playlist.track_ids = playlist.track_ids.filter(id => id !== tid)
-      await idbHelper.update('playlist', pid, {track_ids: playlist.track_ids})
-      return resSucc('ok')
     },
     // #endregion
 
@@ -287,7 +308,14 @@ export default function regIdbApis(idbHelper: indexedDbHelper) {
       const count = num ? parseInt(num) : 50
       const tracks = await idbHelper.getRandom<IDBTrack>('track', count)
       const result = tracks.map((track) => { 
-        return {id: track.id, title: track.title}
+        return {
+          id: track.id, 
+          title: track.title, 
+          artists: track.artists?.map(artist => artist.name), 
+          duration: track.duration,
+          album: track.album?.title || '',
+          cover_art_hash: track.cover_art_hash
+        }
       })
       return resSucc(result)
     },
@@ -298,7 +326,14 @@ export default function regIdbApis(idbHelper: indexedDbHelper) {
       const aid = parseInt(artist_id)
       const tracks_num = parseInt(num)
       const tracks = await idbHelper.getRandom<IDBTrack>('track', tracks_num, 'artist_ids', keyRange.only(aid))
-      return resSucc(tracks.map(item => ({id: item.id, title: item.title})))
+      return resSucc(tracks.map(item => ({
+        id: item.id, 
+        title: item.title, 
+        artists: item.artists?.map(artist => artist.name), 
+        duration: item.duration,
+        album: item.album?.title || '',
+        cover_art_hash: item.cover_art_hash
+      })))
     },
     getGenreRandomTracks: async (options?: IdbApiOptions) => { 
       const genre_id = options?.queryParams?.genre_id
@@ -308,39 +343,62 @@ export default function regIdbApis(idbHelper: indexedDbHelper) {
       const tracks_num = parseInt(num)
       const tracks = await idbHelper.getRandom<IDBTrack>('track', tracks_num, 'genre_ids', keyRange.only(gid))
       return resSucc(tracks.map((track) => { 
-        return {id: track.id, title: track.title}
+        return {
+          id: track.id, 
+          title: track.title, 
+          artists: track.artists?.map(artist => artist.name), 
+          duration: track.duration,
+          album: track.album?.title || '',
+          cover_art_hash: track.cover_art_hash
+        }
       }))
     },
     getFavoriteTracks: async () => { 
       const tracks = await idbHelper.getIndexedRange<IDBTrack>('track', 'favorited_at', keyRange.lowerBound('', true))
       return resSucc(tracks.map((track) => { 
-        return {id: track.id, title: track.title, artists: track.artists?.map(artist => artist.name), cover_art_hash: track.cover_art_hash}
+        return {
+          id: track.id, 
+          title: track.title, 
+          artists: track.artists?.map(artist => artist.name), 
+          duration: track.duration,
+          album: track.album?.title || '',
+          cover_art_hash: track.cover_art_hash
+        }
+      }))
+    },
+    getFavoriteTrackIds: async () => {
+      const tracks = await idbHelper.getIndexedRange<IDBTrack>('track', 'favorited_at', keyRange.lowerBound('', true))
+      return resSucc(tracks.map((track) => { 
+        return track.id
       }))
     },
     getLatestTracks: async () => { 
       const tracks = await idbHelper.getIndexedRange<IDBTrack>('track', 'updated_at', null, true, 12)
       const result = tracks.map((track) => { 
-        return {id: track.id, title: track.title, artists: track.artists?.map(artist => artist.name), cover_art_hash: track.cover_art_hash}
+        return {
+          id: track.id, 
+          title: track.title, 
+          artists: track.artists?.map(artist => artist.name), 
+          duration: track.duration,
+          album: track.album?.title || '',
+          cover_art_hash: track.cover_art_hash
+        }
       })
       return resSucc(result)
     },
     getMostPlayedTracks: async () => { 
       const tracks = await idbHelper.getIndexedRange<IDBTrack>('track', 'hit_count', null, true, 12)
       const result = tracks.map((track) => { 
-        return {id: track.id, title: track.title, artists: track.artists?.map(artist => artist.name), cover_art_hash: track.cover_art_hash}
+        return {
+          id: track.id, 
+          title: track.title, 
+          artists: track.artists?.map(artist => artist.name), 
+          duration: track.duration,
+          album: track.album?.title || '',
+          cover_art_hash: track.cover_art_hash
+        }
       })
       return resSucc(result)
-    },
-    favoriteTrack: async (options?: IdbApiOptions) => { 
-      const track_id = options?.pathParams?.track_id
-      const is_favorited = options?.body?.is_favorited
-      if(!track_id || is_favorited == undefined) return resError(400, 'Invalid params')
-      const id = parseInt(track_id)
-      const track = await idbHelper.get<IDBTrack>('track', id)
-      if(!track) return resError(404, 'Track not found')
-      const favorited_at = is_favorited ? getISOWithOffset() : ''
-      await idbHelper.update('track', id, {favorited_at})
-      return resSucc(favorited_at)
     },
     // #endregion
 
@@ -363,7 +421,14 @@ export default function regIdbApis(idbHelper: indexedDbHelper) {
           tracks = await idbHelper.getIndexedIn<IDBTrack>('track', 'id', playlist.track_ids)
           break
       }
-      return resSucc(tracks.map(item => ({id: item.id, title: item.title}))) 
+      return resSucc(tracks.map(item => ({ 
+        id: item.id, 
+        title: item.title, 
+        artists: item.artists?.map(artist => artist.name), 
+        duration: item.duration,
+        album: item.album?.title || '',
+        cover_art_hash: item.cover_art_hash
+      }))) 
     },
     // #endregion
 
@@ -388,7 +453,14 @@ export default function regIdbApis(idbHelper: indexedDbHelper) {
           let resultTracks = await idbHelper.search<IDBTrack>('track', 'title_lower', 'title_lower', range, kw, page, pageSize)
           return resSucc({
             total: resultTracks.total, 
-            data: resultTracks.data.map(track => ({id: track.id, title: track.title, artists: track.artists?.map(artist => artist.name), cover_art_hash: track.cover_art_hash})),
+            data: resultTracks.data.map(track => ({
+              id: track.id, 
+              title: track.title, 
+              artists: track.artists?.map(artist => artist.name), 
+              duration: track.duration,
+              album: track.album?.title || '',
+              cover_art_hash: track.cover_art_hash
+            })),
             next_key: resultTracks.nextKey
           })
         case 'artist':
@@ -410,6 +482,40 @@ export default function regIdbApis(idbHelper: indexedDbHelper) {
             total: 0
           })
       }
+    },
+    searchLibrary: async (options?: IdbApiOptions) => {
+      const kw = options?.queryParams?.kw
+      const limit_str = options?.queryParams?.limit
+      const limit = limit_str ? parseInt(limit_str) : 50
+      if(!kw) return resSucc({tracks: [], artists: [], albums: []})
+      const range = keyRange.bound('', '\uffff', true, true)
+      const [resultTracks, resultArtists, resultAlbums] = await Promise.all([
+        idbHelper.search<IDBTrack>('track', 'title_lower', 'title_lower', range, kw, 1, limit),
+        idbHelper.search<IDBArtist>('artist', 'name_lower', 'name_lower', range, kw, 1, limit),
+        idbHelper.search<IDBAlbum>('album', 'title_lower', 'title_lower', range, kw, 1, limit),
+      ])
+      const albums = await Promise.all(resultAlbums.data.map(async album => ({
+        id: album.id,
+        title: album.title,
+        cover_art_hash: album.cover_art_hash,
+        track_count: await idbHelper.getCount('track', 'album_id', keyRange.only(album.id))
+      })))
+      return resSucc({
+        tracks: resultTracks.data.map(track => ({
+          id: track.id,
+          title: track.title,
+          artists: track.artists?.map(artist => artist.name),
+          duration: track.duration,
+          album: track.album?.title || '',
+          cover_art_hash: track.cover_art_hash
+        })),
+        artists: resultArtists.data.map(artist => ({
+          id: artist.id,
+          name: artist.name,
+          face_art_hash: artist.face_art_hash
+        })),
+        albums,
+      })
     },
     // #endregion
 
@@ -497,7 +603,14 @@ export default function regIdbApis(idbHelper: indexedDbHelper) {
         })
       }
       const result = await func(count, num_per_artist)
-      return resSucc(result.map(item => ({id: item.id, title: item.title})))
+      return resSucc(result.map(item => ({
+        id: item.id, 
+        title: item.title, 
+        artists: item.artists?.map(artist => artist.name), 
+        duration: item.duration,
+        album: item.album?.title || '',
+        cover_art_hash: item.cover_art_hash
+      })))
     },
     getRandomWeightedArtistTracks: async (options?: IdbApiOptions) => { 
       const num = options?.queryParams?.num
@@ -555,7 +668,14 @@ export default function regIdbApis(idbHelper: indexedDbHelper) {
       }
       
       const result = await func(count, weightRate)
-      return resSucc(result.map(item => ({id: item.id, title: item.title})))
+      return resSucc(result.map(item => ({
+        id: item.id, 
+        title: item.title, 
+        artists: item.artists?.map(artist => artist.name), 
+        duration: item.duration,
+        album: item.album?.title || '',
+        cover_art_hash: item.cover_art_hash
+      })))
     },
     getRandomHitsWeightedTracks: async (options?: IdbApiOptions) => { 
       const num = options?.queryParams?.num
@@ -602,7 +722,14 @@ export default function regIdbApis(idbHelper: indexedDbHelper) {
         })
       }
       const result = await func(count, weightRate)
-      return resSucc(result.map(item => ({id: item.id, title: item.title})))
+      return resSucc(result.map(item => ({
+        id: item.id, 
+        title: item.title, 
+        artists: item.artists?.map(artist => artist.name), 
+        duration: item.duration,
+        album: item.album?.title || '',
+        cover_art_hash: item.cover_art_hash
+      })))
     },
 
     // #endregion

@@ -12,6 +12,27 @@ export function shuffle(arr: any[]){
   }
 }
 
+/** Fisher-Yates: 返回新数组，不改变原数组 */
+export function shuffled<T>(input: readonly T[]): T[] {
+  const a = [...input]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
+
+export function chunk<T>(list: T[], size: number):T[][] {
+  const out: T[][] = []
+  for (let i = 0; i < list.length; i+=size) out.push(list.slice(i, i+size))
+  return out
+}
+
+export function formatTime(sec: number): string {
+  if (!Number.isFinite(sec) || sec < 0) return '00:00'
+  return `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, '0')}`
+}
+
 export function topWeightedLnRandom<T extends Record<K,number>, K extends ('track_count' | 'hit_count')>(arr: T[], count: number, weightKey: K, weightRate: number) {
   let wr = 10 - weightRate
   if (wr < 2) wr = 2
