@@ -47,7 +47,7 @@ describe('出站投影', () => {
   it('TrackChanged → metadata（含 artwork 类型推断）', () => {
     const { bus } = setup()
     bus.emit(PlayerEvent.TrackChanged, {
-      id: 1, title: '歌', artists: ['歌手'], album: '专辑', cover: '/cover.jpg',
+      id: 1, title: '歌', artists: [{id: 1, name: '歌手'}], album: {id: 1, title: '专辑'}, cover: '/cover.jpg',
     })
     expect(msMock.metadata).toMatchObject({
       title: '歌', artist: '歌手', album: '专辑',

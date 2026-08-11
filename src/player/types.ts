@@ -12,6 +12,7 @@ export interface PlayTrack {
   /** 秒，入库元数据可能确实或错误，运行时由durationchange回填 */
   duration?: number
   /** 音乐图片地址，经SW缓存层拦截 */
+  cover_art_hash?: string
   cover?: string
 }
 

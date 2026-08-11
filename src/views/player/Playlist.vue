@@ -12,13 +12,12 @@ import { toPlayTrack } from "@/services/transform";
 import type { MenuSource } from "@/player/menu/types";
 import type { PlayTrack } from "@/player/types";
 import { invalidateCache } from "alova";
-import { useRequest, useForm } from "alova/client";
+import { useRequest } from "alova/client";
 import { useI18n } from "vue-i18n";
-import { shuffled, isNumberic } from "@/utilies/general";
-import { playbackWriter } from "@/services/playback-data";
-import { getPlaylist, updatePlaylist, removeTrackFromPlaylist, movePlaylistTrack, updatePlaylistHit } from "@/apis/methods/music";
-import { updateHits, removeTrackFromPlaylist as idbRemoveTrackFromPlaylist, movePlaylistTrack as idbMovePlaylistTrack } from "@/apis/methods/idb-locals";
-import WMessage from "@/composables/message";
+import { shuffled } from "@/utilies/general";
+import { getPlaylist } from "@/apis/methods/music";
+import { updatePlaylist, removePlaylistTrack, movePlaylistTrack, bumpPlaylistHit } from "@/idb/app-api";
+import { toast } from "@/services/toast";
 import dayjs from "dayjs";
 
 const { t } = useI18n()
@@ -30,8 +29,7 @@ const { heroStyle, compactStyle, reset: resetCollapse } = useCollapseHeader({ ra
 const editing = ref(false)
 
 const {data: playlist, send: getData} = useRequest(() => {
-  let pid: number | string = route.params.id as string
-  if (isNumberic(route.params.id as string)) pid = parseInt(route.params.id as string)
+  let pid = Number(route.params.id)
   return getPlaylist(pid)
 },{
   initialData: { id: '', name: '', tracks: [] },
@@ -50,42 +48,17 @@ const tracks = computed(() =>
   playlist.value?.tracks.map(t => toPlayTrack(t)) ?? []
 )
 
-// 编辑操作：乐观更新 + 失败精确回滚，API接口预留
 function removeTrack(id: number) {
-  const arr = playlist.value!.tracks
-  const idx = arr.findIndex(t => t.id === id)
-  if (idx === -1) return
-  const [removed] = arr.splice(idx, 1)
-  const ok = playbackWriter.write({
-    key: `playlist:${playlist.value.id}:track:${id}`,
-    label: `移除曲目 ${removed.title}`,
-    opType: 'remove-track-from-playlist',
-    payload: { id: playlist.value.id, track_id: id },
-    local: async () => { await idbRemoveTrackFromPlaylist(playlist.value!.id, id) },
-    remote: async () => { await removeTrackFromPlaylist(playlist.value!.id, id) },
-  })
+  removePlaylistTrack(playlist.value!.id, id)
   invalidateCache(getPlaylist(playlist.value!.id))
-  if (!ok) arr.splice(idx, 0, removed)
 }
 
 function moveTrack(id: number, direction: -1 | 1) {
   const arr = playlist.value!.tracks
   const idx = arr.findIndex(t => t.id === id)
   const targetIdx = idx + direction
-  if (idx === -1 || targetIdx < 0 || targetIdx >= arr.length) return
-  ;[arr[idx], arr[targetIdx]] = [arr[targetIdx], arr[idx]]
-  const ok = playbackWriter.write({
-    key: `playlist:${playlist.value.id}:track:${id}`,
-    label: `移动曲目 ${arr[idx].title}`,
-    opType: 'move-playlist-track',
-    payload: { id: playlist.value.id, track_id: id, target_id: arr[targetIdx].id },
-    local: async () => { await idbMovePlaylistTrack(playlist.value!.id, id, arr[targetIdx].id) },
-    remote: async () => { await movePlaylistTrack(playlist.value!.id, id, arr[targetIdx].id) },
-  })
+  movePlaylistTrack(playlist.value!.id, id, targetIdx)
   invalidateCache(getPlaylist(playlist.value!.id))
-  if (!ok) {
-    [arr[idx], arr[targetIdx]] = [arr[targetIdx], arr[idx]]
-  }
 }
 
 // TrackList 菜单注入： playlist-track 类型携带移除回调
@@ -95,35 +68,28 @@ const playlistMenuSource = (t: PlayTrack): MenuSource => ({
   onRemove: () => removeTrack(t.id)
 })
 
-async function writePlaylistHits() {
-  playbackWriter.write({
-    key: `playlist:${playlist.value.id}:hits`,
-    label: `播放计次 ${playlist.value.title}`,
-    opType: 'hit-playlist',
-    payload: { id: playlist.value.id, at: dayjs().format() },
-    local: async () => { await updateHits('playlist', playlist.value!.id) },
-    remote: async () => { await updatePlaylistHit(playlist.value!.id) },
-  })
-}
-
-async function handlePlayAll(){
+function handlePlayAll(){
   player.playAll(tracks.value)
-  await writePlaylistHits()
+  bumpPlaylistHit(playlist.value!.id)
 }
-async function handlePlayRandom(){
+function handlePlayRandom(){
   player.playAll(shuffled(tracks.value))
-  await writePlaylistHits()
+  bumpPlaylistHit(playlist.value!.id)
 }
 
 // edit playlist
 const editOpened = ref(false)
+const editTitle = ref('')
+const editComment = ref('')
 const coverPreview = ref<string>()
 const coverFile = ref<File | null>(null)
 const fileInput = ref<HTMLInputElement>()
+const updating = ref(false)
+
 function openEdit() {
   coverPreview.value = playlist.value?.cover ?? ''
-  form.value.title = playlist.value.title
-  form.value.comment = playlist.value.comment
+  editTitle.value = playlist.value.title
+  editComment.value = playlist.value.comment
   editOpened.value = true
 }
 function onFileChange(e: Event) {
@@ -132,55 +98,24 @@ function onFileChange(e: Event) {
   if (coverPreview.value?.startsWith('blob:')) URL.revokeObjectURL(coverPreview.value)
   coverFile.value = file
   coverPreview.value = URL.createObjectURL(file)
-  form.value.cover = file
+  coverFile.value = file
 }
-const {
-  loading,
-  form,
-  send: submit,
-  uploading,
-  onSuccess,
-  onError,
-} = useForm(
-  (data) => {
-    const formData = new FormData()
-    formData.append('id', playlist.value.id!.toString()) //formData type: string | Blob
-    formData.append('title', data.title)
-    formData.append('comment', data.comment)
-    if(data.cover){
-      formData.append('cover', data.cover)
-    }
-    return updatePlaylist(formData)
-  },
-  {
-    initialForm:{
-      title: '',
-      comment: '',
-      cover: null as File | null
-    },
-    immediate: false
-  },
-)
-const progress = computed(() => {
-  if(uploading.value.total > 0){
-    return uploading.value.loaded / uploading.value.total * 100
-  }
-  return 0
-})
-onSuccess(() => {
-  uploading.value.loaded = 0
-  editOpened.value = false
-  getData()
-})
-onError(() => {
-  WMessage(t('errors.fail_update'), 'error')
-})
-function handleSubmit() {
-  if(!form.value.title){
-    WMessage(t('errors.playlist_title_empty'), 'error')
+
+async function handleSubmit() {
+  if(!editTitle.value.trim()){
+    toast(t('errors.playlist_title_empty'), 'error')
     return
   }
-  submit()
+  updating.value = true
+  const res = await updatePlaylist(playlist.value!.id, { title: editTitle.value.trim(), comment: editComment.value.trim() }, coverFile.value || undefined)
+  if (res.ok) {
+    updating.value = false
+    editOpened.value = false
+    getData()
+  } else {
+    toast(res.reason, 'error')
+    updating.value = false
+  }
 }
 </script>
 
@@ -193,7 +128,7 @@ function handleSubmit() {
           class="shrink-0 rounded-full bg-black/30 p-2 text-zinc-100 ring-1 ring-white/10 transition hover:bg-black/50 active:scale-90"
           aria-label="返回" @click="router.back()"
         >
-          <span class=" icon-[solar--alt-arrow-left-linear] text-2xl"></span>
+          <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
         </button>
         <h2 :style="compactStyle" class="min-w-0 flex-1 truncate text-base font-bold text-zinc-50">
           {{ playlist?.title ?? '...' }}
@@ -352,7 +287,7 @@ function handleSubmit() {
         <div class="  flex-none text-lg text-zinc-300" @click="editOpened = false">{{ t('common.cancel') }}</div>
         <div class=" flex-1 text-lg text-center font-semibold">{{ t('playlist.edit') }}</div>
         <div class="  flex-none text-lg text-amber-500" @click="handleSubmit">
-          <span v-if="loading" class="icon-[svg-spinners--3-dots-scale]"></span>
+          <span v-if="updating" class="icon-[svg-spinners--3-dots-scale]"></span>
           <span v-else>{{ t('common.submit') }}</span>
         </div>
       </div>
@@ -373,20 +308,17 @@ function handleSubmit() {
           <div v-if="coverPreview" class="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition group-hover:opacity-100 group-active:opacity-100">
             <span class="text-[11px] font-medium text-zinc-100">更换</span>
           </div>
-          <div v-if="progress !== 0" class=" mx-2 w-[calc(100%-(--spacing(4)))] h-[2px]">
-              <div class=" h-[2px] bg-cyan-500" :style="{width: progress + '%'}"></div>
-            </div>
         </button>
         <input type="file" class=" hidden" ref="fileInput" accept="image/*" @change="onFileChange" />
 
-        <div class=" max-w-0 flex-1 space-y-2.5">
+        <div class=" min-w-0 flex-1 space-y-2.5">
           <input 
-            v-model.trim="form.title" maxlength="50" class=" 
+            v-model.trim="editTitle" maxlength="50" class=" 
             w-full rounded-lg bg-white/5 px-3.5 py-2 text-sm text-zinc-100 outline-none ring-1 ring-white/10 transition placeholder:text-zinc-500 focus:ring-2 focus:ring-amber-400/60" 
             :placeholder="`${t('playlist.title_placeholder')} *`"
           />
           <textarea 
-            v-model="form.comment" rows="2" maxlength="200" :placeholder="t('playlist.comment_placeholder')"
+            v-model="editComment" rows="2" maxlength="200" :placeholder="t('playlist.comment_placeholder')"
             class=" w-full resize-none rounded-lg bg-white/5 px-3.5 py-2 text-sm text-zinc-100 outline-none ring-1 ring-white/10 transition placeholder:text-zinc-500 focus:ring-2 focus:ring-amber-400/60"
           />
         </div>

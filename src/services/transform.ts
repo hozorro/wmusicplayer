@@ -7,7 +7,8 @@ export function toPlayTrack(track: Track, extra?: { [key in keyof PlayTrack]?: a
     artists: track.artists?.length ? track.artists : [],
     album: track.album,
     duration: track.duration,
-    cover: formatTrackArt(track),
+    cover_art_hash: track.cover_art_hash,
+    cover: coverUrl('track', track.id, track.cover_art_hash),
     ...extra,
   };
 }
@@ -25,18 +26,14 @@ export function toDetailText(track: TrackMoreInfo): string {
   return text
 }
 
-export function formatTrackArt(track: Track): string {
-  return `/media/tracks/${track.id}.jpg?v=${track?.cover_art_hash}`
-}
-
-export function formatAlbumArt(album: Album): string {
-  return `/media/albums/${album.id}.jpg?v=${album?.cover_art_hash}`
-}
-
-export function formatArtistArt(artist: Omit<Artist, 'pinyin_initial'>, kind: 'face' | 'portrait'): string {
-  return `/media/artists/${artist.id}_${kind}.jpg?v=${artist?.[kind + '_art_hash' as keyof Omit<Artist, 'pinyin_initial'>]}`
-}
-
-export function formatPlaylistArt(playlist: Playlist): string {
-  return `/media/playlists/${playlist.id}.jpg?v=${playlist?.cover_art_hash}`
+export function coverUrl(
+  entity: 'track' | 'album' | 'artist' | 'playlist',
+  id: number | string,
+  hash?: string,
+  kind?: 'face' | 'portrait'
+): string {
+  if (entity === 'artist')
+    return hash ? `/media/artists/${id}_${kind}.jpg?v=${hash}` : ''
+  else
+    return hash ? `/media/${entity}s/${id}.jpg?v=${hash}` : ''
 }

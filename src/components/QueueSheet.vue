@@ -72,7 +72,7 @@ function onDragEnd() {
       leave-active-class="transition-opacity duration-200"
       leave-to-class="opacity-0"
     >
-      <div v-if="open" class=" fixed inset-0 z-[60] bg-black/60" @click="open = false"></div>
+      <div v-if="open" class=" fixed inset-0 z-[60] bg-primary/60" @click="open = false"></div>
     </Transition>
 
     <!-- 面板 -->
@@ -84,7 +84,7 @@ function onDragEnd() {
     >
       <section
         v-if="open"
-        class=" fixed inset-x-0 bottom-0 z-[70] flex max-h-[72dvh] flex-col rounded-t-2xl bg-zinc-900 pb-[env(safe-area-inset-bottom)] shadow-2xl shadow-black/60 ring-1 ring-white/10"
+        class=" fixed inset-x-0 bottom-0 z-[70] flex max-h-[72dvh] flex-col rounded-t-2xl bg-primary pb-[env(safe-area-inset-bottom)] shadow-2xl shadow-primary/60 ring-1 ring-fg-primary/10"
         :style="{
           transform: dragY > 0 ? `translateY(${dragY}px)` : undefined,
           transition: dragging ? 'none' : 'transform 200ms ease-out'
@@ -98,25 +98,25 @@ function onDragEnd() {
           @pointerup="onDragEnd"
           @pointercancel="onDragEnd"
         >
-          <div class=" h-1 w-10 rounded-full bg-zinc-600"></div>
+          <div class=" h-1 w-10 rounded-full bg-fg-muted"></div>
         </div>
 
         <!-- 头部 -->
         <header class=" flex items-center justify-between px-5 pb-2 pt-1">
           <div class=" flex items-baseline gap-2.5">
-            <h2 class=" text-lg font-bold text-zinc-50">当前播放清单</h2>
-            <span class=" text-xs tabular-nums text-zinc-500"> {{ playQueue.tracks.value.length }} 首</span>
+            <h2 class=" text-lg font-bold text-fg-primary">当前播放清单</h2>
+            <span class=" text-xs tabular-nums text-fg-muted"> {{ playQueue.tracks.value.length }} 首</span>
           </div>
           <div class=" flex items-center gap-1">
             <button
-              class=" rounded-full px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:bg-white/5 hover:text-zinc-200 active:scale-95 disabled:pointer-events-none disabled:opacity-40"
+              class=" rounded-full px-3 py-1.5 text-xs font-medium text-fg-muted transition hover:bg-fg-primary/5 hover:text-fg-primary active:scale-95 disabled:pointer-events-none disabled:opacity-40"
               :disabled="playQueue.tracks.value.length === 0"
               @click="playQueue.clear()"
             >
               清空
             </button>
             <button
-              class=" rounded-full p-2 text-zinc-400 transition hover:bg-white/5 hover:text-zinc-100 active:scale-90"
+              class=" rounded-full p-2 text-fg-muted transition hover:bg-fg-primary/5 hover:text-fg-primary active:scale-90"
               aria-label="关闭"
               @click="open = false"
             >
@@ -131,10 +131,10 @@ function onDragEnd() {
         <div ref="listEl" class=" min-h-0 flex-1 overflow-y-auto px-2 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <!-- 空态 -->
           <div v-if="playQueue.tracks.value.length === 0" class=" flex flex-col items-center gap-3 py-16">
-            <svg viewBox="0 0 24 24" class="h-10 w-10 text-zinc-700" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+            <svg viewBox="0 0 24 24" class="h-10 w-10 text-fg-secondary" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
               <path d="M4 6h12M4 11h12M4 16h7" /><path d="M19 18V6l-4.5 1" /><circle cx="17" cy="18" r="2.3" fill="currentColor" stroke="none" />
             </svg>
-            <p class="text-sm text-zinc-500">清单为空，去挑几首歌吧</p>
+            <p class="text-sm text-fg-muted">清单为空，去挑几首歌吧</p>
           </div>
 
           <TransitionGroup
@@ -149,29 +149,29 @@ function onDragEnd() {
               :key="t.id"
               :data-index="i"
               class=" rounded-xl transition-colors"
-              :class="i ===playQueue.currentIndex.value ? 'bg-amber-400/10' : 'hover:bg-white/5'"
+              :class="i === playQueue.currentIndex.value ? 'bg-accent/10' : 'hover:bg-fg-primary/5'"
             >
               <div class=" flex items-center gap-2.5 px-3 py-2.5">
                 <!-- 当前曲目：频谱条；其余：序号 -->
                 <div class=" flex w-6 shrink-0 items-center justify-center">
                   <div v-if="i === playQueue.currentIndex.value" class=" flex h-3.5 items-end gap-[3px]">
                     <span
-                      class=" w-[3px] rounded-sm bg-amber-400 animate-bounce [animation-delay:-0.32s] [animation-duration:0.8s]"
+                      class=" w-[3px] rounded-sm bg-accent animate-bounce [animation-delay:-0.32s] [animation-duration:0.8s]"
                       :class="player.isPlaying.value ? '' : '[animation-play-state:paused]'"
                       style="height: 55%;"
                     />
                     <span
-                      class="w-[3px] rounded-sm bg-amber-400 animate-bounce [animation-delay:-0.16s] [animation-duration:1s]"
+                      class="w-[3px] rounded-sm bg-accent animate-bounce [animation-delay:-0.16s] [animation-duration:1s]"
                       :class="player.isPlaying.value ? '' : '[animation-play-state:paused]'"
                       style="height: 100%"
                     />
                     <span
-                      class="w-[3px] rounded-sm bg-amber-400 animate-bounce [animation-duration:0.9s]"
+                      class="w-[3px] rounded-sm bg-accent animate-bounce [animation-duration:0.9s]"
                       :class="player.isPlaying.value ? '' : '[animation-play-state:paused]'"
                       style="height: 70%"
                     />
                   </div>
-                  <span v-else class=" text-xs tabular-nums text-zinc-600">{{ i + 1 }}</span>
+                  <span v-else class=" text-xs tabular-nums text-fg-muted">{{ i + 1 }}</span>
                 </div>
 
                 <!-- 标题块：点击切歌 -->
@@ -179,17 +179,17 @@ function onDragEnd() {
                   <p
                     class=" truncate text-sm"
                     :class="i === playQueue.currentIndex.value
-                      ? 'font-semibold text-amber-400'
-                      : 'font-medium text-zinc-100'"
+                      ? 'font-semibold text-accent'
+                      : 'font-medium text-fg-primary'"
                   >
                     {{ t.title }}
                   </p>
-                  <p class=" mt-0.5 truncate text-xs text-zinc-500">{{ t.artists ? t.artists.map(a => a.name).join(', ') : '' }}</p>
+                  <p class=" mt-0.5 truncate text-xs text-fg-muted">{{ t.artists ? t.artists.map(a => a.name).join(', ') : '' }}</p>
                 </button>
 
                 <!-- 删除 -->
                 <button
-                  class=" shrink-0 rounded-full p-2 text-zinc-500 transition hover:bg-white/10 hover:text-zinc-200 active:scale-90"
+                  class=" shrink-0 rounded-full p-2 text-fg-muted transition hover:bg-fg-primary/5 hover:text-fg-primary active:scale-90"
                   :aria-label="`删除 ${t.title}`"
                   @click="remove(i)"
                 >
@@ -199,7 +199,7 @@ function onDragEnd() {
                 </button>
 
                 <button
-                  class=" inline-flex items-center gap-1.5 rounded-full bg-white/8 px-3 py-1.5 text-xs font-medium text-zinc-200 ring-1 ring-white/10 transition hover:bg-white/15 active:scale-95"
+                  class=" inline-flex items-center gap-1.5 rounded-full bg-fg-primary/8 px-3 py-1.5 text-xs font-medium text-fg-primary ring-1 ring-fg-primary/10 transition hover:bg-fg-primary/15 active:scale-95"
                   @click="pinTop(i)"
                 >
                   <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

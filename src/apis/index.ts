@@ -4,8 +4,8 @@ import type { AxiosError } from "axios";
 import { createClientTokenAuthentication } from "alova/client";
 import VueHook from "alova/vue";
 import { refreshToken } from "./methods/music";
-import WMessage from "@/composables/message";
-import { isTokenExpired } from "@/utilies/general";
+import { toast } from "@/services/toast";
+import { isTokenExpired } from "@/utilies/auth";
 import { t } from '@/utilies/use-i18n'
 import { TokenStorage } from "@/utilies/auth";
 
@@ -56,7 +56,7 @@ export const generalAlova = createAlova({
       const resData = await response.data
       console.log(resData)
       if(resData.code !== 200){
-        WMessage(`${t('errors.data_error')}[${resData.code}]: ${resData.msg}`, "error")
+        toast(`${t('errors.data_error')}[${resData.code}]: ${resData.msg}`, "error")
         return
       }
       return resData.data
@@ -65,21 +65,21 @@ export const generalAlova = createAlova({
       if (error.response) {
         switch (error.response.status) { 
           case 401: 
-            WMessage(t('errors._401'), 'error')
+            toast(t('errors._401'), 'error')
             break;
           case 404:
-            WMessage(t('errors._404'), 'error')
+            toast(t('errors._404'), 'error')
             break;
           case 500: 
-            WMessage(t('errors._500'), 'error')
+            toast(t('errors._500'), 'error')
             break;
           default: 
-            WMessage(`${t('errors.unknown')}[${error.response.status}]:${error.message}`, 'error')
+            toast(`${t('errors.unknown')}[${error.response.status}]:${error.message}`, 'error')
         }
       } else if (error.request) {
-        WMessage(`${t('errors.no_response')}:${error.request}`, 'error')
+        toast(`${t('errors.no_response')}:${error.request}`, 'error')
       } else {
-        WMessage(`${t('errors.request_error')}:${error.message}`, 'error')
+        toast(`${t('errors.request_error')}:${error.message}`, 'error')
       }
     }
   })

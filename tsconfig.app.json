@@ -17,5 +17,6 @@
     },
     "types": ["node", "@intlify/unplugin-vue-i18n/messages", "vitest/globals"]
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "src/i18n/langs/*.json"]
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "src/i18n/langs/*.json"],
+  "exclude": ["node_modules"]
 }

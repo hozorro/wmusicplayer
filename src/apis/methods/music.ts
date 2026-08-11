@@ -1,7 +1,7 @@
 import { generalAlova } from "..";
 import type { RandomModeKey } from "@/services/random-model";
 import { TokenStorage } from "@/utilies/auth";
-import { formatAlbumArt, formatArtistArt, formatTrackArt, formatPlaylistArt } from "@/services/transform";
+import { coverUrl } from "@/services/transform";
 
 export const login = (username: string, password: string) => { 
   const method = generalAlova.Post<TokenData>('/auth/login', {
@@ -30,7 +30,7 @@ export const getAlbum = (id: number) => {
       return {
         ...rawData,
         track_count: rawData?.tracks.length || 0,
-        cover: formatAlbumArt(rawData as Album),
+        cover: coverUrl('album', rawData.id, rawData.cover_art_hash),
       }
     }
   })
@@ -44,7 +44,7 @@ export const getTenArtists = () => {
     transform: (rawData: Artist[]) => {
       return rawData.map(artist => ({
         ...artist,
-        cover: formatArtistArt(artist, 'face'),
+        cover: coverUrl('artist', artist.id, artist.face_art_hash, 'face'),
       }))
     },
     hitSource: /^transfer/
@@ -67,7 +67,7 @@ export const getArtists = (char: string) => {
     transform: (rawData: Artist[]) => {
       return rawData.map(artist => ({
         ...artist,
-        cover: formatArtistArt(artist, 'face'),
+        cover: coverUrl('artist', artist.id, artist.face_art_hash, 'face'),
       }))
     }
   })
@@ -78,7 +78,7 @@ export const getFavoritedArtists = () => {
     transform: (rawData: Artist[]) => {
       return rawData.map(artist => ({
         ...artist,
-        cover: formatArtistArt(artist, 'face'),
+        cover: coverUrl('artist', artist.id, artist.face_art_hash, 'face'),
       }))
     }
   })
@@ -89,11 +89,11 @@ export const getArtist = (id: number) => {
     transform: (rawData: ArtistInfo) => {
       return {
         ...rawData,
-        main_albums: rawData?.main_albums.map(item => ({...item, cover: formatAlbumArt(item)})),
-        track_albums: rawData?.track_albums.map(item => ({...item, cover: formatAlbumArt(item)})),
-        top_tracks: rawData?.top_tracks.map(item => ({...item, cover: formatTrackArt(item)})),
-        face: formatArtistArt(rawData, 'face'),
-        portrait: formatArtistArt(rawData, 'portrait'),        
+        main_albums: rawData?.main_albums.map(item => ({...item, cover: coverUrl('album', item.id, item.cover_art_hash)})),
+        track_albums: rawData?.track_albums.map(item => ({...item, cover: coverUrl('album', item.id, item.cover_art_hash)})),
+        top_tracks: rawData?.top_tracks.map(item => ({...item, cover: coverUrl('track', item.id, item.cover_art_hash)})),
+        face: coverUrl('artist', rawData.id, rawData.face_art_hash, 'face'),
+        portrait: coverUrl('artist', rawData.id, rawData.portrait_art_hash, 'portrait'),        
       }
     }
   })
@@ -135,10 +135,10 @@ export const getGenres = () => {
 export const getGenre = (id: number) => {
   return generalAlova.Get<Genre>("/music/genre/" + id, {name: 'getGenre'})
 }
-export const getGenreTracks = (id: number, page: number, pageSize: number, lastKey: string | null) => {
-  const options = { params: { page, page_size: pageSize } as Record<string, any>, cacheFor: 0, name: 'getGenreTracks' }
-  if(lastKey) options.params.last_key = lastKey
-  return generalAlova.Get<{total: number, tracks: Track[], next_key?: string}>(`/music/genre/${id}/tracks`, options)
+export const getGenreTracks = (id: number, page: number, pageSize: number) => {
+  // 新 IDB 系统按 page/page_size 偏移量分页（pageByIndex），无需 last_key 游标
+  const options = { params: { page, page_size: pageSize }, cacheFor: 0, name: 'getGenreTracks' }
+  return generalAlova.Get<{total: number, tracks: Track[]}>(`/music/genre/${id}/tracks`, options)
 }
 // #endregion
 
@@ -153,7 +153,7 @@ export const getStreamingUrl = (id: number) => {
   return generalAlova.Get<string>("/music/track/signed-url/" + id, {name: 'getStreamingUrl'})
 }
 export const getRandomTracks = (num?: number) => { 
-  return generalAlova.Get<Track[]>("/music/track/randomtracks?num=" + num, {name: 'getRandomTracks'})
+  return generalAlova.Get<Track[]>("/music/track/randomtracks?num=" + (num || 50), {name: 'getRandomTracks'})
 }
 export const getArtistRandomTracks = (id: number, num?: number) => { 
   return generalAlova.Get<Track[]>("/music/track/artistrandomtracks?artist_id=" + id + "&num=" + (num || 50), {name: 'getArtistRandomTracks'})
@@ -167,7 +167,7 @@ export const getFavoriteTracks = (num: number = 100) => {
     transform: (rawData: Track[]) => {
       return rawData.map(track => ({
         ...track,
-        cover: formatTrackArt(track),
+        cover: coverUrl('track', track.id, track.cover_art_hash),
       }))
     }
   })
@@ -181,7 +181,7 @@ export const getLatestTracks = () => {
     transform: (rawData: Track[]) => {
       return rawData.map(track => ({
         ...track,
-        cover: formatTrackArt(track),
+        cover: coverUrl('track', track.id, track.cover_art_hash),
       }))
     }
   });
@@ -192,7 +192,7 @@ export const getHotTracks  = () => {
     transform: (rawData: Track[]) => {
       return rawData.map(track => ({
         ...track,
-        cover: formatTrackArt(track),
+        cover: coverUrl('track', track.id, track.cover_art_hash),
       }))
     }
   });
@@ -251,7 +251,7 @@ export const getTopPlaylists = () => {
     transform: (rawData: Playlist[]) => {
       return rawData.map(playlist => ({
         ...playlist,
-        cover: formatPlaylistArt(playlist),
+        cover: coverUrl('playlist', playlist.id, playlist.cover_art_hash),
       }))
     },
     hitSource: /^transfer/
@@ -263,20 +263,20 @@ export const getPlaylists = () => {
     transform: (rawData: Playlist[]) => {
       return rawData.map(playlist => ({
         ...playlist,
-        cover: formatPlaylistArt(playlist),
+        cover: coverUrl('playlist', playlist.id, playlist.cover_art_hash),
       }))
     },
     hitSource: ['addplaylist', 'addnewplaylist', 'updateplaylist', /^transfer/]
   });
 }
-export const getPlaylist = (id: number | string) => {
+export const getPlaylist = (id: number) => {
   return generalAlova.Get("/music/playback/" + id, {
     name: 'getPlaylist',
     transform: (rawData: PlaylistInfo) => {
       return {
         ...rawData,
-        cover: formatPlaylistArt(rawData),
-        tracks: rawData?.tracks.map(item => ({...item, cover: formatTrackArt(item)}))
+        cover: coverUrl('playlist', rawData.id, rawData.cover_art_hash),
+        tracks: rawData?.tracks.map(item => ({...item, cover: coverUrl('track', item.id, item.cover_art_hash)}))
           .sort((a, b) => a.position - b.position),
       }
     },
@@ -287,7 +287,7 @@ export const addPlaylist = (formData:FormData) => {
   return generalAlova.Post<Omit<PlaylistInfo, 'tracks'>>("/music/playback/addplaylist", formData, {name: 'addPlaylist', timeout: 1000 * 60 * 10});
 };
 export const updatePlaylist = (formData: FormData) => { 
-  return generalAlova.Put<Partial<PlaylistInfo>>("/music/playback/updateplaylist", formData, {name: 'updatePlaylist', timeout: 1000 * 60 * 10});
+  return generalAlova.Put<Omit<PlaylistInfo, 'tracks'>>("/music/playback/updateplaylist", formData, {name: 'updatePlaylist', timeout: 1000 * 60 * 10});
 };
 export const deletePlaylist = (id: number) => { 
   return generalAlova.Delete<Playlist | string>("/music/playback/deleteplaylist", {id}, {name: 'deletePlaylist'});
@@ -298,8 +298,8 @@ export const addTrackToPlaylist = (playlist_id: number | string, track_id: numbe
 export const removeTrackFromPlaylist = (playlist_id: number | string, track_id: number) => { 
   return generalAlova.Put("/music/playback/removetrackfromplaylist", {playlist_id, track_id}, {cacheFor: 0, name: 'removeTrackFromPlaylist'});
 };
-export const movePlaylistTrack = (playlist_id: number | string, track_id: number, target_id: number) => { 
-  return generalAlova.Put("/music/playback/moveplaylisttrack", {playlist_id, track_id, target_id}, {cacheFor: 0, name: 'movePlaylistTrack'});
+export const movePlaylistTrack = (playlist_id: number | string, track_id: number, new_position: number) => { 
+  return generalAlova.Put("/music/playback/moveplaylisttrack", {playlist_id, track_id, new_position}, {cacheFor: 0, name: 'movePlaylistTrack'});
 };
 
 export const favTrack = (track_id: number, is_favorited: boolean) => { 

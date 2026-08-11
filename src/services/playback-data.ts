@@ -1,17 +1,18 @@
 import { toast } from "./toast";
-import { createPendingStore } from "@/apis/methods/idb-locals";
+import { createPendingStore } from "@/idb/pending";
 import { createPlaybackSync } from "./playback-sync";
 import { createPlaybackWriter } from "./playback-writer";
 
-const pending = createPendingStore();
-export const playbackSync = createPlaybackSync({ pending, notify: toast });
+const pendingStore = createPendingStore();
+export { pendingStore }
+export const playbackSync = createPlaybackSync({ pending: pendingStore, notify: toast });
 export const playbackWriter = createPlaybackWriter(playbackSync);
 
 /** 定期同步守卫：drain → 残留确认 → 丢弃 → 重建（A65/A67） */
 export async function guardedRebuild(rebuild: () => Promise<void>): Promise<boolean> {
   const remaining = await playbackSync.drain()
   if (remaining > 0) {
-    const ops = await pending.all()
+    const ops = await pendingStore.all()
     const ok = window.confirm(
       `有 ${remaining} 项改动未能同步：\n -${ops.map(op => op.label).join('\n -')}\n\n继续同步将丢失这些改动。\n\n是否继续？`,
     )

@@ -1,6 +1,13 @@
 <!-- components/ToastHost.vue —— 挂载于 DefaultLayout，层级压过一切弹层 -->
 <script setup lang="ts">
-import { activeToasts } from '@/services/toast'
+import { activeToasts, type ToastKind } from '@/services/toast'
+
+const mapBg: Record<ToastKind, string> = {
+  success: 'bg-green-500/95',
+  error: 'bg-red-500/95',
+  warning: 'bg-yellow-500/95',
+  info: 'bg-blue-500/95'
+}
 </script>
 
 <template>
@@ -11,7 +18,8 @@ import { activeToasts } from '@/services/toast'
     >
       <div
         v-for="t in activeToasts" :key="t.id"
-        class="max-w-sm rounded-full bg-zinc-800/95 px-4 py-2 text-center text-xs font-medium text-zinc-100 shadow-xl shadow-black/40 ring-1 ring-white/10"
+        class="max-w-sm rounded-full px-4 py-2 text-center text-xs font-medium text-zinc-100 shadow-xl shadow-black/40 ring-1 ring-white/10"
+        :class="mapBg[t.kind]"
       >
         {{ t.msg }}
       </div>

@@ -4,28 +4,8 @@
  * 重放时经 OP_REGISTRY 重建请求。同 key 写入直接覆盖（put 语义）
  * fav 类操作天然合并为最后一次状态
  */
-import type { PendingStore } from "@/apis/methods/idb-locals";
-import { 
-  favTrack,
-  favArtist,
-  updateTrackHit,
-  updateArtistHit,
-  updatePlaylistHit,
-  addTrackToPlaylist,
-  removeTrackFromPlaylist,
-  movePlaylistTrack,
-} from "@/apis/methods/music";
-
-export const OP_REGISTRY: Record<PlaybackOpType, (p: any) => Promise<unknown>> = {
-  'fav-track':              p => favTrack(p.id, p.is_favorited).send(),
-  'fav-artist':             p => favArtist(p.id, p.is_favorited).send(),
-  'hit-track':              p => updateTrackHit(p.id).send(),
-  'hit-artist':             p => updateArtistHit(p.id).send(),
-  'hit-playlist':           p => updatePlaylistHit(p.id).send(),
-  'add-track-to-playlist':  p => addTrackToPlaylist(p.playlist_id, p.track_id).send(),
-  'remove-track-from-playlist': p => removeTrackFromPlaylist(p.playlist_id, p.track_id).send(),
-  'move-playlist-track':    p => movePlaylistTrack(p.playlist_id, p.track_id, p.target_id).send(),
-};
+import type { PendingStore } from "@/idb/pending";
+import type { PlaybackOpType } from "@/idb/pending";
 
 const MAX_ATTEMPTS = 3;
 const BACKOFF = [1000, 3000, 9000]
@@ -34,10 +14,16 @@ export function createPlaybackSync(deps: {
   pending: PendingStore
   notify: (msg:string) => void
 }) {
+  const handlers = new Map<PlaybackOpType, (payload: any) => Promise<unknown>>()
+  const registerHandler = (type: PlaybackOpType, fn: (payload: any) => Promise<unknown>) => {
+    handlers.set(type, fn)
+  }
   /** 即时充实 3 次：全败 -> 落 pending + 提醒。返回是否同步成功 */
   async function push(spec: {
-    key: string; opType: PlaybackOpType;
-    payload: Record<string, unknown>; label: string;
+    key: string; 
+    opType: PlaybackOpType;
+    payload: Record<string, unknown>;   // 操作载荷，用于drain时OP_REGISTRY的执行参数
+    label: string;
     remote: () => Promise<unknown>
   }): Promise<boolean> {
     for (let i = 0; i < MAX_ATTEMPTS; i++) {
@@ -57,10 +43,14 @@ export function createPlaybackSync(deps: {
     let remaining = 0
     const ops = await deps.pending.all()
     for (const op of ops) {
+      const handler = handlers.get(op.opType)
+      if (!handler) { remaining++; continue }
       try {
-        await OP_REGISTRY[op.opType](op.payload)
+        await handler(op.payload)
         await deps.pending.remove(op.key)
-      } catch { remaining++ }
+      } catch {
+        remaining++
+      }
     }
     return remaining
   }
@@ -70,7 +60,7 @@ export function createPlaybackSync(deps: {
 
   async function sleep(ms: number) { return new Promise(resolve => setTimeout(resolve, ms)) }
 
-  return { push, drain, discardAll, count }
+  return { push, drain, discardAll, count, registerHandler }
 }
 
 export type PlaybackSync = ReturnType<typeof createPlaybackSync>

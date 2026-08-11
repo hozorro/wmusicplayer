@@ -23,12 +23,12 @@ export const RANDOM_MODES: RandomMode[] = [
     key: 'pure',  
     name: '随机播放', 
     description: '随机选取50首歌',  
-    icon: 'shuffle' 
+    icon: 'pure' 
   }, { 
     key: 'artist-r', 
     name: '歌手随机', 
     description: '随机选出50位歌手，每位歌手随机1首歌',
-    icon: 'artist' 
+    icon: 'artist-r' 
   },{ 
     key: 'heat',   
     name: '熟歌模式', 
@@ -39,13 +39,13 @@ export const RANDOM_MODES: RandomMode[] = [
     key: 'artist-c',  
     name: '约束加权', 
     description: '随机选出50首歌，但每位歌手的歌曲数量不超过：',
-    icon: 'constraint',
+    icon: 'artist-c',
     param: { min: 2, max: 9, step: 1, defaultValue: 2, format: v => `${v}` } 
   }, { 
     key: 'artist-w',    
     name: '加权随机',
     description: '加权随机选出50位歌手，每位歌手1首歌，权重度越高，越偏向于歌曲数量多的歌手，权重度：', 
-    icon: 'weighted',
+    icon: 'artist-w',
     param: { min: 2, max: 9, step: 1, defaultValue: 2, format: v => `${v}` } 
   },
 ]

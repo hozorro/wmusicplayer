@@ -9,14 +9,13 @@ import { useRouter } from 'vue-router'
 import { invalidateCache } from 'alova'
 import { usePlayer } from '@/composables/playback'
 import { usePlayerQueue } from '@/composables/player-queue'
-import { playbackWriter } from '@/services/playback-data'
 import { entityMenuSource, closeEntityMenu } from '@/player/menu/state'
 import { MENU_ACTIONS, KIND_LABEL } from '@/player/menu/definitions'
 import { MENU_ICONS } from '@/player/menu/icons'
 import type { MenuContext } from '@/player/menu/context'
 import type { PlayTrack } from '@/player/types'
-import { getPlaylists, addTrackToPlaylist, getPlaylist } from '@/apis/methods/music'
-import { addTrackToPlaylist as idbAddTrackToPlaylist } from '@/apis/methods/idb-locals'
+import { getPlaylists, getPlaylist } from '@/apis/methods/music'
+import { addPlaylistTrack } from '@/idb/app-api'
 
 const router = useRouter()
 
@@ -57,14 +56,7 @@ async function addToPlaylist(pId: number) {
   const s = source.value
   if (!s || !('track' in s) || addingId.value !== null) return
   addingId.value = pId
-  playbackWriter.write({
-    key: `playlist:${pId}:track:${s.track.id}`,
-    label: `添加曲目 ${s.track.title}`,
-    opType: 'add-track-to-playlist',
-    payload: { playlist_id: pId, track_id: s.track.id },
-    local: async () => { await idbAddTrackToPlaylist(pId, s.track.id) },
-    remote: async () => { await addTrackToPlaylist(pId, s.track.id).send() },
-  })
+  addPlaylistTrack(pId, s.track.id)
   invalidateCache(getPlaylist(pId))
   addingId.value = null 
 }
@@ -86,7 +78,7 @@ const headerSubinfo = computed(() => {
   const s = source.value
   if (!s) return ''
   return s.kind === 'track' || s.kind === 'queue-track' || s.kind === 'playlist-track'
-    ? s.track.artists?.join(' / ') ?? ''
+    ? s.track.artists?.map(a => a.name).join(', ') ?? ''
     : s.subinfo ?? ''
 })
 const headerArtwork = computed(() => {
@@ -127,7 +119,7 @@ async function runAction(key: string) {
       leave-active-class="transition-opacity duration-200"
       leave-to-class="opacity-0"
     >
-      <div v-if="open" class="fixed inset-0 z-[80] bg-black/60" @click="closeEntityMenu()" />
+      <div v-if="open" class="fixed inset-0 z-[80] bg-primary/60" @click="closeEntityMenu()" />
     </Transition>
 
     <Transition
@@ -138,7 +130,7 @@ async function runAction(key: string) {
     >
       <section
         v-if="open"
-        class="fixed inset-x-0 bottom-0 z-[90] rounded-t-xl bg-zinc-900 pb-[env(safe-area-inset-bottom)] shadow-2xl shadow-black/60 ring-1 ring-white/10"
+        class="fixed inset-x-0 bottom-0 z-[90] rounded-t-xl bg-primary pb-[env(safe-area-inset-bottom)] shadow-2xl shadow-primary/60 ring-1 ring-fg-primary/10"
       >
         <div class="overflow-hidden">
           <!-- 面板栈：root 与歌单选择面板横移切换 -->
@@ -148,22 +140,22 @@ async function runAction(key: string) {
           >
             <!-- ── root 面板：来源头部 + 动作表 ── -->
             <div class="w-full shrink-0">
-              <div class="flex justify-center pt-3"><div class="h-1 w-10 rounded-full bg-zinc-600" /></div>
+              <div class="flex justify-center pt-3"><div class="h-1 w-10 rounded-full bg-fg-muted" /></div>
 
               <header v-if="source" class="flex items-center gap-3 px-5 pb-3 pt-2">
-                <div class="h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-zinc-800 ring-1 ring-white/5">
+                <div class="h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-secondary ring-1 ring-white/5">
                   <img v-if="headerArtwork" :src="headerArtwork" alt="" class="h-full w-full object-cover" />
-                  <svg v-else viewBox="0 0 24 24" class="m-auto mt-3 h-5 w-5 text-zinc-600" fill="currentColor">
+                  <svg v-else viewBox="0 0 24 24" class="m-auto mt-3 h-5 w-5 text-fg-muted" fill="currentColor">
                     <path d="M9 18V6l10-2v11.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
                     <circle cx="6.5" cy="18" r="2.5" /><circle cx="16.5" cy="15.5" r="2.5" />
                   </svg>
                 </div>
                 <div class="min-w-0">
-                  <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
+                  <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-fg-muted">
                     {{ KIND_LABEL[source.kind] }}
                   </p>
-                  <h3 class="max-w-[72vw] truncate text-base font-bold text-zinc-50">{{ headerTitle }}</h3>
-                  <p v-if="headerSubinfo" class="max-w-[72vw] truncate text-xs text-zinc-400">{{ headerSubinfo }}</p>
+                  <h3 class="max-w-[72vw] truncate text-base font-bold text-fg-primary">{{ headerTitle }}</h3>
+                  <p v-if="headerSubinfo" class="max-w-[72vw] truncate text-xs text-fg-muted">{{ headerSubinfo }}</p>
                 </div>
               </header>
 
@@ -182,44 +174,44 @@ async function runAction(key: string) {
                   @click="runAction(a.key)"
                 >
                   <span v-if="busyKey === a.key" class="flex w-5 justify-center">
-                    <span class="h-4 w-4 animate-spin rounded-full border-2 border-zinc-600 border-t-amber-400" />
+                    <span class="h-4 w-4 animate-spin rounded-full border-2 border-border border-t-accent" />
                   </span>
                   <svg
                     v-else
                     viewBox="0 0 24 24"
                     class="h-5 w-5 shrink-0"
-                    :class="a.danger ? 'text-rose-400' : 'text-zinc-400'"
+                    :class="a.danger ? 'text-rose-400' : 'text-fg-muted'"
                     fill="currentColor"
                   >
                     <path v-for="(d, i) in MENU_ICONS[a.icon]" :key="i" :d="d" />
                   </svg>
-                  <span class="flex-1 text-sm" :class="a.danger ? 'font-medium text-rose-400' : 'text-zinc-100'">
+                  <span class="flex-1 text-sm" :class="a.danger ? 'font-medium text-rose-400' : 'text-fg-primary'">
                     {{ a.label }}
                   </span>
-                  <span v-if="a.placeholder" class="rounded bg-white/10 px-1.5 py-px text-[10px] text-zinc-500">待接入</span>
+                  <span v-if="a.placeholder" class="rounded bg-white/10 px-1.5 py-px text-[10px] text-fg-muted">待接入</span>
                 </button>
               </nav>
             </div>
 
             <!-- 歌单选择面板 -->
             <div class="w-full shrink-0">
-              <div class="flex justify-center pt-3"><div class="h-1 w-10 rounded-full bg-zinc-600" /></div>
+              <div class="flex justify-center pt-3"><div class="h-1 w-10 rounded-full bg-fg-muted" /></div>
               <header class="flex items-center gap-2 px-3 pb-3 pt-2">
                 <button
-                  class="rounded-full p-2 text-zinc-400 transition hover:bg-white/5 hover:text-zinc-100 active:scale-90"
+                  class="rounded-full p-2 text-fg-muted transition hover:bg-white/5 hover:text-fg-primary active:scale-90"
                   aria-label="返回"
                   @click="panel = 'root'"
                 >
                   <svg viewBox="0 0 24 24" class="h-5 w-5" fill="currentColor"><path d="M14.7 5.3 8 12l6.7 6.7 1.4-1.4L10.8 12l5.3-5.3z" /></svg>
                 </button>
-                <h3 class="text-base font-bold text-zinc-50">添加到歌单</h3>
+                <h3 class="text-base font-bold text-fg-primary">添加到歌单</h3>
               </header>
               
               <!-- 加载中 -->
               <div v-if="pickerLoading" class="space-y-2 px-2 pb-4 pt-1">
                 <div v-for="n in 3" :key="n" class="flex animate-pulse items-center gap-3 rounded-xl px-3 py-2.5">
-                  <div class="h-10 w-10 rounded-lg bg-zinc-800" />
-                  <div class="h-4 w-1/2 rounded bg-zinc-800" />
+                  <div class="h-10 w-10 rounded-lg bg-secondary" />
+                  <div class="h-4 w-1/2 rounded bg-secondary" />
                 </div>
               </div>
 
@@ -235,22 +227,22 @@ async function runAction(key: string) {
                   :disabled="addingId !== null || addedId !== null"
                   @click="addToPlaylist(p.id)"
                 >
-                  <div class="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-zinc-800 ring-1 ring-white/5">
+                  <div class="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-secondary ring-1 ring-white/5">
                     <img v-if="p.cover" :src="p.cover" alt="" class="h-full w-full object-cover" />
-                    <svg v-else viewBox="0 0 24 24" class="m-auto mt-2.5 h-5 w-5 text-zinc-600" fill="currentColor">
+                    <svg v-else viewBox="0 0 24 24" class="m-auto mt-2.5 h-5 w-5 text-fg-muted" fill="currentColor">
                       <path d="M9 18V6l10-2v11.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
                       <circle cx="6.5" cy="18" r="2.5" /><circle cx="16.5" cy="15.5" r="2.5" />
                     </svg>
                   </div>
-                  <span class="min-w-0 flex-1 truncate text-sm font-medium text-zinc-100">{{ p.title }}</span>
+                  <span class="min-w-0 flex-1 truncate text-sm font-medium text-fg-primary">{{ p.title }}</span>
                   <span
                     v-if="addingId === p.id"
-                    class="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-zinc-600 border-t-amber-400"
+                    class="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-fg-muted border-t-accent"
                   />
                   <svg
                     v-else-if="addedId === p.id"
                     viewBox="0 0 24 24"
-                    class="h-5 w-5 shrink-0 text-emerald-400"
+                    class="h-5 w-5 shrink-0 text-accent"
                     fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
                   >
                     <path d="M5 13l4 4L19 7" />
@@ -260,9 +252,9 @@ async function runAction(key: string) {
 
               <!-- 无歌单 -->
               <div v-else class="flex flex-col items-center gap-3 px-5 pb-8 pt-6 text-center">
-                <p class="text-sm text-zinc-500">还没有歌单</p>
+                <p class="text-sm text-fg-muted">还没有歌单</p>
                 <button
-                  class="rounded-full bg-amber-400 px-4 py-1.5 text-xs font-bold text-zinc-950 shadow-lg shadow-amber-400/20 transition hover:bg-amber-300 active:scale-95"
+                  class="rounded-full bg-accent px-4 py-1.5 text-xs font-bold text-primary shadow-lg shadow-accent/20 transition hover:bg-accent/90 active:scale-95"
                   @click="goToPlaylists"
                 >
                   去创建

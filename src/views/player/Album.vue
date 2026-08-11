@@ -59,10 +59,10 @@ watch(() => route.params.id, async id => {
     </div>
 
     <!-- 固定顶栏：返回键 + 折叠标题 -->
-    <div class=" fixed inset-x-0 top-0 z-30 bg-gradient-to-b from-black/60 via-black/30 to-transparent pb-6 pt-[calc(env(safe-area-inset-top)+10px)]">
+    <div class=" fixed inset-x-0 top-0 z-30 bg-gradient-to-b from-fg-primary/75 via-fg-primary/40 to-transparent pb-6 pt-[calc(env(safe-area-inset-top)+10px)]">
       <div class=" mx-auto flex max-w-2xl items-center gap-3 px-4">
         <button
-          class=" shrink-0 rounded-l-full bg-black/30 p-2 text-zinc-100 ring-1 ring-white/10 transition hover:bg-black/50 active:scale-90"
+          class=" shrink-0 rounded-full bg-primary/60 p-2 text-fg-secondary ring-1 ring-primary/10 backdrop-blur-sm transition hover:bg-primary/85 active:scale-90"
           aria-label="返回"
           @click="router.back()"
         >
@@ -70,7 +70,7 @@ watch(() => route.params.id, async id => {
             <path d="M15 6l-6 6 6 6" />
           </svg>
         </button>
-        <h2 :style="compactStyle" class=" min-w-0 flex-1 truncate text-base font-bold text-zinc-50">
+        <h2 :style="compactStyle" class=" min-w-0 flex-1 truncate text-base font-bold text-fg-primary">
           {{ album?.title ?? '...' }}
         </h2>
       </div>
@@ -82,13 +82,13 @@ watch(() => route.params.id, async id => {
         <!-- hero：封面 + 标题 + artists + 动作（折叠时整体淡出） -->
         <header :style="heroStyle" class=" will-change-transform">
           <div class=" flex items-end gap-4">
-            <div class=" h-28 w-28 shrink-0 overflow-hidden rounded-xl bg-zinc-900 shadow-2xl shadow-black/60 ring-1 ring-white/10">
+            <div class=" h-28 w-28 shrink-0 overflow-hidden rounded-xl bg-primary shadow-2xl shadow-primary/15 ring-1 ring-primary/10">
               <img v-if="album.cover" :src="album.cover" alt="" class=" h-full w-full object-cover" />
               <img v-else :src="defaultArt" alt="" class=" h-full w-full object-cover" />
             </div>
             <div class=" min-w-0 flex-1 pb-1">
-              <p class=" text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-400">专辑</p>
-              <h1 class=" mt-1 text-2xl font-extrabold leading-tight text-zinc-50">{{ album.title }}</h1>
+              <p class=" text-[11px] font-semibold uppercase tracking-[0.2em] text-fg-muted">专辑</p>
+              <h1 class=" mt-1 text-2xl font-extrabold leading-tight text-fg-primary">{{ album.title }}</h1>
             </div>
           </div>
 
@@ -101,21 +101,21 @@ watch(() => route.params.id, async id => {
               <button
                 v-for="a in visibleArtists"
                 :key="a.id"
-                class=" rounded-full bg-white/8 px-3 py-1.5 text-xs font-medium text-zinc-200 ring-1 ring-white/10 transition hover:bg-white/15 active:scale-95"
+                class=" rounded-full bg-fg-primary/60 px-3 py-1.5 text-xs font-medium text-secondary ring-1 ring-primary/10 backdrop-blur-sm transition hover:bg-fg-primary/85 active:scale-95"
                 @click="router.push(`/artist/${a.id}`)"
               >
                 {{ a.name }}
               </button>
               <button
                 v-if="hiddenCount > 0 && !artistExpanded"
-                class=" rounded-full bg-white/4 px-3 py-1.5 text-xs font-medium text-zinc-400 ring-1 ring-white/5 transition hover:bg-white/10 active:scale-95"
+                class=" rounded-full bg-fg-primary/5 px-3 py-1.5 text-xs font-medium text-fg-muted ring-1 ring-primary/10 transition hover:bg-fg-primary/10 active:scale-95"
                 @click="artistExpanded = true"
               >
                 +{{ hiddenCount }} more
               </button>
               <button
                 v-if="hiddenCount > 0 && artistExpanded"
-                class=" rounded-full bg-white/4 px-3 py-1.5 text-xs font-medium text-zinc-400 ring-1 ring-white/5 transition hover:bg-white/10 active:scale-95"
+                class=" rounded-full bg-fg-primary/5 px-3 py-1.5 text-xs font-medium text-fg-muted ring-1 ring-primary/10 transition hover:bg-fg-primary/10 active:scale-95"
                 @click="artistExpanded = false"
               >
                 collapse
@@ -126,14 +126,14 @@ watch(() => route.params.id, async id => {
           <!-- actions: 播放全部 / 随机播放 -->
           <div class=" mt-5 flex gap-2.5">
             <button
-              class=" rounded-full bg-amber-400 px-5 py-2 text-sm font-bold text-zinc-950 shadow-lg shadow-amber-400/20 transition hover:bg-amber-300 active:scale-95 disabled:pointer-events-none disabled:opacity-40"
+              class=" btn-primary"
               :disabled="playTracks.length === 0"
               @click="player.playAll(playTracks)"
             >
               {{ t('player.playall') }}
             </button>
             <button
-              class=" rounded-full px-5 py-2 text-sm font-semibold text-zinc-200 ring-1 ring-white/15 transition hover:bg-white/10 active:scale-95 disabled:pointer-events-none disabled:opacity-40"
+              class=" btn-secondary"
               @click="playQueue.addMany(shuffled(playTracks))"
             >
               {{ t('player.randomplay') }}
@@ -142,7 +142,7 @@ watch(() => route.params.id, async id => {
         </header>
 
         <!-- 曲目列表 -->
-        <h2 class=" pb-2 pt-7 text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
+        <h2 class=" pb-2 pt-7 text-[11px] font-semibold uppercase tracking-[0.2em] text-fg-muted">
           曲目 <span class=" tabular-nums"> {{ playTracks.length }}</span>
         </h2>
         <TrackList :tracks="playTracks" :show-art="true" />
@@ -151,22 +151,22 @@ watch(() => route.params.id, async id => {
       <!-- skeleton -->
       <div v-else class=" animate-pulse">
         <div class="flex items-end gap-4">
-          <div class="h-28 w-28 rounded-xl bg-zinc-800/80" />
+          <div class="h-28 w-28 rounded-xl bg-fg-primary/90 dark:bg-fg-primary/80" />
           <div class="flex-1 space-y-2.5 pb-1">
-            <div class="h-3 w-10 rounded bg-zinc-800/80" />
-            <div class="h-7 w-3/4 rounded bg-zinc-800/80" />
+            <div class="h-3 w-10 rounded bg-fg-primary/90 dark:bg-fg-primary/80" />
+            <div class="h-7 w-3/4 rounded bg-fg-primary/90 dark:bg-fg-primary/80" />
           </div>
         </div>
         <div class="mt-4 flex gap-2">
-          <div class="h-7 w-20 rounded-full bg-zinc-800/80" />
-          <div class="h-7 w-24 rounded-full bg-zinc-800/80" />
+          <div class="h-7 w-20 rounded-full bg-fg-primary/90 dark:bg-fg-primary/80" />
+          <div class="h-7 w-24 rounded-full bg-fg-primary/90 dark:bg-fg-primary/80" />
         </div>
         <div class="mt-6 flex gap-2.5">
-          <div class="h-9 w-24 rounded-full bg-zinc-800/80" />
-          <div class="h-9 w-28 rounded-full bg-zinc-800/80" />
+          <div class="h-9 w-24 rounded-full bg-fg-primary/90 dark:bg-fg-primary/80" />
+          <div class="h-9 w-28 rounded-full bg-fg-primary/90 dark:bg-fg-primary/80" />
         </div>
         <div class="mt-10 space-y-3">
-          <div v-for="n in 8" :key="n" class="h-12 rounded-xl bg-zinc-800/50" />
+          <div v-for="n in 8" :key="n" class="h-12 rounded-xl bg-fg-primary/70 dark:bg-fg-primary/50" />
         </div>
       </div>
     </main>

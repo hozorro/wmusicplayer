@@ -6,6 +6,8 @@
  * 不做回滚（A67）：上行失败的写入由下次重建冲刷。
  */
 import type { PlaybackSync } from "./playback-sync";
+import type { PlaybackOpType } from "@/idb/pending";
+
 
 export function createPlaybackWriter(sync: PlaybackSync) {
   async function write(spec: {

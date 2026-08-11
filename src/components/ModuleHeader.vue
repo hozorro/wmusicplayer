@@ -10,11 +10,11 @@ const router = useRouter()
 </script>
 
 <template>
-  <div class=" flex items-end justify-between px-4 pt-7">
-    <h2 class=" text-lg font-extrabold tracking-tight text-zinc-50">{{ title }}</h2>
+  <div class=" flex items-end justify-between px-4 pt-4">
+    <h2 class=" text-lg font-extrabold tracking-tight text-fg-primary">{{ title }}</h2>
     <button
       v-if="to"
-      class="group flex items-center gap-0.5 pb-0.5 text-xs font-medium text-zinc-500 transition hover:text-zinc-200 active:scale-95"
+      class="group flex items-center gap-0.5 pb-0.5 text-xs font-medium text-fg-secondary transition hover:text-fg-muted active:scale-95"
       @click="router.push(to)"
     >
       查看全部

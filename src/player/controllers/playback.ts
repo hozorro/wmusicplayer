@@ -95,7 +95,6 @@ export function createPlaybackController(
       if (queue.intent === 'pause') queue.setEngineState('paused')
     }
     bus.emit(PlayerEvent.TrackChanged, t)
-    prepareUpcoming()
   }
 
   function syncIntent(i: 'play' | 'pause') {
@@ -132,11 +131,6 @@ export function createPlaybackController(
       error,
       action: outcome ==='advanced' ? 'skip' : 'stop'
     })
-  }
-
-  /** PreloadController 接管前最小预热 */
-  function prepareUpcoming() {
-    for (const t of queue.peekNext(2)) resolver.prepare(t.id).catch(() => {})
   }
 
   return {

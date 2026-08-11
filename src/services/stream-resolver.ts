@@ -1,4 +1,4 @@
-/** token TTL 600s x 0.8 安全边际 */
+/** token TTL 600s x 0.8 安全边际，其中 600s 是后端设定的 token 有效时间 */
 export const RESOLVE_TTL_MS = 600 * 1000 * 0.8
 
 /**

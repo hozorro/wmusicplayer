@@ -8,11 +8,10 @@ import type { CollectionItem } from "@/player/menu/types";
 import { toPlayTrack } from "@/services/transform";
 import { usePlayer } from "@/composables/playback";
 import { useCollapseHeader } from "@/composables/collapse-header";
-import { playbackWriter } from "@/services/playback-data";
 import type { PlayTrack } from "@/player/types";
 import { useI18n } from "vue-i18n";
-import { getArtist, getCollectionTracks, getArtistRandomTracks, getFavoritedArtists, favArtist } from "@/apis/methods/music";
-import { updateFav } from "@/apis/methods/idb-locals";
+import { getArtist, getCollectionTracks, getArtistRandomTracks, getFavoritedArtists } from "@/apis/methods/music";
+import { toggleArtistFav } from "@/idb/app-api";
 
 const { t } = useI18n();
 const route = useRoute();
@@ -68,17 +67,8 @@ async function playRandomTracks() {
 
 async function toggleFavorite() {
   if (!artist.value) return
-  const next = !artistFav.value
-  artistFav.value = next
-  const ok = await playbackWriter.write({
-    key: `fav:artist:${artist.value.id}`,
-    label: `收藏 / 取消收藏 ${artist.value.name}`,
-    opType: 'fav-artist',
-    payload: { id: artist.value.id, is_favorited: next },
-    local: async () => { await updateFav('artist', artist.value!.id, next) },
-    remote: async () => { await favArtist(artist.value!.id, next) },
-  })
-  if (!ok) artistFav.value = !next
+  const res = await toggleArtistFav(artist.value.id)
+  if (res) artistFav.value = res.fav
 }
 </script>
 
@@ -90,16 +80,16 @@ async function toggleFavorite() {
     </div>
 
     <!-- ═══ 固定顶栏：返回 + 折叠标题 ═══ -->
-    <div class="fixed inset-x-0 top-0 z-30 bg-gradient-to-b from-black/60 via-black/30 to-transparent pb-6 pt-[calc(env(safe-area-inset-top)+10px)]">
+    <div class="fixed inset-x-0 top-0 z-30 bg-gradient-to-b from-fg-primary/75 via-fg-primary/40 to-transparent pb-6 pt-[calc(env(safe-area-inset-top)+10px)]">
       <div class="mx-auto flex max-w-2xl items-center gap-3 px-4">
         <button
-          class="shrink-0 rounded-full bg-black/30 p-2 text-zinc-100 ring-1 ring-white/10 transition hover:bg-black/50 active:scale-90"
+          class="shrink-0 rounded-full bg-primary/60 p-2 text-fg-secondary ring-1 ring-primary/10 backdrop-blur-sm transition hover:bg-fg-primary/85 active:scale-90"
           aria-label="返回"
           @click="router.back()"
         >
           <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
         </button>
-        <h2 :style="compactStyle" class="min-w-0 flex-1 truncate text-base font-bold text-zinc-50">
+        <h2 :style="compactStyle" class="min-w-0 flex-1 truncate text-base font-bold text-fg-primary">
           {{ artist?.name ?? '…' }}
         </h2>
       </div>
@@ -109,27 +99,27 @@ async function toggleFavorite() {
       <!-- ═══ hero：portrait 全出血 + 重叠信息卡 + 动作 ═══ -->
       <header :style="heroStyle" class="will-change-transform">
         <!-- portrait：全宽 2:1，桌面端限高防巨幅 -->
-        <div class="relative aspect-[2/1] max-h-[420px] w-full overflow-hidden bg-zinc-900">
+        <div class="relative aspect-[2/1] max-h-[420px] w-full overflow-hidden bg-primary">
           <img v-if="artist.portrait" :src="artist.portrait" alt="" class="h-full w-full object-cover" />
           <div v-else class="flex h-full items-center justify-center">
-            <span class="text-7xl font-black uppercase text-zinc-800">{{ artist.pinyin_initial }}</span>
+            <span class="text-7xl font-black uppercase text-fg-primary">{{ artist.pinyin_initial }}</span>
           </div>
           <!-- 底部渐变：为重叠卡托底 -->
-          <div class="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+          <div class="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-primary/70 via-primary/30 to-transparent" />
         </div>
 
         <div class="mx-auto max-w-2xl px-4">
           <!-- 重叠信息卡：-mt-12 没入 portrait 下缘 -->
-          <div class="relative z-10 -mt-12 flex items-center gap-3.5 rounded-xl bg-zinc-900/85 p-4 shadow-xl shadow-black/40 ring-1 ring-white/10 backdrop-blur-md">
-            <div class="h-14 w-14 shrink-0 overflow-hidden rounded-full bg-zinc-800 ring-2 ring-white/10">
+          <div class="relative z-10 -mt-12 flex items-center gap-3.5 rounded-xl bg-primary/95 p-4 shadow-xl shadow-primary/10 ring-1 ring-primary/10 backdrop-blur-md">
+            <div class="h-14 w-14 shrink-0 overflow-hidden rounded-full bg-fg-primary ring-2 ring-fg-primary/10">
               <img v-if="artist.face" :src="artist.face" alt="" class="h-full w-full object-cover" />
-              <span v-else class="flex h-full items-center justify-center text-lg font-bold uppercase text-zinc-500">
+              <span v-else class="flex h-full items-center justify-center text-lg font-bold uppercase text-fg-secondary">
                 {{ artist.pinyin_initial }}
               </span>
             </div>
             <div class="min-w-0">
-              <h1 class="truncate text-xl font-extrabold text-zinc-50">{{ artist.name }}</h1>
-              <p class="mt-1 text-xs tabular-nums text-zinc-400">
+              <h1 class="truncate text-xl font-extrabold text-fg-primary">{{ artist.name }}</h1>
+              <p class="mt-1 text-xs tabular-nums text-fg-secondary">
                 {{ albumCount }} 张专辑 · {{ artist.track_count }} 首曲目
               </p>
             </div>
@@ -138,14 +128,14 @@ async function toggleFavorite() {
           <!-- 动作区：作用于 top_tracks -->
           <div class="mt-4 flex gap-2.5">
             <button
-              class="rounded-full bg-amber-400 px-5 py-2 text-sm font-bold text-zinc-950 shadow-lg shadow-amber-400/20 transition hover:bg-amber-300 active:scale-95 disabled:pointer-events-none disabled:opacity-40"
+              class="btn btn-primary"
               :disabled="topTracks.length === 0"
               @click="player.playAll(topTracks)"
             >
               {{ t('player.playall') }}
             </button>
             <button
-              class="rounded-full px-5 py-2 text-sm font-semibold text-zinc-200 ring-1 ring-white/15 transition hover:bg-white/10 active:scale-95 disabled:pointer-events-none disabled:opacity-40"
+              class="btn btn-secondary"
               :disabled="topTracks.length === 0"
               @click="playRandomTracks"
             >
@@ -155,7 +145,7 @@ async function toggleFavorite() {
               class="flex h-9 w-9 items-center justify-center self-center rounded-full ring-1 transition active:scale-90"
               :class="artistFav
                 ? 'bg-rose-400/15 text-rose-400 ring-rose-400/30'
-                : 'text-zinc-300 ring-white/15 hover:bg-white/10'"
+                : 'text-fg-muted ring-fg-primary/20 hover:bg-primary/5'"
               :aria-label="artistFav ? '取消收藏艺人' : '收藏艺人'"
               @click="toggleFavorite"
             >
@@ -171,14 +161,14 @@ async function toggleFavorite() {
       <!-- ═══ 标签 + 内容区 ═══ -->
       <main class="mx-auto max-w-2xl px-4 pb-32 pt-6">
         <!-- 分段式标签 -->
-        <div class="flex rounded-full bg-white/5 p-1 ring-1 ring-white/10">
+        <div class="flex rounded-full bg-black/5 p-1 ring-1 ring-black/10 dark:bg-white/5 dark:ring-white/10">
           <button
             v-for="tab in ([['tracks', 'Top 50'], ['albums', '专辑']] as const)"
             :key="tab[0]"
             class="flex-1 rounded-full py-1.5 text-sm font-medium transition"
             :class="activeTab === tab[0]
-              ? 'bg-white/12 text-zinc-50 shadow-sm'
-              : 'text-zinc-400 hover:text-zinc-200'"
+              ? 'bg-fg-primary text-primary shadow-sm'
+              : 'text-fg-muted hover:text-fg-secondary'"
             @click="activeTab = tab[0]"
           >
             {{ tab[1] }}
@@ -194,29 +184,29 @@ async function toggleFavorite() {
         >
           <!-- Top 50：序号即排名 -->
           <div v-if="activeTab === 'tracks'" key="tracks" class="pt-4">
-            <TrackList v-if="topTracks.length" :tracks="topTracks" :show-art="true" />
-            <p v-else class="py-16 text-center text-sm text-zinc-500">暂无曲目</p>
+            <TrackList v-if="topTracks.length" :tracks="topTracks" :show-art="false" />
+            <p v-else class="py-16 text-center text-sm text-fg-muted">暂无曲目</p>
           </div>
 
           <!-- 专辑：主专辑 / 参与专辑，分隔呈现 -->
           <div v-else key="albums" class="pt-2">
             <template v-if="mainAlbumItems.length">
-              <h3 class="px-3 pb-2 pt-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
+              <h3 class="px-3 pb-2 pt-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-fg-primary">
                 主专辑
               </h3>
               <CollectionList kind="album" :collections="mainAlbumItems" :resolve-tracks="resolveAlbumTracks" />
             </template>
 
-            <div v-if="mainAlbumItems.length && trackAlbumItems.length" class="mx-4 my-3 h-px bg-white/8" />
+            <div v-if="mainAlbumItems.length && trackAlbumItems.length" class="mx-4 my-3 h-px bg-fg-primary/8" />
 
             <template v-if="trackAlbumItems.length">
-              <h3 class="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
+              <h3 class="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-fg-secondary">
                 参与的专辑
               </h3>
               <CollectionList kind="album" :collections="trackAlbumItems" :resolve-tracks="resolveAlbumTracks" />
             </template>
 
-            <p v-if="!mainAlbumItems.length && !trackAlbumItems.length" class="py-16 text-center text-sm text-zinc-500">
+            <p v-if="!mainAlbumItems.length && !trackAlbumItems.length" class="py-16 text-center text-sm text-fg-muted">
               暂无专辑
             </p>
           </div>
@@ -226,22 +216,22 @@ async function toggleFavorite() {
 
     <!-- skeleton -->
     <div v-else class="animate-pulse">
-      <div class="aspect-[2/1] max-h-[420px] w-full bg-zinc-800/60" />
+      <div class="aspect-[2/1] max-h-[420px] w-full bg-secondary/80" />
       <div class="mx-auto max-w-2xl px-4">
-        <div class="-mt-12 flex items-center gap-3.5 rounded-xl bg-zinc-800/80 p-4">
-          <div class="h-14 w-14 rounded-full bg-zinc-700/80" />
+        <div class="-mt-12 flex items-center gap-3.5 rounded-xl bg-secondary/90 p-4">
+          <div class="h-14 w-14 rounded-full bg-secondary/80" />
           <div class="space-y-2">
-            <div class="h-5 w-32 rounded bg-zinc-700/80" />
-            <div class="h-3 w-24 rounded bg-zinc-700/80" />
+            <div class="h-5 w-32 rounded bg-secondary/80" />
+            <div class="h-3 w-24 rounded bg-secondary/80" />
           </div>
         </div>
         <div class="mt-4 flex gap-2.5">
-          <div class="h-9 w-24 rounded-full bg-zinc-800/80" />
-          <div class="h-9 w-28 rounded-full bg-zinc-800/80" />
+          <div class="h-9 w-24 rounded-full bg-secondary/90" />
+          <div class="h-9 w-28 rounded-full bg-secondary/90" />
         </div>
-        <div class="mt-6 h-9 rounded-full bg-zinc-800/60" />
+        <div class="mt-6 h-9 rounded-full bg-secondary/80" />
         <div class="mt-6 space-y-3">
-          <div v-for="n in 6" :key="n" class="h-12 rounded-xl bg-zinc-800/50" />
+          <div v-for="n in 6" :key="n" class="h-12 rounded-xl bg-secondary/70" />
         </div>
       </div>
     </div>

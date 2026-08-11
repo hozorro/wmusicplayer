@@ -10,7 +10,7 @@ defineEmits<{go: [page: number]}>()
       v-for="p in count"
       :key="p"
       class=" rounded-full h-1.5 transition-all duration-300"
-      :class="p - 1 === active ? 'w-4 bg-zinc-200' : 'w-1.5 bg-zinc-600 hover:bg-zinc-500'"
+      :class="p - 1 === active ? 'w-4 bg-fg-secondary' : 'w-1.5 bg-secondary hover:bg-primary'"
       :aria-label="`第 ${p} 屏`"
       @click="$emit('go', p - 1)"
     />

@@ -1,6 +1,6 @@
 // player/__tests__/palette.test.ts
 import { describe, expect, it } from 'vitest'
-import { FALLBACK_PALETTE, ambientize, quantize, rgbToHsl } from '../palette'
+import { FALLBACK_PALETTE, ambientize, ambientizeLight, quantize, rgbToHsl } from '../palette'
 
 const solid = (r: number, g: number, b: number, n = 100) => {
   const d = new Uint8ClampedArray(n * 4)
@@ -8,7 +8,7 @@ const solid = (r: number, g: number, b: number, n = 100) => {
   return d
 }
 
-describe('ambientize —— 结构化可读性不变量（A42）', () => {
+describe('ambientize —— dark 主题结构化可读性不变量（A42）', () => {
   it('任意输入都被钳制进安全暗区', () => {
     for (const c of [
       { h: 0, s: 1, l: 0.97 },     // 极亮
@@ -17,10 +17,30 @@ describe('ambientize —— 结构化可读性不变量（A42）', () => {
       { h: 0, s: 0, l: 0.01 },     // 极暗
     ]) {
       const a = ambientize(c)
-      expect(a.l).toBeGreaterThanOrEqual(0.10)
-      expect(a.l).toBeLessThanOrEqual(0.30)
-      expect(a.s).toBeLessThanOrEqual(0.6)
+      expect(a.l).toBeGreaterThanOrEqual(0.12)
+      expect(a.l).toBeLessThanOrEqual(0.38)
+      expect(a.s).toBeLessThanOrEqual(0.75)
     }
+  })
+})
+
+describe('ambientizeLight —— light 主题可读性不变量', () => {
+  it('任意输入都被钳制进安全亮区（粉彩）', () => {
+    for (const c of [
+      { h: 0, s: 1, l: 0.97 },     // 极亮
+      { h: 200, s: 0.95, l: 0.7 }, // 高饱和亮
+      { h: 60, s: 1, l: 0.5 },
+      { h: 0, s: 0, l: 0.01 },     // 极暗
+    ]) {
+      const a = ambientizeLight(c)
+      expect(a.l).toBeGreaterThanOrEqual(0.80)
+      expect(a.l).toBeLessThanOrEqual(0.94)
+      expect(a.s).toBeLessThanOrEqual(0.45)
+    }
+  })
+
+  it('保留封面色相，仅重映射明度/饱和度', () => {
+    expect(ambientizeLight({ h: 210, s: 0.9, l: 0.3 }).h).toBe(210)
   })
 })
 

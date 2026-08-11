@@ -22,16 +22,16 @@ onMounted(async () => {
 <template>
   <div class="min-h-dvh">
     <!-- 粘性导航（standalone PWA 无浏览器返回手势，返回键必须常驻）-->
-    <div class="sticky top-0 z-30 border-b border-white/5 bg-zinc-950">
+    <div class="sticky top-0 z-30 border-b border-fg-primary/5 bg-primary">
       <div class="mx-auto flex max-w-2xl items-center gap-3 px-4 py-2.5 pt-[calc(env(safe-area-inset-top)+10px)]">
         <button
-          class="rounded-full p-2 text-zinc-300 transition hover:bg-white/8 hover:text-zinc-50 active:scale-90"
+          class="rounded-full p-2 text-fg-secondary transition hover:bg-fg-primary/85 hover:text-fg-primary active:scale-90"
           aria-label="返回"
           @click="router.back()"
         >
           <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
         </button>
-        <h1 class="text-lg font-bold text-zinc-50">{{ t('player.genre') }}</h1>
+        <h1 class="text-lg font-bold text-fg-primary">{{ t('player.genre') }}</h1>
       </div>
     </div>
 
@@ -72,7 +72,7 @@ onMounted(async () => {
 
       <!-- 骨架 -->
       <div v-else class="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <div v-for="n in 8" :key="n" class="h-24 animate-pulse rounded-xl bg-zinc-800/60 sm:h-28" />
+        <div v-for="n in 8" :key="n" class="h-24 animate-pulse rounded-xl bg-fg-primary/60 sm:h-28" />
       </div>
     </main>
   </div>

@@ -25,7 +25,7 @@ export default defineConfig(({ mode }) => {
         injectRegister: 'auto',
         strategies: 'injectManifest',
         srcDir: 'src',
-        filename: 'sw.ts',
+        filename: './sw/sw.ts',
         devOptions: {
           enabled: true,
           type: 'module',
@@ -33,12 +33,14 @@ export default defineConfig(({ mode }) => {
         injectManifest: {
           // globDirectory: 'dist',
           globPatterns: ['**/*.{js,css,html,ico,png,svg,ttf,woff,woff2}'],
+          maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         },
         manifest: {
           name: 'WMusicPlayer',
           short_name: 'WPlayer',
           description: 'PWA Music Player from weyeco',
           display: 'standalone',
+          theme_color: '#18181b',
           icons: [
             {
               src: '/imgs/manifest/web-app-manifest-48x48.png',
@@ -73,8 +75,8 @@ export default defineConfig(({ mode }) => {
       host: '0.0.0.0',
       port: 5174,
       https: {
-        cert: fs.readFileSync('d:\\tmp\\localhost+2.pem'),
-        key: fs.readFileSync('d:\\tmp\\localhost+2-key.pem'),
+        cert: fs.readFileSync(env.VITE_SSL_CERT),
+        key: fs.readFileSync(env.VITE_SSL_KEY),
       },
       proxy: {
         '/api': {

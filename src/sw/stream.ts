@@ -1,11 +1,15 @@
 /**
  * 用于 sw 拦截 '/api/stream' 的请求
- * ⚠️ 本函数必须完全自包含——workbox generateSW 会将本函数的代码复制到 sw 中
- * 任何模块级 import / 闭包引用都会失效
  */
 export async function mediaStreamCacheHandler({ request }: { request: Request }): Promise<Response> {
   const CACHE = 'media-v1'
 
+  /**
+   * 模拟分片响应：从缓存Blob中按header中的range切出响应的chunk返回206
+   * @param blob 缓存的Blob
+   * @param header Range头
+   * @returns 206 Partial Content
+   */
   const slice = (blob: Blob, header: string): Response => {
     const m = /bytes=(\d*)-(\d*)/.exec(header)
     let start = m?.[1] ? Number(m[1]) : 0
@@ -27,6 +31,7 @@ export async function mediaStreamCacheHandler({ request }: { request: Request })
     })
   }
 
+  // 完整缓存文件响应
   const full = (blob: Blob): Response => new Response(blob, {
     status: 200,
     headers: {

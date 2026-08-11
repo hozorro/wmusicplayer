@@ -5,8 +5,8 @@ export interface Palette { primary: Hsl, secondary: Hsl }
 
 /** 提取失败（跨域污染 / 加载失败）的兜底：暖调深琥珀，与播放键 accent 同族 */
 export const FALLBACK_PALETTE: Palette = {
-  primary: { h: 36, s: 0.32, l: 0.20 },
-  secondary: { h: 16, s: 0.26, l: 0.13 }
+  primary: { h: 179, s: 0.92, l: 0.09 },
+  secondary: { h: 176, s: 0.76, l: 0.17 }
 }
 
 /** 通用色值运算：Hex 解析、可读文字色、明暗派生 */
@@ -59,15 +59,31 @@ export function shade(bgHex: string, dl: number): string {
 }
 
 /**
- * 氛围化钳制 —— 结构化可读性第一道锁：
- * 无论封面多亮多艳，进入背景的颜色亮度恒定在[0.10, 0.30]，饱和度 ≤ 0.6
+ * 氛围化钳制（dark 主题）—— 结构化可读性第一道锁：
+ * 无论封面多亮多艳，进入背景的颜色亮度恒定在[0.12, 0.38]，饱和度 ≤ 0.75
+ * 区间刻意保留足够带宽，让不同封面呈现可辨识的深浅/艳淡差异，
+ * 文字对比度下限交由 scrim 锁定
  * 此不变量有对应单测，不可悄悄放宽
  */
 export function ambientize(c: Hsl): Hsl {
   return {
     h: c.h,
-    s: Math.min(c.s, 0.6),
-    l: Math.max(0.10, Math.min(c.l, 0.3))
+    s: Math.min(c.s, 0.75),
+    l: Math.max(0.12, Math.min(c.l, 0.38))
+  }
+}
+
+/**
+ * 氛围化钳制（light 主题）—— 浅色可读性锁：
+ * 背景亮度恒定在[0.80, 0.94]，饱和度 ≤ 0.45（粉彩区），
+ * 保留封面色相的同时保证深色文字可读
+ * 此不变量有对应单测，不可悄悄放宽
+ */
+export function ambientizeLight(c: Hsl): Hsl {
+  return {
+    h: c.h,
+    s: Math.min(c.s, 0.45),
+    l: Math.max(0.80, Math.min(c.l, 0.94))
   }
 }
 
@@ -108,13 +124,32 @@ export function quantize(data: Uint8ClampedArray): Palette {
   return { primary, secondary: secondary ?? { ...primary, l: primary.l * 0.6 } }
 }
 
-/** 三层渐变：顶部主色光晕 + 底部副色光晕 + 深色基地，整体模拟“封面极度模糊化” */
+/**
+ * dark 主题四层渐变，模拟“封面极度模糊化”：
+ * 顶部主色光晕（全量呈现不再压黑）+ 底部副色光晕 + 顶部副色暗角回响，
+ * 基地渐变随主色色相染色并沉入深色 —— 基底随色相走是“不同封面不同背景”的核心
+ */
 export function ambientGradient(p: Palette): string {
   const a = ambientize(p.primary)
   const b = ambientize(p.secondary)
   return [
-    `radial-gradient(115% 90% at 12% 6%, ${hslCss({ ...a, l: a.l * 0.08 })} 0%, transparent 58%)`,
-    `radial-gradient(125% 95% at 88% 96%, ${hslCss(b)} 0%, transparent 62%)`,
-    `linear-gradient(180deg, ${hslCss(a)} 0%, hsl(240 6% 5%) 100%)`
+    `radial-gradient(120% 85% at 15% 8%, ${hslCss(a, 0.9)} 0%, transparent 56%)`,
+    `radial-gradient(130% 95% at 85% 92%, ${hslCss(b, 0.85)} 0%, transparent 60%)`,
+    `radial-gradient(80% 60% at 92% 10%, ${hslCss({ ...b, l: b.l * 0.7 }, 0.5)} 0%, transparent 58%)`,
+    `linear-gradient(168deg, ${hslCss({ h: a.h, s: a.s * 0.55, l: a.l * 0.8 })} 0%, ${hslCss({ h: a.h, s: 0.25, l: 0.05 })} 100%)`
+  ].join(', ')
+}
+
+/**
+ * light 主题三层渐变：粉彩主/副色光晕 + 近白基地渐入淡彩，
+ * 观感为封面的高明度极度模糊化，深色文字直接可读
+ */
+export function ambientGradientLight(p: Palette): string {
+  const a = ambientizeLight(p.primary)
+  const b = ambientizeLight(p.secondary)
+  return [
+    `radial-gradient(120% 85% at 15% 8%, ${hslCss(a, 0.8)} 0%, transparent 56%)`,
+    `radial-gradient(130% 95% at 85% 92%, ${hslCss(b, 0.75)} 0%, transparent 60%)`,
+    `linear-gradient(168deg, hsl(0 0% 99%) 0%, ${hslCss({ h: a.h, s: a.s * 0.6, l: 0.94 })} 100%)`
   ].join(', ')
 }

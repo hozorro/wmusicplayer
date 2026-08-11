@@ -22,6 +22,31 @@ export function shuffled<T>(input: readonly T[]): T[] {
   return a
 }
 
+export function sample<T>(arr: readonly T[], k: number): T[] {
+  const a = [...arr]
+  const n = Math.min(k, a.length)
+  for (let i = 0; i < n; i++) {
+    const j = i + Math.floor(Math.random() * (a.length - i))
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a.slice(0, n)
+}
+
+/** 
+ * Efraimidis-Spirakis 加权不放回抽样：weight 越大入选概率越高
+ * 键 u^(1/w) 取 top-k，单遍 O(N log k)，weight 必须为正
+ */
+export function weightedSample<T>(items: readonly T[], weight: (item: T) => number, k: number): T[] {
+  const take = Math.min(k, items.length)
+  if (take <= 0) return []
+  const keyed = items.map(item => ({
+    item,
+    key: Math.random() ** (1 / Math.max(weight(item), 1e-9))
+  }))
+  keyed.sort((a, b) => b.key - a.key)
+  return keyed.slice(0, take).map(x => x.item)
+}
+
 export function chunk<T>(list: T[], size: number):T[][] {
   const out: T[][] = []
   for (let i = 0; i < list.length; i+=size) out.push(list.slice(i, i+size))
@@ -121,6 +146,8 @@ export async function getImageAsDataURI(url: string) {
 
   return dataURI;
 }
+
+export const sleep = (ms: number): Promise<void> =>  new Promise(resolve => setTimeout(resolve, ms))
 
 /**
  * check whether the JWT token has expired

@@ -1,7 +1,8 @@
 import { ref, watch, type Ref } from 'vue'
-import { FALLBACK_PALETTE, ambientGradient, quantize, type Palette } from '@/utilies/palette'
+import { FALLBACK_PALETTE, quantize, type Palette } from '@/utilies/palette'
 
-export interface AmbientLayer { id: number; css: string }
+/** 层存原始调色板而非烘焙好的 css，主题切换时可即时重算渐变，无需重新提色 */
+export interface AmbientLayer { id: number; palette: Palette }
 
 async function extractPalette(url: string): Promise<Palette> {
   return new Promise(resolve => {
@@ -39,7 +40,7 @@ export function useArtworkPalette(artwork: Ref<string | undefined>) {
     activeUrl = url
     const palette = await extractPalette(url)
     if (url !== activeUrl) return   // 竞态守卫：已切歌则丢弃过期结果
-    layers.value = [{ id: ++seq, css: ambientGradient(palette) }, ...layers.value].slice(0, 2)
+    layers.value = [{ id: ++seq, palette }, ...layers.value].slice(0, 2)
   }, { immediate: true })
 
   return { layers }

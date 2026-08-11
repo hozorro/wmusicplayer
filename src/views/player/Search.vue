@@ -126,10 +126,10 @@ const tabs = computed(() => [
     </div>
 
     <!-- ═══ 粘性头部：返回 + 搜索输入 + tabs ═══ -->
-    <div class="sticky top-0 z-30 border-b border-white/5 bg-zinc-950/90 backdrop-blur-md">
+    <div class="sticky top-0 z-30 border-b border-fg-primary/5 bg-primary/90 backdrop-blur-md">
       <div class="mx-auto flex max-w-2xl items-center gap-2.5 px-4 py-2.5 pt-[calc(env(safe-area-inset-top)+10px)]">
         <button
-          class="shrink-0 rounded-full p-2 text-zinc-300 transition hover:bg-white/8 hover:text-zinc-50 active:scale-90"
+          class="shrink-0 rounded-full p-2 text-fg-secondary transition hover:bg-fg-primary/8 hover:text-fg-primary active:scale-90"
           aria-label="返回"
           @click="router.back()"
         >
@@ -137,7 +137,7 @@ const tabs = computed(() => [
         </button>
 
         <div class="relative min-w-0 flex-1">
-          <svg viewBox="0 0 24 24" class="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500"
+          <svg viewBox="0 0 24 24" class="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-muted"
                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.35-4.35" />
           </svg>
@@ -147,14 +147,14 @@ const tabs = computed(() => [
             type="search"
             placeholder="搜索歌曲、艺人"
             enterkeyhint="search"
-            class="w-full rounded-full bg-white/[0.06] py-2.5 pl-10 pr-16 text-[15px] text-zinc-100 outline-none ring-1 ring-white/10 transition placeholder:text-zinc-500 focus:bg-white/[0.08] focus:ring-2 focus:ring-amber-400/50 [&::-webkit-search-cancel-button]:hidden"
+            class="w-full rounded-full bg-fg-primary/[0.06] py-2.5 pl-10 pr-16 text-[15px] text-fg-primary outline-none ring-1 ring-fg-primary/10 transition placeholder:text-fg-muted focus:bg-fg-primary/[0.08] focus:ring-2 focus:ring-accent/50 [&::-webkit-search-cancel-button]:hidden"
             @keydown.enter="searchNow"
           />
           <div class="absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-1.5">
-            <span v-if="searching" class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-zinc-600 border-t-amber-400" />
+            <span v-if="searching" class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-fg-secondary border-t-accent" />
             <button
               v-if="q"
-              class="rounded-full p-1 text-zinc-500 transition hover:text-zinc-200 active:scale-90"
+              class="rounded-full p-1 text-fg-muted transition hover:text-fg-primary active:scale-90"
               aria-label="清空"
               @click="q = ''; input?.focus()"
             >
@@ -174,8 +174,8 @@ const tabs = computed(() => [
             v-for="t in tabs" :key="t.key"
             class="rounded-full px-3.5 py-1.5 text-xs font-semibold transition active:scale-95"
             :class="tab === t.key
-              ? 'bg-amber-400 text-zinc-950 shadow-md shadow-amber-400/20'
-              : 'bg-white/[0.05] text-zinc-400 ring-1 ring-white/10 hover:text-zinc-200'"
+              ? 'bg-accent text-primary shadow-md shadow-accent/20'
+              : 'bg-fg-primary/5 text-fg-muted ring-1 ring-fg-primary/10 hover:text-fg-secondary'"
             @click="tab = t.key"
           >
             {{ t.label }} · {{ t.capped ? `${t.count}+` : t.count }}
@@ -188,26 +188,26 @@ const tabs = computed(() => [
       <!-- ═══ 引导态：无查询 ═══ -->
       <div v-if="!q.trim()" class="px-4 pt-14">
         <div class="flex flex-col items-center text-center">
-          <span class="flex h-16 w-16 items-center justify-center rounded-full bg-amber-400/10 text-amber-400">
+          <span class="flex h-16 w-16 items-center justify-center rounded-full bg-accent/10 text-accent">
             <svg viewBox="0 0 24 24" class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
               <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.35-4.35" />
             </svg>
           </span>
-          <h2 class="mt-4 text-lg font-bold text-zinc-100">搜索歌曲与歌手</h2>
-          <p class="mt-1 text-xs text-zinc-500">结果来自本地曲库 · 几乎零延迟</p>
+          <h2 class="mt-4 text-lg font-bold text-fg-primary">搜索歌曲与歌手</h2>
+          <p class="mt-1 text-xs text-fg-muted">结果来自本地曲库 · 几乎零延迟</p>
         </div>
 
         <div v-if="recents.length" class="mt-10">
           <div class="flex items-center justify-between">
-            <h3 class="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-500">最近搜索</h3>
-            <button class="text-[11px] text-zinc-500 transition hover:text-zinc-300 active:scale-95" @click="clearRecents">
+            <h3 class="text-[11px] font-semibold uppercase tracking-[0.2em] text-fg-muted">最近搜索</h3>
+            <button class="text-[11px] text-fg-muted transition hover:text-fg-secondary active:scale-95" @click="clearRecents">
               清除
             </button>
           </div>
           <div class="mt-3 flex flex-wrap gap-2">
             <button
               v-for="r in recents" :key="r"
-              class="rounded-full bg-white/[0.05] px-3.5 py-1.5 text-xs font-medium text-zinc-300 ring-1 ring-white/10 transition hover:bg-white/10 hover:text-zinc-100 active:scale-95"
+              class="rounded-full bg-fg-primary/[0.05] px-3.5 py-1.5 text-xs font-medium text-fg-muted ring-1 ring-fg-primary/10 transition hover:bg-fg-primary/10 hover:text-fg-primary active:scale-95"
               @click="q = r"
             >
               {{ r }}
@@ -226,42 +226,42 @@ const tabs = computed(() => [
           >
             <div
               v-for="(t, i) in playTracks" :key="t.id"
-              class="flex items-center gap-1.5 rounded-xl px-3 py-2.5 transition hover:bg-white/5"
-              :class="isCurrent(t.id) ? 'bg-amber-400/10' : ''"
+              class="flex items-center gap-1.5 rounded-xl px-3 py-2.5 transition hover:bg-fg-primary/5"
+              :class="isCurrent(t.id) ? 'bg-accent text-primary' : ''"
             >
               <button class="flex min-w-0 flex-1 items-center gap-3 text-left" @click="playFromResults(i)">
-                <div class="relative h-10 w-10 shrink-0 overflow-hidden rounded-md bg-zinc-800 ring-1 ring-white/5">
+                <div class="relative h-10 w-10 shrink-0 overflow-hidden rounded-md bg-secondary ring-1 ring-white/5">
                   <img v-if="t.cover" :src="t.cover" alt="" class="h-full w-full object-cover" />
-                  <svg v-else viewBox="0 0 24 24" class="m-auto mt-2.5 h-5 w-5 text-zinc-600" fill="currentColor">
+                  <svg v-else viewBox="0 0 24 24" class="m-auto mt-2.5 h-5 w-5 text-fg-muted" fill="currentColor">
                     <path d="M9 18V6l10-2v11.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
                     <circle cx="6.5" cy="18" r="2.5" /><circle cx="16.5" cy="15.5" r="2.5" />
                   </svg>
-                  <span v-if="isCurrent(t.id)" class="absolute bottom-0.5 left-0.5 rounded bg-black/55 p-1">
+                  <span v-if="isCurrent(t.id)" class="absolute bottom-0.5 left-0.5 rounded bg-primary/55 p-1">
                     <NowPlayingIndicator :playing="player.isPlaying.value" class="origin-bottom-left scale-[0.55]" />
                   </span>
                 </div>
                 <div class="min-w-0 flex-1">
-                  <p class="truncate text-sm" :class="isCurrent(t.id) ? 'font-semibold text-amber-400' : 'font-medium text-zinc-100'">
+                  <p class="truncate text-sm" :class="isCurrent(t.id) ? 'font-semibold text-accent' : 'font-medium text-fg-primary'">
                     <template v-for="(seg, si) in segments(t.title)" :key="si">
-                      <span :class="seg.hit && !isCurrent(t.id) ? 'text-amber-400' : ''">{{ seg.text }}</span>
+                      <span :class="seg.hit && !isCurrent(t.id) ? 'text-accent' : ''">{{ seg.text }}</span>
                     </template>
                   </p>
-                  <p class="mt-0.5 truncate text-xs text-zinc-500">{{ t.artists?.map(a => a.name).join(' / ') }}</p>
+                  <p class="mt-0.5 truncate text-xs text-fg-muted">{{ t.artists?.map(a => a.name).join(' / ') }}</p>
                 </div>
               </button>
-              <span v-if="t.duration" class="shrink-0 text-xs tabular-nums text-zinc-600">
+              <span v-if="t.duration" class="shrink-0 text-xs tabular-nums text-fg-muted">
                 {{ formatTime(t.duration) }}
               </span>
               <EntityMenuButton :source="{ kind: 'track', track: t }" />
             </div>
             <p
               v-if="results[tab].length >= SEARCH_TYPE_LIMIT"
-              class="py-4 text-center text-[11px] text-zinc-600"
+              class="py-4 text-center text-[11px] text-fg-muted"
             >
               每类仅显示前 {{ SEARCH_TYPE_LIMIT }} 条 —— 试试更精确的关键词
             </p>
           </TransitionGroup>
-          <p v-if="!playTracks.length" class="py-16 text-center text-sm text-zinc-500">
+          <p v-if="!playTracks.length" class="py-16 text-center text-sm text-fg-muted">
             未找到相关歌曲
           </p>
         </div>
@@ -282,12 +282,12 @@ const tabs = computed(() => [
             </ArtistRow>
             <p
               v-if="results[tab].length >= SEARCH_TYPE_LIMIT"
-              class="py-4 text-center text-[11px] text-zinc-600"
+              class="py-4 text-center text-[11px] text-fg-muted"
             >
               每类仅显示前 {{ SEARCH_TYPE_LIMIT }} 条 —— 试试更精确的关键词
             </p>
           </TransitionGroup>
-          <p v-if="!results.artists.length" class="py-16 text-center text-sm text-zinc-500">
+          <p v-if="!results.artists.length" class="py-16 text-center text-sm text-fg-muted">
             未找到相关歌手
           </p>
         </div>
@@ -300,25 +300,25 @@ const tabs = computed(() => [
           >
             <div
               v-for="al in results.albums" :key="al.id"
-              class="flex items-center gap-1.5 rounded-xl px-3 py-2.5 transition hover:bg-white/5"
+              class="flex items-center gap-1.5 rounded-xl px-3 py-2.5 transition hover:bg-fg-primary/5"
             >
               <button
                 class="flex min-w-0 flex-1 items-center gap-3 text-left"
                 @click="router.push(`/album/${al.id}`)"
               >
-                <div class="h-10 w-10 shrink-0 overflow-hidden rounded-md bg-zinc-800 ring-1 ring-white/5">
+                <div class="h-10 w-10 shrink-0 overflow-hidden rounded-md bg-secondary ring-1 ring-fg-primary/5">
                   <img v-if="al.cover" :src="al.cover" alt="" class="h-full w-full object-cover" />
-                  <svg v-else viewBox="0 0 24 24" class="m-auto mt-2.5 h-5 w-5 text-zinc-600" fill="currentColor">
+                  <svg v-else viewBox="0 0 24 24" class="m-auto mt-2.5 h-5 w-5 text-fg-muted" fill="currentColor">
                     <path d="M12 3a9 9 0 100 18 9 9 0 000-18zm0 6.5a2.5 2.5 0 110 5 2.5 2.5 0 010-5z" fill-rule="evenodd" />
                   </svg>
                 </div>
                 <div class="min-w-0 flex-1">
-                  <p class="truncate text-sm font-medium text-zinc-100">
+                  <p class="truncate text-sm font-medium text-fg-primary">
                     <template v-for="(seg, si) in segments(al.title)" :key="si">
-                      <span :class="seg.hit ? 'text-amber-400' : ''">{{ seg.text }}</span>
+                      <span :class="seg.hit ? 'text-accent' : ''">{{ seg.text }}</span>
                     </template>
                   </p>
-                  <p v-if="al.track_count != null" class="mt-0.5 text-xs tabular-nums text-zinc-500">
+                  <p v-if="al.track_count != null" class="mt-0.5 text-xs tabular-nums text-fg-muted">
                     {{ al.track_count }} 首
                   </p>
                 </div>
@@ -330,12 +330,12 @@ const tabs = computed(() => [
             </div>
             <p
               v-if="results[tab].length >= SEARCH_TYPE_LIMIT"
-              class="py-4 text-center text-[11px] text-zinc-600"
+              class="py-4 text-center text-[11px] text-fg-muted"
             >
               每类仅显示前 {{ SEARCH_TYPE_LIMIT }} 条 —— 试试更精确的关键词
             </p>
           </TransitionGroup>
-          <p v-if="!results.albums.length" class="py-16 text-center text-sm text-zinc-500">
+          <p v-if="!results.albums.length" class="py-16 text-center text-sm text-fg-muted">
             未找到相关专辑
           </p>
         </div>

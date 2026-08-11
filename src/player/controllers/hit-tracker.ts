@@ -2,9 +2,7 @@ import { watch, type Ref } from 'vue'
 import { PlayerEvent, type PlayerEventMap } from '../events'
 import type { Emitter } from '@/shared/emitter'
 import type { QueueStore } from '@/store/queue'
-import { playbackWriter } from '@/services/playback-data'
-import { updateArtistHit, updateTrackHit } from '@/apis/methods/music'
-import { updateHits } from '@/apis/methods/idb-locals'
+import { bumpArtistHit, bumpTrackHit } from '@/idb/app-api'
 
 /** 计时阈值：曲目播放 50%，封顶 2 min（长曲目不拖长计时） */
 const HIT_RATIO = 0.3
@@ -47,27 +45,8 @@ export function createHitTracker(
   function registerHit() {
     const t = queue.currentTrack
     if (!t) return
-    const at = new Date().toISOString()
-    playbackWriter.write({
-      key: `hit:track:${t.id}:${at}`,
-      label: `播放计次 ${t.title}`,
-      opType: 'hit-track',
-      payload: { id: t.id, at },
-      local: async () => { await updateHits('track', t.id) },
-      remote: async () => { await updateTrackHit(t.id) },
-    })
-    if (t.artists){
-      for (const a of t.artists) {
-        playbackWriter.write({
-          key: `hit:artist:${a.id}:${at}`,
-          label: `歌手计次 ${a.name}`,
-          opType: 'hit-artist',
-          payload: { id: a.id, at },
-          local: async () => { await updateHits('artist', a.id) },
-          remote: async () => { await updateArtistHit(a.id) },
-        })
-      }
-    }
+    bumpTrackHit(t.id)
+    for (const aid of (t.artists?.map(a => a.id) ?? [])) bumpArtistHit(aid)
   }
 
   function dispose() {

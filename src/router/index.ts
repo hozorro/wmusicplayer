@@ -15,7 +15,7 @@ const routes: RouteRecordRaw[] = [
     name: "play",
     component: () => import("@/layouts/Play.vue"),
     children: [
-      { path: "", name: "home", component: () => import("@/views/player/Home.vue") },
+      { path: "", name: "home", component: () => import("@/views/player/Index.vue") },
       {
         path: "/album",
         children: [
@@ -58,7 +58,7 @@ const routes: RouteRecordRaw[] = [
         children: [
           { path: "", name: "setting", component: () => import("@/views/setting/Index.vue") },
           { path: "play", name: "setting-play", component: () => import("@/views/setting/Play.vue") },
-          { path: "localdb", name: "setting-localdb", component: () => import("@/views/setting/LocalDb.vue") },
+          { path: "sync", name: "setting-sync", component: () => import("@/views/setting/Sync.vue") },
           { path: "help", name: "setting-help", component: () => import("@/views/setting/Help.vue") },
           { path: "about", name: "setting-about", component: () => import("@/views/setting/About.vue") },
           { path: "test", name: "setting-test", component: () => import("@/views/setting/TestView.vue") }

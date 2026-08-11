@@ -23,7 +23,7 @@ const isCurrent = (t: Track) => t.id === player.currentTrack.value?.id
       v-for="(t, i) in tracks"
       :key="t.id"
       class=" rounded-xl transition-colors"
-      :class="isCurrent(t) ? 'bg-amber-400/10' : 'hover:bg-white/5'"
+      :class="isCurrent(t) ? 'bg-accent/10' : 'hover:bg-white/5'"
     >
       <TrackRow :track="t" :order-no="i + 1" :show-art="showArt" :menu-source="menuSource" />
     </div>

@@ -11,7 +11,7 @@ import { toPlayTrack } from '@/services/transform'
 import { usePlayer } from '@/composables/playback'
 import { usePlayerQueue } from '@/composables/player-queue'
 import type { PlayTrack } from '@/player/types'
-import favTracksCover from '@/assets/fav-tracks-cover.png'
+import favTracksCover from '@/assets/imgs/favorite.jpg';
 import { getFavoriteTracks } from '@/apis/methods/music'
 
 const route = useRoute()
@@ -36,16 +36,16 @@ const loaded = computed(() => tracks.value !== null)
 <template>
   <div class="min-h-dvh">
     <!-- 固定顶栏：返回 + 折叠标题 -->
-    <div class="fixed inset-x-0 top-0 z-30 bg-gradient-to-b from-black/60 via-black/30 to-transparent pb-6 pt-[calc(env(safe-area-inset-top)+10px)]">
+    <div class="fixed inset-x-0 top-0 z-30 bg-gradient-to-b from-primary/60 via-primary/30 to-transparent pb-6 pt-[calc(env(safe-area-inset-top)+10px)]">
       <div class="mx-auto flex max-w-2xl items-center gap-3 px-4">
         <button
-          class="shrink-0 rounded-full bg-black/30 p-2 text-zinc-100 ring-1 ring-white/10 transition hover:bg-black/50 active:scale-90"
+          class="shrink-0 rounded-full bg-primary/30 p-2 text-fg-primary ring-1 ring-fg-primary/10 transition hover:bg-primary/50 active:scale-90"
           aria-label="返回"
           @click="router.back()"
         >
           <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
         </button>
-        <h2 :style="compactStyle" class="min-w-0 flex-1 truncate text-base font-bold text-zinc-50">
+        <h2 :style="compactStyle" class="min-w-0 flex-1 truncate text-base font-bold text-fg-primary">
           我喜欢的音乐
         </h2>
       </div>
@@ -59,9 +59,9 @@ const loaded = computed(() => tracks.value !== null)
             <img :src="favTracksCover" alt="" class="h-full w-full object-cover" />
           </div>
           <div class="min-w-0 flex-1 pb-1">
-            <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-400">歌单</p>
-            <h1 class="mt-1 text-2xl font-extrabold leading-tight text-zinc-50">我喜欢的音乐</h1>
-            <p v-if="loaded" class="mt-1.5 text-xs tabular-nums text-zinc-400">
+            <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-fg-muted">歌单</p>
+            <h1 class="mt-1 text-2xl font-extrabold leading-tight text-fg-primary">我喜欢的音乐</h1>
+            <p v-if="loaded" class="mt-1.5 text-xs tabular-nums text-fg-muted">
               {{ tracks!.length }} 首 · 在播放页点按 ♥ 收藏
             </p>
           </div>
@@ -69,14 +69,14 @@ const loaded = computed(() => tracks.value !== null)
 
         <div class="mt-5 flex gap-2.5">
           <button
-            class="rounded-full bg-amber-400 px-5 py-2 text-sm font-bold text-zinc-950 shadow-lg shadow-amber-400/20 transition hover:bg-amber-300 active:scale-95 disabled:pointer-events-none disabled:opacity-40"
+            class=" btn-primary"
             :disabled="!tracks?.length"
             @click="player.playAll(tracks ?? [])"
           >
             播放全部
           </button>
           <button
-            class="rounded-full px-5 py-2 text-sm font-semibold text-zinc-200 ring-1 ring-white/15 transition hover:bg-white/10 active:scale-95 disabled:pointer-events-none disabled:opacity-40"
+            class=" btn-secondary"
             :disabled="!tracks?.length"
             @click="playQueue.addMany(tracks ?? [])"
           >
@@ -92,17 +92,17 @@ const loaded = computed(() => tracks.value !== null)
         <TrackList v-if="tracks!.length" :tracks="tracks!" :show-art="true" />
         <!-- 空态：引导收藏入口 -->
         <div v-else class="flex flex-col items-center gap-3 py-20 text-center">
-          <svg viewBox="0 0 24 24" class="h-12 w-12 text-zinc-700" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <svg viewBox="0 0 24 24" class="h-12 w-12 text-fg-primary" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
           </svg>
-          <p class="text-sm text-zinc-500">还没有收藏的歌曲</p>
-          <p class="text-xs text-zinc-600">播放时点按全屏播放器的心形按钮即可收藏</p>
+          <p class="text-sm text-fg-muted">还没有收藏的歌曲</p>
+          <p class="text-xs text-fg-secondary">播放时点按全屏播放器的心形按钮即可收藏</p>
         </div>
       </template>
 
       <!-- 骨架 -->
       <div v-else class="animate-pulse space-y-3 pt-2">
-        <div v-for="n in 8" :key="n" class="h-12 rounded-xl bg-zinc-800/50" />
+        <div v-for="n in 8" :key="n" class="h-12 rounded-xl bg-secondary/50" />
       </div>
     </main>
   </div>

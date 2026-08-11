@@ -22,7 +22,10 @@ let fetchSeq = 0
 onMounted(async () => {
   chars.value = (await getArtistChars().send());
   const first = chars.value.find(c => c.hasArtist);
-  if (first) selectedChar.value = first.charName;
+  if (first) {
+    selectedChar.value = first.charName;
+    getArtistList(first.charName);
+  }
 })
 
 const { loading, data:artists, send:getArtistList } = useRequest((archar) => getArtists(archar),{
@@ -42,16 +45,16 @@ async function switchArtists(char: string) {
 }
 
 function charClass(c: CharInfo):string {
-  if (!c.hasArtist) return 'pointer-events-none text-zinc-700'
-  if (c.charName === selectedChar.value) return 'bg-amber-400 font-bold text-zinc-900'
-  return 'text-zinc-300 hover:bg-white/8 active:bg-white/15'
+  if (!c.hasArtist) return 'pointer-events-none text-fg-muted'
+  if (c.charName === selectedChar.value) return 'bg-accent font-bold text-fg-primary'
+  return 'text-fg-secondary hover:bg-white/8 active:bg-white/15'
 }
 </script>
 
 <template>
   <div class="min-h-dvh">
     <!-- ═══ 粘性头部：导航栏 + 字母块 ═══ -->
-    <div class="sticky top-0 z-30 border-b border-white/5 bg-zinc-950">
+    <div class="sticky top-0 z-30 border-b border-white/5 bg-card">
       <!-- 导航栏 -->
       <div class="mx-auto flex max-w-2xl items-center gap-3 px-4 pb-2 pt-[calc(env(safe-area-inset-top)+10px)]">
         <button
@@ -79,7 +82,7 @@ function charClass(c: CharInfo):string {
         </div>
         <!-- 字母块骨架 -->
         <div v-else class="grid grid-cols-9 gap-1.5">
-          <div v-for="n in 27" :key="n" class="animate-pulse rounded-md bg-zinc-800/70 py-2" />
+          <div v-for="n in 27" :key="n" class="animate-pulse rounded-md bg-secondary/70 py-2" />
         </div>
       </div>
     </div>
@@ -89,7 +92,7 @@ function charClass(c: CharInfo):string {
       <!-- 当前字母 + 计数 -->
       <p
         v-if="selectedChar && !loading"
-        class="px-2 pb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-500"
+        class="px-2 pb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-fg-muted"
       >
         {{ selectedChar === '#' ? '其它' : selectedChar }}
         <span class="tabular-nums">· {{ artists.length }} 位艺人</span>
@@ -97,9 +100,9 @@ function charClass(c: CharInfo):string {
 
       <!-- 加载骨架 -->
       <div v-if="loading" class="space-y-2.5 pt-1">
-        <div v-for="n in 6" :key="n" class="flex animate-pulse items-center gap-3 rounded-xl bg-zinc-800/50 px-3 py-2.5">
-          <div class="h-11 w-11 rounded-full bg-zinc-700/70" />
-          <div class="h-4 w-1/3 rounded bg-zinc-700/70" />
+        <div v-for="n in 6" :key="n" class="flex animate-pulse items-center gap-3 rounded-xl bg-secondary/50 px-3 py-2.5">
+          <div class="h-11 w-11 rounded-full bg-secondary/70" />
+          <div class="h-4 w-1/3 rounded bg-secondary/70" />
         </div>
       </div>
 
@@ -111,7 +114,7 @@ function charClass(c: CharInfo):string {
       </div>
 
       <!-- 空态 -->
-      <p v-else class="py-16 text-center text-sm text-zinc-500">暂无艺人</p>
+      <p v-else class="py-16 text-center text-sm text-fg-muted">暂无艺人</p>
     </main>
   </div>
 </template>

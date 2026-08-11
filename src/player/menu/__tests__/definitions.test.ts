@@ -4,7 +4,7 @@ import { MENU_ACTIONS, KIND_LABEL } from '../definitions'
 import type { MenuContext } from '../context'
 import type { MenuSource } from '../types'
 
-const T = { id: 7, title: 't7', artists: ['a'] }
+const T = { id: 7, title: 't7', artists: [{id: 1, name: 'a'}] }
 const ctx = (): MenuContext => ({
   player: { playTrack: vi.fn(), playNext: vi.fn(), addAndPlay: vi.fn(), playAll: vi.fn(), playNextAll: vi.fn() },
   playQueue: { add: vi.fn(), addMany: vi.fn(), move: vi.fn(), insertNext: vi.fn(), removeAt: vi.fn() },
@@ -46,8 +46,8 @@ describe('动作表接线', () => {
     expect(action.keepsOpen).toBe(true)
   })
 
-  it('七类 kind 全部在册，标题无缺', () => {
-    expect(Object.keys(MENU_ACTIONS)).toHaveLength(7)
+  it('八类 kind 全部在册，标题无缺', () => {
+    expect(Object.keys(MENU_ACTIONS)).toHaveLength(8)
     for (const kind of Object.keys(MENU_ACTIONS)) {
       expect(MENU_ACTIONS[kind as keyof typeof MENU_ACTIONS].length).toBeGreaterThan(0)
       expect(KIND_LABEL[kind as keyof typeof MENU_ACTIONS]).toBeTruthy()
