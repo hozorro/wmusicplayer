@@ -59,7 +59,7 @@ function charClass(c: CharInfo):string {
       <div class="mx-auto flex max-w-2xl items-center gap-3 px-4 pb-2 pt-[calc(env(safe-area-inset-top)+10px)]">
         <button
           class="rounded-full p-2 text-zinc-300 transition hover:bg-white/8 hover:text-zinc-50 active:scale-90"
-          aria-label="返回"
+          :aria-label="t('common.back')"
           @click="router.back()"
         >
           <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
@@ -94,8 +94,8 @@ function charClass(c: CharInfo):string {
         v-if="selectedChar && !loading"
         class="px-2 pb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-fg-muted"
       >
-        {{ selectedChar === '#' ? '其它' : selectedChar }}
-        <span class="tabular-nums">· {{ artists.length }} 位艺人</span>
+        {{ selectedChar === '_' ? t('common.others') : selectedChar }}
+        <span class="tabular-nums">· {{ t('player.char_stat', { artist_count: artists.length }) }}</span>
       </p>
 
       <!-- 加载骨架 -->
@@ -114,7 +114,7 @@ function charClass(c: CharInfo):string {
       </div>
 
       <!-- 空态 -->
-      <p v-else class="py-16 text-center text-sm text-fg-muted">暂无艺人</p>
+      <p v-else class="py-16 text-center text-sm text-fg-muted">{{ t('player.no_artists') }}</p>
     </main>
   </div>
 </template>

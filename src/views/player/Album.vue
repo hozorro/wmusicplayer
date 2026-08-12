@@ -63,7 +63,7 @@ watch(() => route.params.id, async id => {
       <div class=" mx-auto flex max-w-2xl items-center gap-3 px-4">
         <button
           class=" shrink-0 rounded-full bg-primary/60 p-2 text-fg-secondary ring-1 ring-primary/10 backdrop-blur-sm transition hover:bg-primary/85 active:scale-90"
-          aria-label="返回"
+          :aria-label="t('common.back')"
           @click="router.back()"
         >
           <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -87,7 +87,7 @@ watch(() => route.params.id, async id => {
               <img v-else :src="defaultArt" alt="" class=" h-full w-full object-cover" />
             </div>
             <div class=" min-w-0 flex-1 pb-1">
-              <p class=" text-[11px] font-semibold uppercase tracking-[0.2em] text-fg-muted">专辑</p>
+              <p class=" text-[11px] font-semibold uppercase tracking-[0.2em] text-fg-muted">{{ t('player.album') }}</p>
               <h1 class=" mt-1 text-2xl font-extrabold leading-tight text-fg-primary">{{ album.title }}</h1>
             </div>
           </div>
@@ -143,7 +143,7 @@ watch(() => route.params.id, async id => {
 
         <!-- 曲目列表 -->
         <h2 class=" pb-2 pt-7 text-[11px] font-semibold uppercase tracking-[0.2em] text-fg-muted">
-          曲目 <span class=" tabular-nums"> {{ playTracks.length }}</span>
+          {{ t('player.track') }} <span class=" tabular-nums"> {{ playTracks.length }}</span>
         </h2>
         <TrackList :tracks="playTracks" :show-art="true" />
       </template>

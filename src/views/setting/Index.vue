@@ -16,14 +16,13 @@ const appVersion = appInfo.VUE_APP_VERSION
 const menuList = computed(() => {// must be computed, or the menu will not update when language changes
   const menuItems = [ 
     { title: t('settings.play.item'), to: '/setting/play', icon: 'icon-[solar--tuning-square-2-outline]' },
-    { title: t('settings.localdb.item'), to: '/setting/sync', icon: 'icon-[solar--database-outline]' },
+    { title: t('settings.sync.item'), to: '/setting/sync', icon: 'icon-[solar--database-outline]' },
     { title: t('settings.help'), to: '/setting/help', icon: 'icon-[solar--notebook-bookmark-outline]' },
-    { title: t('settings.test'), to: '/setting/test', icon: 'icon-[solar--flashlight-outline] origin-center rotate-180' },
     { title: t('settings.about.item'), to: '/setting/about', icon: 'icon-[solar--cassette-outline]' },
   ]
   const devItems = [
-    { title: t('dev-runtime'), to: '/dev/runtime', icon: 'icon-[solar--test-tube-linear]' },
-    { title: t('dev-player'), to: '/dev/player', icon: 'icon-[solar--play-stream-linear]' },
+    { title: 'dev-runtime', to: '/dev/runtime', icon: 'icon-[solar--test-tube-linear]' },
+    { title: 'dev-player', to: '/dev/player', icon: 'icon-[solar--play-stream-linear]' },
   ]
   if (import.meta.env.DEV) menuItems.push(...devItems) 
   return menuItems;

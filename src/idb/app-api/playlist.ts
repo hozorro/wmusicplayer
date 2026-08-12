@@ -9,6 +9,7 @@ import {
   movePlaylistTrack as movePlaylistTrackApi 
 } from "@/apis/methods/music";
 import { toIDBPlaylist } from "../derive";
+import { t } from "@/utilies/use-i18n";
 
 export interface PlaylistFields { title: string, comment: string }
 
@@ -58,7 +59,7 @@ export async function updatePlaylist(
 export const addPlaylistTrack = (playlistId: number, trackId: number) => {
   playbackWriter.write({
     key: `playlist:${playlistId}:add:${trackId}`,
-    label: `添加歌曲《${trackId}》到播放列表《${playlistId}》`,
+    label: `${t('playlist.add_label', { track_id: trackId, playlist_id: playlistId })}`,
     opType: 'add-track-to-playlist',
     payload: { playlistId, trackId },
     local: () => mutateEntity<IDBPlaylist>('playlists', playlistId, p => { 
@@ -73,7 +74,7 @@ export const addPlaylistTrack = (playlistId: number, trackId: number) => {
 export const removePlaylistTrack = (playlistId: number, trackId: number) => {
   playbackWriter.write({
     key: `playlist:${playlistId}:remove:${trackId}`,
-    label: `从歌单 ${playlistId} 中移除歌曲 ${trackId}`,
+    label: `${t('playlist.remove_label', { track_id: trackId, playlist_id: playlistId })}`,
     opType: 'remove-track-from-playlist',
     payload: { playlistId, trackId },
     local: () => mutateEntity<IDBPlaylist>('playlists', playlistId, p => { 
@@ -86,7 +87,7 @@ export const removePlaylistTrack = (playlistId: number, trackId: number) => {
 export const movePlaylistTrack = (playlistId: number, trackId: number, newPosition: number) => {
   playbackWriter.write({
     key: `playlist:${playlistId}:move:${trackId}:${newPosition}`,
-    label: `在歌单 ${playlistId} 中将歌曲 ${trackId} 移动到 ${newPosition}`,
+    label: `${t('playlist.move_label', { track_id: trackId, playlist_id: playlistId, position: newPosition })}`,
     opType: 'move-playlist-track',
     payload: { playlistId, trackId, newPosition },
     local: () => mutateEntity<IDBPlaylist>('playlists', playlistId, p => { 

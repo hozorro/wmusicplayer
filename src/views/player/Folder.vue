@@ -76,7 +76,7 @@ async function resolveFolderTracks(c: CollectionItem): Promise<PlayTrack[]> {
       <div class=" mx-auto flex max-w-2xl items-center gap-3 px-4 pb-1.5 pt-[calc(env(safe-area-inset-top)+10px)]">
         <button
           class=" shrink-0 rounded-full p-2 text-fg-secondary transition hover:bg-fg-primary/8 hover:text-fg-primary active:scale-90"
-          aria-label="返回"
+          :aria-label="t('common.back')"
           @click="router.push('/')"
         >
           <span class=" icon-[solar--alt-arrow-left-linear]"></span>
@@ -89,7 +89,7 @@ async function resolveFolderTracks(c: CollectionItem): Promise<PlayTrack[]> {
       <!-- 面包屑：横向滚动 + 尾锚定 + 单屑截断 -->
       <nav
         ref="crumbStrip"
-        aria-label="文件夹路径"
+        :aria-label="t('player.folder_path')"
         class=" mx-auto flex max-w-2xl items-center gap-1 overflow-x-auto px-4 pb-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         <template v-if="crumbs.length">
@@ -131,7 +131,7 @@ async function resolveFolderTracks(c: CollectionItem): Promise<PlayTrack[]> {
       <template v-if="folder">
         <template v-if="subfolderItems.length">
           <h2 class=" px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-fg-muted">
-            子文件夹 <span class=" tabular-nums">· {{ subfolderItems.length }}</span>
+            {{ t('player.subfolder') }} <span class=" tabular-nums">· {{ subfolderItems.length }}</span>
           </h2>
           <CollectionList kind="folder" :collections="subfolderItems" :resolve-tracks="resolveFolderTracks" />
         </template>
@@ -140,13 +140,13 @@ async function resolveFolderTracks(c: CollectionItem): Promise<PlayTrack[]> {
 
         <template v-if=" playTracks.length">
           <h2 class=" px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-fg-muted">
-            曲目 <span class=" tabular-nums">· {{ playTracks.length }}</span>
+            {{ t('player.track') }} <span class=" tabular-nums">· {{ playTracks.length }}</span>
           </h2>
           <TrackList :tracks="playTracks" :show-art="false"></TrackList>
         </template>
 
         <p v-if="!subfolderItems.length && !playTracks.length" class=" py-16 text-center text-sm text-fg-muted">
-          空文件夹
+          {{ t('player.empty_folder') }}
         </p>
       </template>
 

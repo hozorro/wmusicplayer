@@ -5,6 +5,7 @@
  */
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import ModuleHeader from '@/components/ModuleHeader.vue';
 import MediaCard from '@/components/MediaCard.vue';
 import TrackRow from '@/components/TrackRow.vue';
@@ -23,14 +24,15 @@ import { getTopPlaylists, getTenArtists, getModedRandomTracks,
         getRandomGenres, getLatestTracks, getHotTracks } from '@/apis/methods/music';
 
 const router = useRouter();
+const { t } = useI18n();
 
 // —— 问候：随时刻流转 ——
 const greeting = computed(() => {
   const hour = new Date().getHours()
-  if (hour < 5 || hour > 23) return '夜深了'
-  if (hour < 11) return '早上好'
-  if (hour < 18) return '下午好'
-  return '晚上好'
+  if (hour < 5 || hour > 23) return t('sentence.greet_night')
+  if (hour < 11) return t('sentence.greet_morning')
+  if (hour < 18) return t('sentence.greet_afternoon')
+  return t('sentence.greet_evening')
 })
 const todayLine = computed(() => {
   return new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' })
@@ -120,18 +122,18 @@ async function playRandom(m: RandomMode) {
       <div class=" mx-auto flex max-w-2xl items-center gap-3 px-4 pb-3 pt-[calc(env(safe-area-inset-top)+12px)]">
         <button
           class="group flex min-w-0 flex-1 items-center gap-2.5 rounded-full bg-white/20 px-4 py-2.5 ring-1 ring-white/10 transition hover:bg-white/[0.09] hover:ring-white/20 active:scale-[0.98]"
-          aria-label="搜索"
+          :aria-label="t('player.search')"
           @click="router.push('/search')"
         >
           <svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0 text-fg-secondary transition group-hover:text-fg-primary"
                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.35-4.35" />
           </svg>
-          <span class="truncate text-sm text-fg-secondary">搜索歌曲、歌手</span>
+          <span class="truncate text-sm text-fg-secondary">{{ t('player.search_tip') }}</span>
         </button>
         <button
           class="shrink-0 rounded-full p-2.5 text-fg-secondary transition hover:bg-white/8 hover:text-fg-primary active:scale-90"
-          aria-label="设置"
+          :aria-label="t('settings.title')"
           @click="router.push('/setting')"
         >
           <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -151,7 +153,7 @@ async function playRandom(m: RandomMode) {
 
       <!-- 歌单：favTracks 伪条目居首 -->
       <section>
-        <ModuleHeader title="歌单" to="/playlist" />
+        <ModuleHeader :title="t('player.playlist')" to="/playlist" />
         <Transition
           appear
           enter-active-class="transition duration-500 ease-out"
@@ -159,7 +161,7 @@ async function playRandom(m: RandomMode) {
         >
           <div v-if="playlistsLoaded" class=" flex gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <MediaCard
-              title="我最喜欢" subtitle="收藏的歌曲"
+              :title="t('player.favorited')" :subtitle="t('player.favorited_tracks')"
               :cover="favTracksCover" badge="heart" to="/favourite"
             />
             <MediaCard
@@ -180,7 +182,7 @@ async function playRandom(m: RandomMode) {
 
       <!-- 随机播放：零参数模式直达 -->
       <section>
-        <ModuleHeader title="随机播放" to="/random" />
+        <ModuleHeader :title="t('random.random')" to="/random" />
         <div class=" flex gap-3 px-4 pt-2">
           <button
             v-for="m in paramlessModes" :key="m.key"
@@ -199,7 +201,7 @@ async function playRandom(m: RandomMode) {
 
       <!-- 歌手：favArtists 伪条目居尾 -->
       <section>
-        <ModuleHeader title="歌手" to="/artist" />
+        <ModuleHeader :title="t('player.artist')" to="/artist" />
         <Transition
           appear
           enter-active-class="transition duration-500 ease-out"
@@ -212,7 +214,7 @@ async function playRandom(m: RandomMode) {
               :cover="a.cover" :to="`/artist/${a.id}`"
             />
             <MediaCard
-              title="我最喜欢" subtitle="收藏的歌手"
+              :title="t('player.favorited')" :subtitle="t('player.favorited_artists')"
               :cover="favArtistsCover" badge="heart" to="/artist/favourite"
             />
           </div>
@@ -227,7 +229,7 @@ async function playRandom(m: RandomMode) {
 
       <!-- 流派：8 块随机瓷砖横向成行 -->
       <section>
-        <ModuleHeader title="流派" to="/genre" />
+        <ModuleHeader :title="t('player.genre')" to="/genre" />
         <Transition
           appear
           enter-active-class="transition duration-500 ease-out"
@@ -265,7 +267,7 @@ async function playRandom(m: RandomMode) {
         <div class="flex items-center px-4 pb-3 pt-7">
           <div class="flex rounded-full bg-white/[0.05] p-1 ring-1 ring-white/10">
             <button
-              v-for="tab in ([['latest', '最近添加'], ['hot', '最常播放']] as const)" :key="tab[0]"
+              v-for="tab in ([['latest', t('player.latest_added')], ['hot', t('player.most_played')]] as const)" :key="tab[0]"
               class="rounded-full px-3.5 py-1.5 text-xs font-semibold transition"
               :class="trackTab === tab[0]
                 ? 'bg-accent text-fg-primary shadow-md shadow-accent/20'
@@ -294,7 +296,7 @@ async function playRandom(m: RandomMode) {
             </div>
           </div>
           <PagerDots v-if="trackPages.length > 1" :count="trackPages.length" :active="activePage" @go="goTo" />
-          <p v-else class="py-10 text-center text-sm text-fg-secondary">暂无曲目</p>
+          <p v-else class="py-10 text-center text-sm text-fg-secondary">{{ t('player.no_tracks') }}</p>
         </template>
         <div v-else class="animate-pulse">
           <div v-for="n in 4" :key="n">
@@ -308,7 +310,7 @@ async function playRandom(m: RandomMode) {
 
       <!-- 文件夹：仅标题入口 -->
       <section class="pb-2">
-        <ModuleHeader title="文件夹" :to="`/folder/1`" />
+        <ModuleHeader :title="t('player.folder')" :to="`/folder/1`" />
       </section>
     </main>
   </div>

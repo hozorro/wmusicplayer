@@ -8,12 +8,15 @@ import { idbReady } from '@/services/idb-state'
 import { SYNC_STORES, syncLibrary, syncState } from '@/services/lib-sync'
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+
 
 const router = useRouter()
+const { t } = useI18n()
 
 const STORE_LABEL: Record<string, string> = {
-  tracks: '歌曲', artists: '歌手', albums: '专辑',
-  genres: '流派', folders: '文件夹', playlists: '歌单',
+  tracks: t('player.track'), artists: t('player.artist'), albums: t('player.album'),
+  genres: t('player.genre'), folders: t('player.folder'), playlists: t('player.playlist'),
 }
 
 const overallPct = computed(() => syncState.totalBatches
@@ -29,20 +32,20 @@ const overallPct = computed(() => syncState.totalBatches
       <div class=" mx-auto flex max-w-2xl items-center gap-3 px-4 py-2.5 pt-[calc(env(safe-area-inset-top)+10px)]">
         <button
           class=" rounded-full p-2 text-fg-muted transition hover:bg-fg-primary/8 hover:text-fg-primary active:scale-90"
-          aria-label="返回"
+          :aria-label="t('common.back')"
           @click="router.back()"
         >
           <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M15 6l-6 6 6 6" />
           </svg>
         </button>
-        <h1 class=" text-lg font-bold text-fg-primary">曲库同步</h1>
+        <h1 class=" text-lg font-bold text-fg-primary">{{ t('settings.sync.item') }}</h1>
       </div>
     </div>
 
     <main class=" mx-auto max-w-2xl px-4 pb-32 pt-6">
       <p class=" text-xs text-fg-muted">
-        {{ idbReady ? `上次同步：${syncState.lastSyncAt ?? '-'}` : '本地曲库尚未初始化' }}
+        {{ idbReady ? t('settings.sync.last_sync', { time: syncState.lastSyncAt ?? '-' }) : t('settings.sync.not_init') }}
       </p>
 
       <!-- 总进度 -->
@@ -54,8 +57,8 @@ const overallPct = computed(() => syncState.totalBatches
       >
         <div v-if="syncState.running" class=" mt-5">
           <div class=" flex items-center justify-between text-xs tabular-nums text-fg-muted">
-            <span>正在同步：{{ STORE_LABEL[syncState.currentStore ?? ''] ?? '...' }}</span>
-            <span>{{ syncState.doneBatches }} / {{ syncState.totalBatches }} 批 · {{ overallPct }}%</span>
+            <span>{{ t('settings.sync.syncing') }}：{{ STORE_LABEL[syncState.currentStore ?? ''] ?? '...' }}</span>
+            <span>{{ syncState.doneBatches }} / {{ syncState.totalBatches }} {{ t('settings.sync.batch') }} · {{ overallPct }}%</span>
           </div>
           <div class=" mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
             <div 
@@ -81,11 +84,11 @@ const overallPct = computed(() => syncState.totalBatches
         :disabled="syncState.running"
         @click="syncLibrary()"
       >
-        {{ syncState.running ? '正在同步...' : idbReady ? '增量同步' : '全量同步' }}
+        {{ syncState.running ? `${t('settings.sync.syncing')}...` : idbReady ? t('settings.sync.incremental') : t('settings.sync.syncall') }}
       </button>
 
       <p class=" mt-3 text-center text-[11px] text-fg-muted">
-        同步支持断点续传，中途退出页面或杀进程均安全
+        {{ t('settings.sync.sync_hint') }}
       </p>
     </main>
   </div>

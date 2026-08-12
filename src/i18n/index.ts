@@ -1,9 +1,11 @@
 import { createI18n, type I18nOptions } from "vue-i18n";
 
 const DEFAULT_LOCALE: SupportedLocale = 'zh-CN';
+// 防护非浏览器环境（如 node 单测）下的模块级 localStorage 访问
+const savedLocale = typeof localStorage !== 'undefined' ? localStorage.getItem('locale') : null;
 const options: I18nOptions = {
   legacy: false,
-  locale: localStorage.getItem('locale') || DEFAULT_LOCALE,
+  locale: savedLocale || DEFAULT_LOCALE,
   fallbackLocale: DEFAULT_LOCALE,
   messages: {}
 }

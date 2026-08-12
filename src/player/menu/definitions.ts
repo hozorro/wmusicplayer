@@ -1,5 +1,6 @@
 import type { MenuContext } from "./context";
 import type { MenuKind, MenuSource } from "./types";
+import { t } from "@/utilies/use-i18n";
 
 export interface MenuAction {
   key: string
@@ -19,53 +20,54 @@ export interface MenuAction {
 type TrackSrc = Extract<MenuSource, { kind: 'track' }>
 type QueueSrc = Extract<MenuSource, { kind: 'queue-track'}>
 
+// label 用 getter 惰性求值：模块级直接调用 t() 会把文案冻结在首次导入时的语言
 const trackActions: MenuAction[] = [
-  { key: 'play', label: '播放', icon: 'play',
+  { key: 'play', get label() { return t('player.play') }, icon: 'play',
     run: (s, ctx) => ctx.player.playTrack((s as TrackSrc).track) },
-  { key: 'play-next', label: '下一首播放', icon: 'play-next',
+  { key: 'play-next', get label() { return t('player.add_next') }, icon: 'play-next',
     run: (s, ctx) => ctx.player.playNext((s as TrackSrc).track) },
-  { key: 'add-play', label: '添加并播放', icon: 'add-play',
+  { key: 'add-play', get label() { return t('player.add_and_play') }, icon: 'add-play',
     run: (s, ctx) => ctx.player.addAndPlay([(s as TrackSrc).track]) },
-  { key: 'add-queue', label: '添加到队列', icon: 'queue',
+  { key: 'add-queue', get label() { return t('player.add_to_queue') }, icon: 'queue',
     run: (s, ctx) => { ctx.playQueue.add((s as TrackSrc).track) } },
-  { key: 'add-playlist', label: '添加到歌单', icon: 'playlist', keepsOpen: true,
+  { key: 'add-playlist', get label() { return t('player.add_to_playlist') }, icon: 'playlist', keepsOpen: true,
     run: (_s, ctx) => ctx.openPanel('playlist-picker') },
-  { key: 'view-album', label: '查看所属专辑', icon: 'album', placeholder: true,
+  { key: 'view-album', get label() { return t('player.to_album') }, icon: 'album', placeholder: true,
     run: () => {} },
 ]
 
 const queueTrackActions: MenuAction[] = [
-  { key: 'pin-top', label: '置顶', icon: 'pin-top',
+  { key: 'pin-top', get label() { return t('player.pin_top') }, icon: 'pin-top',
     run: (s, ctx) => ctx.playQueue.move((s as QueueSrc).index, 0) },
-  { key: 'play-next', label: '移到下一曲', icon: 'play-next',
+  { key: 'play-next', get label() { return t('player.move_to_next') }, icon: 'play-next',
     run: (s, ctx) => { ctx.playQueue.insertNext((s as QueueSrc).track) } },
-  { key: 'add-playlist', label: '添加到歌单', icon: 'playlist', keepsOpen: true,
+  { key: 'add-playlist', get label() { return t('player.add_to_playlist') }, icon: 'playlist', keepsOpen: true,
     run: (_s, ctx) => ctx.openPanel('playlist-picker') },
-  { key: 'view-album', label: '查看所属专辑', icon: 'album', placeholder: true,
+  { key: 'view-album', get label() { return t('player.to_album') }, icon: 'album', placeholder: true,
     run: () => {} },
-  { key: 'remove', label: '从队列删除', icon: 'remove', danger: true,
+  { key: 'remove', get label() { return t('player.remove') }, icon: 'remove', danger: true,
     run: (s, ctx) => ctx.playQueue.removeAt((s as QueueSrc).index) },
 ]
 
 const playlistActions: MenuAction[] = [
   ...trackActions.filter(a => !['add-playlist', 'view-album'].includes(a.key)),
-  { key: 'remove-from-playlist', label: '从歌单移除', icon: 'remove', danger: true,
+  { key: 'remove-from-playlist', get label() { return t('playlist.remove') }, icon: 'remove', danger: true,
     run: s => (s as Extract<MenuSource, { kind: 'playlist-track' }>).onRemove() },
-  { key: 'view-album', label: '查看所属专辑', icon: 'album', placeholder: true, run: () => {}}
+  { key: 'view-album', get label() { return t('player.to_album') }, icon: 'album', placeholder: true, run: () => {}}
 ]
 
 /** 五类合集共享同一动作表：差异只在 resolveTracks 的接线方 */
 const collectionActions: MenuAction[] = [
-  { key: 'play-all', label: '播放全部', icon: 'play', resolves: true,
+  { key: 'play-all', get label() { return t('player.play_all') }, icon: 'play', resolves: true,
     run: async (s, ctx) => ctx.player.playAll(await ctx.resolveTracks(s)) },
-  { key: 'play-next-all', label: '下一首播放', icon: 'play-next', resolves: true,
+  { key: 'play-next-all', get label() { return t('player.add_next') }, icon: 'play-next', resolves: true,
     run: async (s, ctx) => ctx.player.playNextAll(await ctx.resolveTracks(s)) },
-  { key: 'add-play-all', label: '添加并播放', icon: 'add-play', resolves: true,
+  { key: 'add-play-all', get label() { return t('player.add_and_play') }, icon: 'add-play', resolves: true,
     run: async (s, ctx) => ctx.player.addAndPlay(await ctx.resolveTracks(s)) },
-  { key: 'add-queue-all', label: '添加到队列', icon: 'queue', resolves: true,
+  { key: 'add-queue-all', get label() { return t('player.add_to_queue') }, icon: 'queue', resolves: true,
     run: async (s, ctx) => { ctx.playQueue.addMany(await ctx.resolveTracks(s)) } },
   // 合集 -> 歌单需批量接口 addTracksToPlaylist(playlistId, tracksIds[])，接线前置回占位
-  { key: 'add-playlist', label: '添加到歌单', icon: 'playlist', placeholder: true,
+  { key: 'add-playlist', get label() { return t('player.add_to_playlist') }, icon: 'playlist', placeholder: true,
     run: () => {} },
 ]
 
@@ -81,6 +83,12 @@ export const MENU_ACTIONS: Record<MenuKind, MenuAction[]> = {
 }
 
 export const KIND_LABEL: Record<MenuKind, string> = {
-  track: '歌曲', 'queue-track': '队列曲目', 'playlist-track': '歌单曲目',
-  album: '专辑', artist: '艺人', genre: '流派', folder: '文件夹', playlist: '歌单',
+  get track() { return t('player.track') },
+  get 'queue-track'() { return t('player.queue_track') },
+  get 'playlist-track'() { return t('player.playlist_track') },
+  get album() { return t('player.album') },
+  get artist() { return t('player.artist') },
+  get genre() { return t('player.genre') },
+  get folder() { return t('player.folder') },
+  get playlist() { return t('player.playlist') },
 }

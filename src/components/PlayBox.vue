@@ -14,6 +14,7 @@ import { useRoute } from 'vue-router'
 import { usePlayer } from '@/composables/playback'
 import { usePlayerQueue } from '@/composables/player-queue'
 import { useLyrics } from '@/composables/lyrics'
+import { useI18n } from 'vue-i18n'
 import { toDetailText } from '@/services/transform'
 import AmbientBackground from './AmbientBackground.vue'
 import type { PlayMode } from '@/player/types'
@@ -26,6 +27,7 @@ const player = usePlayer()
 const playQueue = usePlayerQueue()
 const lyrics = useLyrics()
 const route = useRoute()
+const { t } = useI18n()
 
 // —— 形态 ——
 const expanded = ref(false)
@@ -123,10 +125,10 @@ const MODE_NEXT: Record<PlayMode, PlayMode> = {
   'loop-one': 'sequential'
 }
 const MODE_LABEL = {
-  sequential: '顺序播放',
-  shuffle: '随机播放',
-  'loop-all': '循环播放',
-  'loop-one': '单曲循环'
+  sequential: t('player.sequential'),
+  shuffle: t('player.shuffle'),
+  'loop-all': t('player.loop_all'),
+  'loop-one': t('player.loop_one')
 }
 
 // —— 收藏（本地态） ——
@@ -179,15 +181,15 @@ onUnmounted(() => window.removeEventListener('idb-rebuilt', onLibraryRebuilt))
         <!-- 顶栏 -->
         <header class=" flex items-center justify-between px-4 pt-[calc(env(safe-area-inset-top)+10px)]">
           <button
-            class=" rounded-full p-2.5 text-zinc-500 transition hover:bg-black/5 hover:text-zinc-800 active:scale-90 dark:text-zinc-400 dark:hover:bg-white/5 dark:hover:text-zinc-100"
-            aria-label="收起"
+            class=" rounded-full p-2.5 text-fg-muted transition hover:bg-primary/5 hover:text-secondary active:scale-90"
+            :aria-label="t('common.closeup')"
             @click="expanded = false"
           >
             <svg view-box="0 0 24 24" class=" h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M6 9L6 6 6-6" />
             </svg>
           </button>
-          <span class=" text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-500">正在播放</span>
+          <span class=" text-[11px] font-semibold uppercase tracking-[0.2em] text-fg-muted">{{ t('player.playing') }}</span>
           <div class=" w-10"></div>
         </header>
 
@@ -204,12 +206,12 @@ onUnmounted(() => window.removeEventListener('idb-rebuilt', onLibraryRebuilt))
             <!-- 模块 0：封面 -->
             <section class=" flex w-full shrink-0 items-center justify-center px-10">
               <div
-                class=" aspect-square w-full max-w-xs overflow-hidden rounded-xl shadow-2xl shadow-black/20 ring-1 ring-black/10 transition-transform duration-500 ease-out dark:shadow-black/70 dark:ring-white/10 sm:max-w-sm"
+                class=" aspect-square w-full max-w-xs overflow-hidden rounded-xl shadow-2xl shadow-primary/20 ring-1 ring-primary/10 transition-transform duration-500 ease-out sm:max-w-sm"
                 :class="player.isPlaying.value ? 'scale-100' : 'scale-[0.92]'"
               >
                 <img v-if="track?.cover" :src="track.cover" alt="" class=" h-full w-full object-cover" />
                 <div v-else class=" flex h-full items-center justify-center">
-                  <svg viewBox="0 0 24 24" class="h-16 w-16 text-zinc-700" fill="currentColor">
+                  <svg viewBox="0 0 24 24" class="h-16 w-16 text-secondary" fill="currentColor">
                     <path d="M9 18V6l10-2v11.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
                     <circle cx="6.5" cy="18" r="2.5" /><circle cx="16.5" cy="15.5" r="2.5" />
                   </svg>
@@ -226,17 +228,17 @@ onUnmounted(() => window.removeEventListener('idb-rebuilt', onLibraryRebuilt))
                     :key="i"
                     :data-line="i"
                     class="py-2.5 text-center transition-all duration-300"
-                    :class="i === lyrics.currentLine.value ? ' text-xl font-bold text-zinc-900 dark:text-zinc-50' : ' text-[15px] leading-6 text-zinc-500'"
+                    :class="i === lyrics.currentLine.value ? ' text-xl font-bold text-primary' : ' text-[15px] leading-6 text-fg-muted'"
                   >
                     {{ line.text || '...' }}
                   </p>
                 </template>
-                <div v-else-if="lyrics.status.value === 'loading'" class=" flex h-full items-center justify-center gap-3 text-sm text-zinc-400">
-                  <span class=" h-4 w-4 animate-spin rounded-full border-2 border-zinc-300 border-t-amber-400 dark:border-zinc-600" />
-                  歌词加载中...
+                <div v-else-if="lyrics.status.value === 'loading'" class=" flex h-full items-center justify-center gap-3 text-sm text-fg-muted">
+                  <span class=" h-4 w-4 animate-spin rounded-full border-2 border-fg-secondary border-t-accent" />
+                  {{ t('player.lyric_loading') }}
                 </div>
-                <div v-else class=" flex h-full items-center justify-center text-sm text-zinc-500">
-                  暂无歌词
+                <div v-else class=" flex h-full items-center justify-center text-sm text-fg-muted">
+                  {{ t('player.lyric_not_found') }}
                 </div>
               </div>
             </section>
@@ -244,15 +246,15 @@ onUnmounted(() => window.removeEventListener('idb-rebuilt', onLibraryRebuilt))
             <!-- 模块 2：信息 -->
             <section class=" w-full shrink-0 overflow-y-auto px-8 py-10 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               <template v-if="detailStatus === 'ready'">
-                <h3 class="text[11px] font-semibold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">歌曲详情</h3>
-                <p class=" mt-4 whitespace-pre-wrap text-[15px] leading-7 text-zinc-700 dark:text-zinc-300">{{ detail }}</p>
+                <h3 class="text[11px] font-semibold uppercase tracking-[0.2em] text-fg-muted">{{ t('player.more_track_info') }}</h3>
+                <p class=" mt-4 whitespace-pre-wrap text-[15px] leading-6 text-secondary">{{ detail }}</p>
               </template>
-              <div v-else-if="detailStatus === 'loading'" class=" flex h-full items-center justify-center gap-3 text-sm text-zinc-400">
-                <span class=" h-4 w-4 animate-spin rounded-full border-2 border-zinc-300 border-t-amber-400 dark:border-zinc-600" />
-                加载中...
+              <div v-else-if="detailStatus === 'loading'" class=" flex h-full items-center justify-center gap-3 text-sm text-fg-muted">
+                <span class=" h-4 w-4 animate-spin rounded-full border-2 border-fg-secondary border-t-accent" />
+                {{ t('player.loading') }}
               </div>
-              <div v-else class=" flex h-full items-center justify-center text-sm text-zinc-500">
-                暂无详细信息
+              <div v-else class=" flex h-full items-center justify-center text-sm text-fg-muted">
+                {{ t('player.no_detail') }}
               </div>
             </section>
           </div>
@@ -264,8 +266,8 @@ onUnmounted(() => window.removeEventListener('idb-rebuilt', onLibraryRebuilt))
             v-for="i in 3"
             :key="i"
             class=" h-1.5 rounded-full transition-all duration-300"
-            :class="moduleIndex === i - 1 ? 'w-5 bg-zinc-800 dark:bg-zinc-200' : 'w-1.5 bg-black/20 hover:bg-black/30 dark:bg-zinc-600 dark:hover:bg-zinc-500'"
-            :aria-label="['封面', '歌词', '详情'][i - 1]"
+            :class="moduleIndex === i - 1 ? 'w-5 bg-secondary' : 'w-1.5 bg-primary/20 hover:bg-primary/30'"
+            :aria-label="[t('player.cover'), t('player.lyric'), t('player.detail')][i - 1]"
             @click="moduleIndex = i - 1"
           />
         </div>
@@ -273,15 +275,15 @@ onUnmounted(() => window.removeEventListener('idb-rebuilt', onLibraryRebuilt))
         <!-- 信息 + 收藏（恒定显示） -->
         <div class=" flex items-start justify-between gap-4 px-7">
           <div class=" min-w-0">
-            <h2 class=" truncate text-xl font-bold text-zinc-900 dark:text-zinc-50">{{ track?.title ?? '未播放' }}{{ track?.id ?? '' }}</h2>
-            <p class=" mt-0.5 truncate text-sm text-zinc-500 dark:text-zinc-400">
+            <h2 class=" truncate text-xl font-bold text-primary">{{ track?.title ?? t('player.not_playing') }}{{ track?.id ?? '' }}</h2>
+            <p class=" mt-0.5 truncate text-sm text-fg-muted">
               {{ artistsText }}<span v-if="track?.album"> - {{ track.album.title }}</span>
             </p>
           </div>
           <button 
             class=" mt-0.5 shrink-0 rounded-full p-2 transition active:scale-75"
-            :class="favorited ? 'text-rose-400' : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200'"
-            :aria-label="favorited ? '取消' : '收藏'"
+            :class="favorited ? 'text-rose-400' : 'text-fg-muted hover:text-fg-secondary'"
+            :aria-label="favorited ? t('common.cancel') : t('player.favorite')"
             :disabled="!track"
             @click="toggleFavorite"
           >
@@ -301,22 +303,22 @@ onUnmounted(() => window.removeEventListener('idb-rebuilt', onLibraryRebuilt))
             @pointerup="onScrubEnd"
             @pointercancel="onScrubEnd"
           >
-            <div class=" h-1 w-full overflow-hidden rounded-full bg-black/10 dark:bg-white/15">
+            <div class=" h-1 w-full overflow-hidden rounded-full bg-primary/10">
               <div
-                class=" h-full rounded-full bg-zinc-900 dark:bg-zinc-100"
+                class=" h-full rounded-full bg-primary"
                 :class=" scrubbing ? '' : 'transition-[width] duration-200 ease-linear'"
                 :style="{ width: `${displayRatio * 100}%`}">
               </div>
             </div>
             <div
-              class=" absolute h-3.5 w-3.5 -translate-x-1/2 rounded-full bg-zinc-900 shadow-md transition-opacity dark:bg-zinc-50"
+              class=" absolute h-3.5 w-3.5 -translate-x-1/2 rounded-full bg-primary shadow-md transition-opacity"
               :class="scrubbing ? 'opacity-100' : ' opacity-0 group-hover:opacity-100'"
               :style="{ left: `${displayRatio * 100}%`}"
             >
             </div>
           </div>
-          <div class=" flex justify-between text-[11px] tabular-nums text-zinc-500 dark:text-zinc-400">
-            <span :class="scrubbing ? 'text-amber-400' : ''">{{ formatTime(displayRatio * player.duration.value) }}</span>
+          <div class=" flex justify-between text-[11px] tabular-nums text-fg-muted">
+            <span :class="scrubbing ? 'text-accent' : ''">{{ formatTime(displayRatio * player.duration.value) }}</span>
             <span>{{ formatTime(player.duration.value) }}</span>
           </div>
         </div>
@@ -326,7 +328,7 @@ onUnmounted(() => window.removeEventListener('idb-rebuilt', onLibraryRebuilt))
           <!-- 播放模式 -->
           <button
             class=" rounded-full p-2.5 transition hover:bg-black/5 active:scale-90 dark:hover:bg-white/5"
-            :class="playQueue.mode.value === 'sequential' ? 'text-zinc-400' : 'text-amber-400'"
+            :class="playQueue.mode.value === 'sequential' ? 'text-fg-muted' : 'text-accent'"
             :aria-label="MODE_LABEL[playQueue.mode.value]"
             @click="playQueue.setMode(MODE_NEXT[playQueue.mode.value])"
           >
@@ -358,9 +360,9 @@ onUnmounted(() => window.removeEventListener('idb-rebuilt', onLibraryRebuilt))
 
           <!-- 上一首 -->
           <button
-            class=" rounded-full p-2 text-zinc-700 transition hover:bg-black/5 active:scale-90 disabled:pointer-events-none disabled:opacity-40 dark:text-zinc-200 dark:hover:bg-white/5"
+            class=" rounded-full p-2 text-secondary transition hover:bg-primary/5 active:scale-90 disabled:pointer-events-none disabled:opacity-40"
             :disabled="!track"
-            aria-label="上一首"
+            :aria-label="t('player.previous')"
             @click="player.prev();"
           >
             <svg viewBox="0 0 24 24" class="h-7 w-7" fill="currentColor">
@@ -370,14 +372,14 @@ onUnmounted(() => window.removeEventListener('idb-rebuilt', onLibraryRebuilt))
 
           <!-- 播放 / 暂停-->
           <button
-            class=" relative flex h-16 w-16 items-center justify-center rounded-full bg-zinc-100 text-zinc-900 shadow-xl shadow-black/15 transition hover:scale-105 active:scale-95 disabled:pointer-events-none disabled:opacity-40 dark:shadow-black/40"
+            class=" relative flex h-16 w-16 items-center justify-center rounded-full bg-fg-primary text-primary shadow-xl shadow-primary/15 transition hover:scale-105 active:scale-95 disabled:pointer-events-none disabled:opacity-40"
             :disabled="!track"
-            :aria-label="player.isPlaying.value ? '暂停' : '播放'"
+            :aria-label="player.isPlaying.value ? t('player.pause') : t('player.play')"
             @click="player.toggle();"
           >
             <span
               v-if="player.isBuffering.value"
-              class=" absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-amber-500"
+              class=" absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-accent"
             ></span>
             <svg v-if="player.isPlaying.value" viewBox="0 0 24 24" class="h-7 w-7" fill="currentColor">
               <path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" />
@@ -389,9 +391,9 @@ onUnmounted(() => window.removeEventListener('idb-rebuilt', onLibraryRebuilt))
 
           <!-- 下一首 -->
           <button
-            class=" rounded-full p-2 text-zinc-700 transition hover:bg-black/5 active:scale-90 disabled:pointer-events-none disabled:opacity-40 dark:text-zinc-200 dark:hover:bg-white/5"
+            class=" rounded-full p-2 text-secondary transition hover:bg-primary/5 active:scale-90 disabled:pointer-events-none disabled:opacity-40"
             :disabled="!track"
-            aria-label="下一首"
+            :aria-label="t('player.next')"
             @click="player.next();"
           >
             <svg viewBox="0 0 24 24" class="h-7 w-7" fill="currentColor">
@@ -401,8 +403,8 @@ onUnmounted(() => window.removeEventListener('idb-rebuilt', onLibraryRebuilt))
 
           <!-- 播放清单 -->
           <button
-            class=" rounded-full p-2.5 text-zinc-500 transition hover:bg-black/5 hover:text-zinc-700 active:scale-90 dark:text-zinc-400 dark:hover:bg-white/5 dark:hover:text-zinc-200"
-            aria-label="播放清单"
+            class=" rounded-full p-2.5 text-fg-muted transition hover:bg-primary/5 hover:text-fg-secondary active:scale-90"
+            :aria-label="t('player.queue')"
             @click="showQueue = true"
           >
             <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -419,10 +421,10 @@ onUnmounted(() => window.removeEventListener('idb-rebuilt', onLibraryRebuilt))
   <!-- ============ 悬浮条 ==============-->
   <div v-show="!hidden" class=" fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+20px)] z-40">
     <div 
-      class=" relative overflow-hidden rounded-xl bg-primary/90 shadow-2xl shadow-black/15 ring-1 ring-black/5 backdrop-blur-xl transition-transform duration-150 active:scale-[0.98] dark:shadow-black/50 dark:ring-white/10"
+      class=" relative overflow-hidden rounded-xl bg-primary/90 shadow-2xl shadow-primary/15 ring-1 ring-primary/5 backdrop-blur-xl transition-transform duration-150 active:scale-[0.98]"
       role="button"
       tabindex="0"
-      aria-label="展开播放器"
+      :aria-label="t('common.expand')"
       @click="expanded = true"
       @keydown.enter="expanded = true"
     >
@@ -436,21 +438,21 @@ onUnmounted(() => window.removeEventListener('idb-rebuilt', onLibraryRebuilt))
         </div>
 
         <div class=" min-w-0 flex-1">
-          <p class=" truncate text-sm font-semibold text-fg-primary">{{ track?.title ?? '未在播放' }}{{ track?.id ?? '' }}</p>
-          <p class=" truncate text-xs text-fg-muted">{{ track ? artistsText : '点击打开播放器' }}</p>
+          <p class=" truncate text-sm font-semibold text-fg-primary">{{ track?.title ?? t('player.not_playing') }}{{ track?.id ?? '' }}</p>
+          <p class=" truncate text-xs text-fg-muted">{{ track ? artistsText : t('player.click_to_open_player') }}</p>
         </div>
 
         <!-- 缓冲指示 -->
         <span 
           v-if="player.isBuffering.value"
           class=" h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-secondary border-t-accent"
-          aria-label="缓冲中"
+          :aria-label="t('player.buffering')"
         ></span>
 
         <button
-          class=" flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-fg-primary transition hover:bg-black/5 active:scale-90 disabled:pointer-events-none disabled:opacity-40 dark:hover:bg-white/10"
+          class=" flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-fg-primary transition hover:bg-primary/5 active:scale-90 disabled:pointer-events-none disabled:opacity-40"
           :disabled="!track"
-          :aria-label="player.isPlaying.value ? '暂停' : '播放'"
+          :aria-label="player.isPlaying.value ? t('player.pause') : t('player.play')"
           @click.stop="player.toggle()"
         >
           <svg v-if="player.isPlaying.value" viewBox="0 0 24 24" class="h-6 w-6" fill="currentColor">
@@ -462,9 +464,9 @@ onUnmounted(() => window.removeEventListener('idb-rebuilt', onLibraryRebuilt))
         </button>
 
         <button
-          class=" flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-fg-primary transition hover:bg-black/5 hover:text-fg-primary active:scale-90 disabled:pointer-events-none disabled:opacity-40 dark:hover:bg-white/10"
+          class=" flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-fg-primary transition hover:bg-primary/5 hover:text-fg-secondary active:scale-90 disabled:pointer-events-none disabled:opacity-40"
           :disabled="!track"
-          aria-label="下一首"
+          :aria-label="t('player.next')"
           @click.stop="player.next()"
         >
           <svg viewBox="0 0 24 24" class="h-5 w-5" fill="currentColor">
@@ -474,7 +476,7 @@ onUnmounted(() => window.removeEventListener('idb-rebuilt', onLibraryRebuilt))
       </div>
 
       <!-- 进度细线：仅展示，不可拖动-->
-      <div class=" absolute inset-x-0 bottom-0 h-[2px] bg-black/10 dark:bg-white/10">
+      <div class=" absolute inset-x-0 bottom-0 h-[2px] bg-primary/10">
         <div class=" h-full bg-accent transition-[width] duration-300 ease-linear" :style="{ width: `${barProgress}%`}"></div>
       </div>
     </div>

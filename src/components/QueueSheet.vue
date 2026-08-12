@@ -9,12 +9,14 @@
 import { nextTick, ref, watch } from 'vue';
 import { usePlayerQueue } from '@/composables/player-queue';
 import { usePlayer } from '@/composables/playback';
+import { useI18n } from 'vue-i18n';
 import EntityMenuButton from './EntityMenuButton.vue';
 
 const open = defineModel<boolean>('open', { default: false });
 
 const playQueue = usePlayerQueue()
 const player = usePlayer()
+const { t } = useI18n()
 
 const openMenuId = ref<number | null>(null)
 const listEl = ref<HTMLElement>()
@@ -104,7 +106,7 @@ function onDragEnd() {
         <!-- 头部 -->
         <header class=" flex items-center justify-between px-5 pb-2 pt-1">
           <div class=" flex items-baseline gap-2.5">
-            <h2 class=" text-lg font-bold text-fg-primary">当前播放清单</h2>
+            <h2 class=" text-lg font-bold text-fg-primary">{{ t('player.queue') }}</h2>
             <span class=" text-xs tabular-nums text-fg-muted"> {{ playQueue.tracks.value.length }} 首</span>
           </div>
           <div class=" flex items-center gap-1">
@@ -113,11 +115,11 @@ function onDragEnd() {
               :disabled="playQueue.tracks.value.length === 0"
               @click="playQueue.clear()"
             >
-              清空
+              {{ t('common.clear') }}
             </button>
             <button
               class=" rounded-full p-2 text-fg-muted transition hover:bg-fg-primary/5 hover:text-fg-primary active:scale-90"
-              aria-label="关闭"
+              :aria-label="t('common.close')"
               @click="open = false"
             >
               <svg viewBox="0 0 24 24" class="h-4.5 w-4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -134,7 +136,7 @@ function onDragEnd() {
             <svg viewBox="0 0 24 24" class="h-10 w-10 text-fg-secondary" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
               <path d="M4 6h12M4 11h12M4 16h7" /><path d="M19 18V6l-4.5 1" /><circle cx="17" cy="18" r="2.3" fill="currentColor" stroke="none" />
             </svg>
-            <p class="text-sm text-fg-muted">清单为空，去挑几首歌吧</p>
+            <p class="text-sm text-fg-muted">{{ t("player.queue_empty") }}</p>
           </div>
 
           <TransitionGroup
@@ -145,8 +147,8 @@ function onDragEnd() {
             move-class="transition-transform duration-300 ease-out"
           >
             <div
-              v-for="(t, i) in playQueue.tracks.value"
-              :key="t.id"
+              v-for="(track, i) in playQueue.tracks.value"
+              :key="track.id"
               :data-index="i"
               class=" rounded-xl transition-colors"
               :class="i === playQueue.currentIndex.value ? 'bg-accent/10' : 'hover:bg-fg-primary/5'"
@@ -182,15 +184,15 @@ function onDragEnd() {
                       ? 'font-semibold text-accent'
                       : 'font-medium text-fg-primary'"
                   >
-                    {{ t.title }}
+                    {{ track.title }}
                   </p>
-                  <p class=" mt-0.5 truncate text-xs text-fg-muted">{{ t.artists ? t.artists.map(a => a.name).join(', ') : '' }}</p>
+                  <p class=" mt-0.5 truncate text-xs text-fg-muted">{{ track.artists ? track.artists.map(a => a.name).join(', ') : '' }}</p>
                 </button>
 
                 <!-- 删除 -->
                 <button
                   class=" shrink-0 rounded-full p-2 text-fg-muted transition hover:bg-fg-primary/5 hover:text-fg-primary active:scale-90"
-                  :aria-label="`删除 ${t.title}`"
+                  :aria-label="`${t('common.delete')} ${track.title}`"
                   @click="remove(i)"
                 >
                   <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -205,10 +207,10 @@ function onDragEnd() {
                   <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M12 19V5M5 12l7-7 7 7" />
                   </svg>
-                  置顶
+                  {{ t('player.pin_top') }}
                 </button>
 
-                <EntityMenuButton :source="{ kind: 'queue-track', track: t, index: i }" />
+                <EntityMenuButton :source="{ kind: 'queue-track', track: track, index: i }" />
               </div>
             </div>
           </TransitionGroup>

@@ -5,6 +5,7 @@ import { coverUrl } from "@/services/transform";
 import type { IDBTrack, IDBArtist } from "../shapes/idb";
 import type { PlayTrack } from "@/player/types";
 import { favTrack } from "@/apis/methods/music";
+import { t } from '@/utilies/use-i18n'
 
 /** 曲目收藏：事务读改写 + 显示双写。返回 null = 曲目不存在 */
 export async function toggleTrackFav(trackId: number): Promise<{ ok: boolean; fav: boolean } | null> {
@@ -15,7 +16,7 @@ export async function toggleTrackFav(trackId: number): Promise<{ ok: boolean; fa
 
   const ok = await playbackWriter.write({
     key: `fav:track:${trackId}`,
-    label: `收藏歌曲《${track.title}》`,
+    label: `${t('player.favorite')}《${track.title}》`,
     opType: 'fav-track',
     payload: { id: trackId, is_favorited: fav },
     local: () => mutateEntity<IDBTrack>('tracks', trackId, t => {
@@ -38,7 +39,7 @@ export async function toggleArtistFav(artistId: number): Promise<{ ok: boolean; 
 
   const ok = await playbackWriter.write({
     key: `fav:artist:${artistId}`,
-    label: `收藏歌手《${artist.name}》`,
+    label: `${t('player.favorite_artist')} <${artist.name}>`,
     opType: 'fav-artist',
     payload: { id: artistId, is_favorited: fav },
     local: () => mutateEntity<IDBArtist>('artists', artistId, a => {

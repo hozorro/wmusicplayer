@@ -1,3 +1,5 @@
+import { t } from "@/utilies/use-i18n";
+
 export interface RandomModeParam {
   min: number
   max: number
@@ -18,33 +20,34 @@ export interface RandomMode {
 }
 
 /** 六种模式按后端实际机制填充 key / name / 权重区间 */
+// name/description 用 getter 惰性求值：模块级直接调用 t() 会把文案冻结在首次导入时的语言
 export const RANDOM_MODES: RandomMode[] = [
   { 
     key: 'pure',  
-    name: '随机播放', 
-    description: '随机选取50首歌',  
+    get name() { return t('random.random') }, 
+    get description() { return t('random.random_tip') },  
     icon: 'pure' 
   }, { 
     key: 'artist-r', 
-    name: '歌手随机', 
-    description: '随机选出50位歌手，每位歌手随机1首歌',
+    get name() { return t('random.artist') }, 
+    get description() { return t('random.artist_tip') },
     icon: 'artist-r' 
   },{ 
     key: 'heat',   
-    name: '熟歌模式', 
-    description: '加权随机选出50首歌，优先度越高，越偏向播放过的， 优先度：',
+    get name() { return t('random.familiar') }, 
+    get description() { return t('random.familiar_tip') },
     icon: 'heat',
     param: { min: 2, max: 9, step: 1, defaultValue: 2, format: v => `${v}` } 
   }, { 
     key: 'artist-c',  
-    name: '约束加权', 
-    description: '随机选出50首歌，但每位歌手的歌曲数量不超过：',
+    get name() { return t('random.constraint') }, 
+    get description() { return t('random.constraint_tip') },
     icon: 'artist-c',
     param: { min: 2, max: 9, step: 1, defaultValue: 2, format: v => `${v}` } 
   }, { 
     key: 'artist-w',    
-    name: '加权随机',
-    description: '加权随机选出50位歌手，每位歌手1首歌，权重度越高，越偏向于歌曲数量多的歌手，权重度：', 
+    get name() { return t('random.weighted') },
+    get description() { return t('random.weighted_tip') }, 
     icon: 'artist-w',
     param: { min: 2, max: 9, step: 1, defaultValue: 2, format: v => `${v}` } 
   },

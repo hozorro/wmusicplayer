@@ -4,10 +4,12 @@
  */
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import ArtistRow from '@/components/ArtistRow.vue'
 import { getFavoritedArtists } from '@/apis/methods/music'
 
 const router = useRouter()
+const { t } = useI18n()
 const artists = ref<Artist[] | null>(null)
 
 onMounted(async () => {
@@ -22,14 +24,14 @@ onMounted(async () => {
       <div class="mx-auto flex max-w-2xl items-center gap-3 px-4 py-2.5 pt-[calc(env(safe-area-inset-top)+10px)]">
         <button
           class="rounded-full p-2 text-fg-secondary transition hover:bg-fg-primary/8 hover:text-fg-primary active:scale-90"
-          aria-label="返回"
+          :aria-label="t('common.back')"
           @click="router.back()"
         >
           <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
         </button>
-        <h1 class="min-w-0 flex-1 text-lg font-bold text-fg-primary">我喜欢的歌手</h1>
+        <h1 class="min-w-0 flex-1 text-lg font-bold text-fg-primary">{{ t('player.favorited_artists') }}</h1>
         <span v-if="artists?.length" class="text-xs tabular-nums text-fg-muted">
-          {{ artists.length }} 位
+          {{ artists.length }} {{ t('player.unit_artist') }}
         </span>
       </div>
     </div>
@@ -50,7 +52,7 @@ onMounted(async () => {
             <path d="M12 12a4.5 4.5 0 100-9 4.5 4.5 0 000 9z" />
             <path d="M3.5 21c.6-4.2 3.9-6.5 8.5-6.5s7.9 2.3 8.5 6.5" />
           </svg>
-          <p class="text-sm text-fg-muted">还没有关注的歌手</p>
+          <p class="text-sm text-fg-muted">{{ t('player.no_fav_artist') }}</p>
         </div>
       </template>
 

@@ -5,6 +5,7 @@
  */
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import TrackList from '@/components/TrackList.vue'
 import { useCollapseHeader } from '@/composables/collapse-header'
 import { toPlayTrack } from '@/services/transform'
@@ -16,6 +17,7 @@ import { getFavoriteTracks } from '@/apis/methods/music'
 
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
 const player = usePlayer()
 const playQueue = usePlayerQueue()
 const { heroStyle, compactStyle, reset } = useCollapseHeader({ range: 160, parallax: 40 })
@@ -40,13 +42,13 @@ const loaded = computed(() => tracks.value !== null)
       <div class="mx-auto flex max-w-2xl items-center gap-3 px-4">
         <button
           class="shrink-0 rounded-full bg-primary/30 p-2 text-fg-primary ring-1 ring-fg-primary/10 transition hover:bg-primary/50 active:scale-90"
-          aria-label="返回"
+          :aria-label="t('common.back')"
           @click="router.back()"
         >
           <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
         </button>
         <h2 :style="compactStyle" class="min-w-0 flex-1 truncate text-base font-bold text-fg-primary">
-          我喜欢的音乐
+          {{ t('player.favorited_tracks') }}
         </h2>
       </div>
     </div>
@@ -59,10 +61,10 @@ const loaded = computed(() => tracks.value !== null)
             <img :src="favTracksCover" alt="" class="h-full w-full object-cover" />
           </div>
           <div class="min-w-0 flex-1 pb-1">
-            <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-fg-muted">歌单</p>
-            <h1 class="mt-1 text-2xl font-extrabold leading-tight text-fg-primary">我喜欢的音乐</h1>
+            <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-fg-muted">{{ t('player.playlist') }}</p>
+            <h1 class="mt-1 text-2xl font-extrabold leading-tight text-fg-primary">{{ t('player.favorited_tracks') }}</h1>
             <p v-if="loaded" class="mt-1.5 text-xs tabular-nums text-fg-muted">
-              {{ tracks!.length }} 首 · 在播放页点按 ♥ 收藏
+              {{ tracks!.length }} {{ t('player.unit_track') }} · {{ t('player.fav_track_tip') }}
             </p>
           </div>
         </div>
@@ -73,14 +75,14 @@ const loaded = computed(() => tracks.value !== null)
             :disabled="!tracks?.length"
             @click="player.playAll(tracks ?? [])"
           >
-            播放全部
+            {{ t('player.playall') }}
           </button>
           <button
             class=" btn-secondary"
             :disabled="!tracks?.length"
             @click="playQueue.addMany(tracks ?? [])"
           >
-            添加到队列
+            {{ t('player.add_to_queue') }}
           </button>
         </div>
       </div>
@@ -95,8 +97,8 @@ const loaded = computed(() => tracks.value !== null)
           <svg viewBox="0 0 24 24" class="h-12 w-12 text-fg-primary" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
           </svg>
-          <p class="text-sm text-fg-muted">还没有收藏的歌曲</p>
-          <p class="text-xs text-fg-secondary">播放时点按全屏播放器的心形按钮即可收藏</p>
+          <p class="text-sm text-fg-muted">{{ t('player.no_fav_track') }}</p>
+          <p class="text-xs text-fg-secondary">{{ t('player.fav_track_hint') }}</p>
         </div>
       </template>
 

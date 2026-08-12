@@ -1,7 +1,10 @@
 <!-- 可点按的页码圆点 -->
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n';
 const props = defineProps<{count: number; active: number}>()
 defineEmits<{go: [page: number]}>()
+
+const { t } = useI18n()
 </script>
 
 <template>
@@ -11,7 +14,7 @@ defineEmits<{go: [page: number]}>()
       :key="p"
       class=" rounded-full h-1.5 transition-all duration-300"
       :class="p - 1 === active ? 'w-4 bg-fg-secondary' : 'w-1.5 bg-secondary hover:bg-primary'"
-      :aria-label="`第 ${p} 屏`"
+      :aria-label="t('common.number_of_slider', { number: p })"
       @click="$emit('go', p - 1)"
     />
   </div>

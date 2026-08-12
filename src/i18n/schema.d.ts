@@ -5,18 +5,26 @@ import { DefineLocaleMessage } from 'vue-i18n'
 declare module 'vue-i18n' {
   export interface DefineLocaleMessage {
   common: {
-    confirm: string
     submit: string
     cancel: string
     create: string
-    unknown: string
-    more: string
     close: string
     closeup: string
-    refresh: string
-    init: string
     yes: string
     no: string
+    more_actions: string
+    back: string
+    not_use: string
+    view_all: string
+    number_of_slider: string
+    expand: string
+    clear: string
+    others: string
+    page_load_complete: string
+    complete: string
+    manage: string
+    remove: string
+    change: string
   }
   auth: {
     username: string
@@ -32,34 +40,83 @@ declare module 'vue-i18n' {
     playlist: string
     genre: string
     folder: string
-    directory: string
     lyric: string
     lyric_loading: string
-    lyric_error: string
-    current_playlist: string
     favorited: string
     favorited_artists: string
     favorited_tracks: string
     playall: string
     randomplay: string
-    playhot: string
-    addplay: string
     add_and_play: string
     add_next: string
-    add_to_playinglist: string
+    add_to_queue: string
     add_to_playlist: string
-    add_to_favorite: string
     more_track_info: string
     to_album: string
     latest_added: string
     most_played: string
-    favorited_success: string
-    total_tracks: string
-    artist_stats: string
+    no_playlist: string
+    go_to_create: string
+    sequential: string
+    shuffle: string
+    loop_all: string
+    loop_one: string
+    playing: string
+    loading: string
+    lyric_not_found: string
+    no_detail: string
+    cover: string
+    detail: string
+    not_playing: string
+    favorite: string
+    favorite_artist: string
+    cancel_fav_artist: string
+    no_fav_artist: string
+    no_fav_track: string
+    fav_track_tip: string
+    fav_track_help: string
+    previous: string
+    next: string
+    play: string
+    pause: string
+    queue: string
+    click_to_open_player: string
+    buffering: string
+    queue_empty: string
+    pin_top: string
+    track_play_times: string
+    artist_play_times: string
+    playlist_play_times: string
+    move_to_next: string
+    remove: string
+    queue_track: string
+    playlist_track: string
+    confirm_playback_deprecated: string
+    info_playback_sync_success: string
+    unit_track: string
+    unit_artist: string
+    artist_stat: string
+    char_stat: string
+    no_tracks: string
+    no_albums: string
+    no_artists: string
+    main_albums: string
+    track_albums: string
+    folder_path: string
+    subfolder: string
+    empty_folder: string
+    empty_genre: string
+    search: string
+    search_tip: string
+    search_des: string
+    search_hint: string
+    search_latest: string
+    search_no_track: string
+    search_no_artist: string
+    search_no_album: string
+    unknown_artist: string
   }
   playlist: {
-    favorite: string
-    to: string
     create: string
     title: string
     title_placeholder: string
@@ -69,8 +126,21 @@ declare module 'vue-i18n' {
     cover_tip: string
     comment: string
     comment_placeholder: string
+    add_label: string
+    remove_label: string
+    move_label: string
+    moveup: string
+    movedown: string
+    manage_tip: string
+    empty: string
+    empty_tip: string
+    create_first: string
   }
   sentence: {
+    greet_night: string
+    greet_morning: string
+    greet_afternoon: string
+    greet_evening: string
     month_1: string
     month_2: string
     month_3: string
@@ -109,6 +179,8 @@ declare module 'vue-i18n' {
     then_often_listened: string
   }
   random: {
+    random: string
+    random_tip: string
     advance: string
     artist: string
     artist_tip: string
@@ -118,6 +190,12 @@ declare module 'vue-i18n' {
     weighted_tip: string
     familiar: string
     familiar_tip: string
+    mode_count: string
+    drag_tip: string
+    click_tip: string
+    mode_play: string
+    weight: string
+    random_hint: string
   }
   settings: {
     title: string
@@ -144,18 +222,15 @@ declare module 'vue-i18n' {
       sync_batch_size_unit: string
       sync_batch_size_tip: string
     }
-    localdb: {
+    sync: {
       item: string
-      title: string
-      content: string
-      model: string
-      local_count: string
-      remote_count: string
-      local_version: string
-      remote_version: string
-      rebuild: string
-      check: string
+      last_sync: string
+      not_init: string
+      syncing: string
+      batch: string
+      incremental: string
       syncall: string
+      sync_hint: string
     }
     language: string
     theme: string
@@ -177,18 +252,11 @@ declare module 'vue-i18n' {
     }
   }
   errors: {
-    401: string
-    403: string
-    404: string
-    500: string
     data_error: string
     unknown: string
     no_response: string
     request_error: string
     playlist_title_empty: string
-    fail_create: string
-    fail_update: string
-    idb_not_ready: string
     _401: string
     _403: string
     _404: string

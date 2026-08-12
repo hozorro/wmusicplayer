@@ -48,7 +48,7 @@ const toAlbumItem = (a: Album) => ({
   id: a.id,
   title: a.title,
   cover: a.cover,
-  subinfo: a.track_count !== undefined ? `${a.track_count} 首` : '',
+  subinfo: a.track_count !== undefined ? `${a.track_count} ${t('unit_tracks')}` : '',
   to: { name: 'album', params: { id: a.id } }
 })
 const mainAlbumItems = computed(() => artist.value?.main_albums.map(toAlbumItem) ?? [])
@@ -84,7 +84,7 @@ async function toggleFavorite() {
       <div class="mx-auto flex max-w-2xl items-center gap-3 px-4">
         <button
           class="shrink-0 rounded-full bg-primary/60 p-2 text-fg-secondary ring-1 ring-primary/10 backdrop-blur-sm transition hover:bg-fg-primary/85 active:scale-90"
-          aria-label="返回"
+          :aria-label="t('common.back')"
           @click="router.back()"
         >
           <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
@@ -120,7 +120,7 @@ async function toggleFavorite() {
             <div class="min-w-0">
               <h1 class="truncate text-xl font-extrabold text-fg-primary">{{ artist.name }}</h1>
               <p class="mt-1 text-xs tabular-nums text-fg-secondary">
-                {{ albumCount }} 张专辑 · {{ artist.track_count }} 首曲目
+                {{ t('player.artist_stat', { album_count: albumCount, track_count: artist.track_count }) }}
               </p>
             </div>
           </div>
@@ -146,7 +146,7 @@ async function toggleFavorite() {
               :class="artistFav
                 ? 'bg-rose-400/15 text-rose-400 ring-rose-400/30'
                 : 'text-fg-muted ring-fg-primary/20 hover:bg-primary/5'"
-              :aria-label="artistFav ? '取消收藏艺人' : '收藏艺人'"
+              :aria-label="artistFav ? t('player.cancel_fav_artist') : t('player.favorite_artist')"
               @click="toggleFavorite"
             >
               <svg viewBox="0 0 24 24" class="h-4.5 w-4.5" :fill="artistFav ? 'currentColor' : 'none'"
@@ -163,7 +163,7 @@ async function toggleFavorite() {
         <!-- 分段式标签 -->
         <div class="flex rounded-full bg-black/5 p-1 ring-1 ring-black/10 dark:bg-white/5 dark:ring-white/10">
           <button
-            v-for="tab in ([['tracks', 'Top 50'], ['albums', '专辑']] as const)"
+            v-for="tab in ([['tracks', 'Top 20'], ['albums', t('player.album')]] as const)"
             :key="tab[0]"
             class="flex-1 rounded-full py-1.5 text-sm font-medium transition"
             :class="activeTab === tab[0]
@@ -182,17 +182,17 @@ async function toggleFavorite() {
           leave-active-class="transition duration-150 ease-in"
           leave-to-class="opacity-0 -translate-y-1"
         >
-          <!-- Top 50：序号即排名 -->
+          <!-- Top 20：序号即排名 -->
           <div v-if="activeTab === 'tracks'" key="tracks" class="pt-4">
             <TrackList v-if="topTracks.length" :tracks="topTracks" :show-art="false" />
-            <p v-else class="py-16 text-center text-sm text-fg-muted">暂无曲目</p>
+            <p v-else class="py-16 text-center text-sm text-fg-muted">{{ t('player.no_tracks') }}</p>
           </div>
 
           <!-- 专辑：主专辑 / 参与专辑，分隔呈现 -->
           <div v-else key="albums" class="pt-2">
             <template v-if="mainAlbumItems.length">
               <h3 class="px-3 pb-2 pt-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-fg-primary">
-                主专辑
+                {{ t('player.main_albums') }}
               </h3>
               <CollectionList kind="album" :collections="mainAlbumItems" :resolve-tracks="resolveAlbumTracks" />
             </template>
@@ -201,13 +201,13 @@ async function toggleFavorite() {
 
             <template v-if="trackAlbumItems.length">
               <h3 class="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-fg-secondary">
-                参与的专辑
+                {{ t('player.track_albums') }}
               </h3>
               <CollectionList kind="album" :collections="trackAlbumItems" :resolve-tracks="resolveAlbumTracks" />
             </template>
 
             <p v-if="!mainAlbumItems.length && !trackAlbumItems.length" class="py-16 text-center text-sm text-fg-muted">
-              暂无专辑
+              {{ t('player.no_albums') }}
             </p>
           </div>
         </Transition>

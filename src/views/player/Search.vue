@@ -6,6 +6,7 @@
  */
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import NowPlayingIndicator from '@/components/NowPlayingIndicator.vue'
 import EntityMenuButton from '@/components/EntityMenuButton.vue'
 import ArtistRow from '@/components/ArtistRow.vue'
@@ -20,6 +21,7 @@ import { getCollectionTracks, searchLibrary } from '@/apis/methods/music'
 
 const router = useRouter()
 const player = usePlayer()
+const { t } = useI18n()
 
 const input = ref<HTMLInputElement>()
 const q = ref('')
@@ -112,9 +114,9 @@ function clearRecents() {
 }
 
 const tabs = computed(() => [
-  { key: 'tracks' as const, label: '歌曲', count: results.value.tracks.length },
-  { key: 'artists' as const, label: '歌手', count: results.value.artists.length },
-  { key: 'albums' as const, label: '专辑', count: results.value.albums.length },
+  { key: 'tracks' as const, label: t('player.track'), count: results.value.tracks.length },
+  { key: 'artists' as const, label: t('player.artist'), count: results.value.artists.length },
+  { key: 'albums' as const, label: t('player.album'), count: results.value.albums.length },
 ].map(t => ({...t, capped: t.count >= SEARCH_TYPE_LIMIT })))
 </script>
 
@@ -130,7 +132,7 @@ const tabs = computed(() => [
       <div class="mx-auto flex max-w-2xl items-center gap-2.5 px-4 py-2.5 pt-[calc(env(safe-area-inset-top)+10px)]">
         <button
           class="shrink-0 rounded-full p-2 text-fg-secondary transition hover:bg-fg-primary/8 hover:text-fg-primary active:scale-90"
-          aria-label="返回"
+          :aria-label="t('common.back')"
           @click="router.back()"
         >
           <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
@@ -145,7 +147,7 @@ const tabs = computed(() => [
             ref="input"
             v-model="q"
             type="search"
-            placeholder="搜索歌曲、艺人"
+            :placeholder="t('player.search_tip')"
             enterkeyhint="search"
             class="w-full rounded-full bg-fg-primary/[0.06] py-2.5 pl-10 pr-16 text-[15px] text-fg-primary outline-none ring-1 ring-fg-primary/10 transition placeholder:text-fg-muted focus:bg-fg-primary/[0.08] focus:ring-2 focus:ring-accent/50 [&::-webkit-search-cancel-button]:hidden"
             @keydown.enter="searchNow"
@@ -155,7 +157,7 @@ const tabs = computed(() => [
             <button
               v-if="q"
               class="rounded-full p-1 text-fg-muted transition hover:text-fg-primary active:scale-90"
-              aria-label="清空"
+              :aria-label="t('common.clear')"
               @click="q = ''; input?.focus()"
             >
               <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
@@ -193,15 +195,15 @@ const tabs = computed(() => [
               <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.35-4.35" />
             </svg>
           </span>
-          <h2 class="mt-4 text-lg font-bold text-fg-primary">搜索歌曲与歌手</h2>
-          <p class="mt-1 text-xs text-fg-muted">结果来自本地曲库 · 几乎零延迟</p>
+          <h2 class="mt-4 text-lg font-bold text-fg-primary">{{ t('player.search_tip') }}</h2>
+          <p class="mt-1 text-xs text-fg-muted">{{ t('player.search_des') }}</p>
         </div>
 
         <div v-if="recents.length" class="mt-10">
           <div class="flex items-center justify-between">
-            <h3 class="text-[11px] font-semibold uppercase tracking-[0.2em] text-fg-muted">最近搜索</h3>
+            <h3 class="text-[11px] font-semibold uppercase tracking-[0.2em] text-fg-muted">{{ t('player.search_latest') }}</h3>
             <button class="text-[11px] text-fg-muted transition hover:text-fg-secondary active:scale-95" @click="clearRecents">
-              清除
+              {{ t('common.clear') }}
             </button>
           </div>
           <div class="mt-3 flex flex-wrap gap-2">
@@ -258,11 +260,11 @@ const tabs = computed(() => [
               v-if="results[tab].length >= SEARCH_TYPE_LIMIT"
               class="py-4 text-center text-[11px] text-fg-muted"
             >
-              每类仅显示前 {{ SEARCH_TYPE_LIMIT }} 条 —— 试试更精确的关键词
+              {{ t('player.search_hint', { limit: SEARCH_TYPE_LIMIT }) }}
             </p>
           </TransitionGroup>
           <p v-if="!playTracks.length" class="py-16 text-center text-sm text-fg-muted">
-            未找到相关歌曲
+            {{ t('player.search_no_track') }}
           </p>
         </div>
 
@@ -277,18 +279,18 @@ const tabs = computed(() => [
               :id="a.id" :face="a.cover" :fallback="a.name.slice(0, 1)"
             >
               <template v-for="(seg, si) in segments(a.name)" :key="si">
-                <span :class="seg.hit ? 'text-amber-400' : ''">{{ seg.text }}</span>
+                <span :class="seg.hit ? 'text-accent' : ''">{{ seg.text }}</span>
               </template>
             </ArtistRow>
             <p
               v-if="results[tab].length >= SEARCH_TYPE_LIMIT"
               class="py-4 text-center text-[11px] text-fg-muted"
             >
-              每类仅显示前 {{ SEARCH_TYPE_LIMIT }} 条 —— 试试更精确的关键词
+              {{ t('player.search_hint', { limit: SEARCH_TYPE_LIMIT }) }}
             </p>
           </TransitionGroup>
           <p v-if="!results.artists.length" class="py-16 text-center text-sm text-fg-muted">
-            未找到相关歌手
+            {{ t('player.search_no_artist') }}
           </p>
         </div>
 
@@ -319,7 +321,7 @@ const tabs = computed(() => [
                     </template>
                   </p>
                   <p v-if="al.track_count != null" class="mt-0.5 text-xs tabular-nums text-fg-muted">
-                    {{ al.track_count }} 首
+                    {{ al.track_count }} {{ t('player.search_album_track') }}
                   </p>
                 </div>
               </button>
@@ -332,11 +334,11 @@ const tabs = computed(() => [
               v-if="results[tab].length >= SEARCH_TYPE_LIMIT"
               class="py-4 text-center text-[11px] text-fg-muted"
             >
-              每类仅显示前 {{ SEARCH_TYPE_LIMIT }} 条 —— 试试更精确的关键词
+              {{ t('player.search_hint', { limit: SEARCH_TYPE_LIMIT }) }}
             </p>
           </TransitionGroup>
           <p v-if="!results.albums.length" class="py-16 text-center text-sm text-fg-muted">
-            未找到相关专辑
+            {{ t('player.search_no_album') }}
           </p>
         </div>
       </template>

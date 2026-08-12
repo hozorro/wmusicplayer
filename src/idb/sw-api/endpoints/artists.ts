@@ -7,8 +7,7 @@ import { sample } from "@/utilies/general";
 /** 常数 */
 const TOP_COUNT = 6
 const RANDOM_COUNT = 4
-const TOP_TRACKS_COUNT = 50
-const RECENT_TRACKS_COUNT = 20
+const TOP_TRACKS_COUNT = 20
 
 export const idbGetTenArtists: ApiHandler = async () => {
   const idb = await getLibraryIdb()
@@ -49,13 +48,15 @@ export const idbGetArtist: ApiHandler = async ({ params }) => {
     idb.getByIndex<IDBTrack>('tracks', 'artist_ids', id),
   ])
   const mainIds = new Set(mainAlbums.map(a => a.id))
-  // 对齐后端：有播放记录按 hit_count 降序；全部未播放时按 created_at 取最新入库曲目
-  const played = artistTracks.filter(t => (t.hit_count ?? 0) > 0)
-  const topTracks = played.length
-    ? played.sort((a, b) => (b.hit_count ?? 0) - (a.hit_count ?? 0)).slice(0, TOP_TRACKS_COUNT)
-    : artistTracks
-      .sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''))
-      .slice(0, RECENT_TRACKS_COUNT)
+  // 对齐后端：有播放记录的曲目按 hit_count 降序；不足上限时从未播放曲目中随机补齐，尽可能填满
+  const played = artistTracks
+    .filter(t => (t.hit_count ?? 0) > 0)
+    .sort((a, b) => (b.hit_count ?? 0) - (a.hit_count ?? 0))
+  const topTracks = played.slice(0, TOP_TRACKS_COUNT)
+  if (topTracks.length < TOP_TRACKS_COUNT) {
+    const unplayed = artistTracks.filter(t => (t.hit_count ?? 0) === 0)
+    topTracks.push(...sample(unplayed, TOP_TRACKS_COUNT - topTracks.length))
+  }
   return json({
     ...toRawArtist(artist),
     main_albums: mainAlbums.map(toRawAlbum),

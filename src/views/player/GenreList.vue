@@ -26,7 +26,7 @@ onMounted(async () => {
       <div class="mx-auto flex max-w-2xl items-center gap-3 px-4 py-2.5 pt-[calc(env(safe-area-inset-top)+10px)]">
         <button
           class="rounded-full p-2 text-fg-secondary transition hover:bg-fg-primary/85 hover:text-fg-primary active:scale-90"
-          aria-label="返回"
+          :aria-label="t('common.back')"
           @click="router.back()"
         >
           <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
@@ -64,7 +64,7 @@ onMounted(async () => {
               class="mt-0.5 text-[11px] font-medium tabular-nums opacity-65"
               :style="{ color: readableTextColor(g.color) }"
             >
-              {{ g.track_count }} 首
+              {{ g.track_count }} {{ t('player.unit_track') }}
             </p>
           </div>
         </button>

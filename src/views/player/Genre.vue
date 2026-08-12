@@ -119,7 +119,7 @@ async function playRandomTracks() {
       <div class="mx-auto flex max-w-2xl items-center gap-3 px-4">
         <button
           class="shrink-0 rounded-full bg-primary/30 p-2 text-fg-secondary ring-1 ring-fg-primary/10 transition hover:bg-primary/50 active:scale-90"
-          aria-label="返回"
+          :aria-label="t('common.back')"
           @click="router.back()"
         >
           <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
@@ -149,7 +149,7 @@ async function playRandomTracks() {
               {{ genre.name }}
             </h1>
             <p class="mt-1.5 text-xs tabular-nums opacity-75" :style="{ color: textColor }">
-              {{ genre.track_count }} 首曲目
+              {{ genre.track_count }} {{ t('player.unit_track')}}
             </p>
           </div>
           <!-- 底部过渡到页面底色 -->
@@ -177,20 +177,20 @@ async function playRandomTracks() {
       <!-- ═══ 曲目列表 + 无限滚动 ═══ -->
       <main class="mx-auto max-w-2xl px-4 pb-32">
         <h2 class="pb-2 pt-5 text-[11px] font-semibold uppercase tracking-[0.2em] text-fg-muted">
-          曲目 <span class="tabular-nums">· {{ genre.track_count }}</span>
+          {{ t('player.track') }} <span class="tabular-nums">· {{ genre.track_count }}</span>
         </h2>
 
         <TrackList v-if="tracks.length" :tracks="tracks" :show-art="true" />
-        <p v-else-if="!loadingMore" class="py-16 text-center text-sm text-fg-muted">该流派暂无曲目</p>
+        <p v-else-if="!loadingMore" class="py-16 text-center text-sm text-fg-muted">{{ t('player.empty_genre') }}</p>
 
         <!-- sentinel + 加载状态 -->
         <div ref="sentinel" class="h-px" />
         <div v-if="loadingMore" class="flex items-center justify-center gap-3 py-6 text-sm text-fg-muted">
           <span class="h-4 w-4 animate-spin rounded-full border-2 border-fg-secondary border-t-accent" />
-          加载中
+          {{ t('player.loading') }}
         </div>
         <p v-else-if="isLastPage && tracks.length" class="py-6 text-center text-xs text-fg-secondary">
-          已加载全部 {{ tracks.length }} 首
+          {{ t('common..page_load_complete') }} {{ tracks.length }} {{ t('player.unit_track') }}
         </p>
       </main>
     </template>

@@ -9,6 +9,7 @@ import { useRouter } from 'vue-router'
 import { invalidateCache } from 'alova'
 import { usePlayer } from '@/composables/playback'
 import { usePlayerQueue } from '@/composables/player-queue'
+import { useI18n } from 'vue-i18n'
 import { entityMenuSource, closeEntityMenu } from '@/player/menu/state'
 import { MENU_ACTIONS, KIND_LABEL } from '@/player/menu/definitions'
 import { MENU_ICONS } from '@/player/menu/icons'
@@ -21,6 +22,7 @@ const router = useRouter()
 
 const player = usePlayer()
 const playQueue = usePlayerQueue()
+const { t } = useI18n()
 
 const source = entityMenuSource
 const open = computed(() => source.value !== null)
@@ -188,7 +190,7 @@ async function runAction(key: string) {
                   <span class="flex-1 text-sm" :class="a.danger ? 'font-medium text-rose-400' : 'text-fg-primary'">
                     {{ a.label }}
                   </span>
-                  <span v-if="a.placeholder" class="rounded bg-white/10 px-1.5 py-px text-[10px] text-fg-muted">待接入</span>
+                  <span v-if="a.placeholder" class="rounded bg-white/10 px-1.5 py-px text-[10px] text-fg-muted">{{ t('common.not_use') }}</span>
                 </button>
               </nav>
             </div>
@@ -199,12 +201,12 @@ async function runAction(key: string) {
               <header class="flex items-center gap-2 px-3 pb-3 pt-2">
                 <button
                   class="rounded-full p-2 text-fg-muted transition hover:bg-white/5 hover:text-fg-primary active:scale-90"
-                  aria-label="返回"
+                  :aria-label="t('common.back')"
                   @click="panel = 'root'"
                 >
                   <svg viewBox="0 0 24 24" class="h-5 w-5" fill="currentColor"><path d="M14.7 5.3 8 12l6.7 6.7 1.4-1.4L10.8 12l5.3-5.3z" /></svg>
                 </button>
-                <h3 class="text-base font-bold text-fg-primary">添加到歌单</h3>
+                <h3 class="text-base font-bold text-fg-primary">{{ t('player.add_to_playlist') }}</h3>
               </header>
               
               <!-- 加载中 -->
@@ -252,12 +254,12 @@ async function runAction(key: string) {
 
               <!-- 无歌单 -->
               <div v-else class="flex flex-col items-center gap-3 px-5 pb-8 pt-6 text-center">
-                <p class="text-sm text-fg-muted">还没有歌单</p>
+                <p class="text-sm text-fg-muted">{{ t('player.no_playlist' )}}</p>
                 <button
                   class="rounded-full bg-accent px-4 py-1.5 text-xs font-bold text-primary shadow-lg shadow-accent/20 transition hover:bg-accent/90 active:scale-95"
                   @click="goToPlaylists"
                 >
-                  去创建
+                  {{ t('player.go_to_create') }}
                 </button>
               </div>
             </div>

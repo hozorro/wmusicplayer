@@ -63,13 +63,13 @@ async function playRandom(m: RandomMode) {
       <div class="mx-auto flex max-w-2xl items-center gap-3 px-4 py-2.5 pt-[calc(env(safe-area-inset-top)+10px)]">
         <button
           class="rounded-full p-2 text-fg-secondary transition hover:bg-white/8 hover:text-zinc-50 active:scale-90"
-          aria-label="返回"
+          :aria-label="t('common.back')"
           @click="router.back()"
         >
           <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
         </button>
         <h1 class="min-w-0 flex-1 text-lg font-bold text-fg-primary">{{ t('random.advance') }}</h1>
-        <span class="text-xs tabular-nums text-fg-muted">{{ RANDOM_MODES.length }} 种模式</span>
+        <span class="text-xs tabular-nums text-fg-muted">{{ RANDOM_MODES.length }} {{ t('random.mode_count') }}</span>
       </div>
     </div>
 
@@ -94,7 +94,7 @@ async function playRandom(m: RandomMode) {
             <div class="min-w-0 flex-1">
               <p class="truncate text-sm font-bold text-fg-primary">{{ m.name }}</p>
               <p class="mt-0.5 text-[11px] text-fg-muted">
-                {{ m.param ? '拖动调节权重' : '点按立即播放' }}
+                {{ m.param ? t('random.drag_tip') : t('random.click_tip') }}
               </p>
             </div>
 
@@ -107,7 +107,7 @@ async function playRandom(m: RandomMode) {
             <button
               class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-primary shadow-lg shadow-accent/20 transition hover:bg-accent/90 active:scale-90 disabled:pointer-events-none disabled:opacity-40"
               :disabled="busy !== null"
-              :aria-label="`以${m.name}播放`"
+              :aria-label="t('random.mode_play', { mode: m.name })"
               @click="playRandom(m)"
             >
               <span v-if="busy === m.key" class="h-4 w-4 animate-spin rounded-full border-2 border-border/30 border-t-primary" />
@@ -124,7 +124,7 @@ async function playRandom(m: RandomMode) {
               type="range"
               :min="m.param.min" :max="m.param.max" :step="m.param.step"
               v-model.number="paramValues[m.key]"
-              :aria-label="`${m.name}权重`"
+              :aria-label="`${m.name} ${t('random.weight')}`"
               class="h-1.5 w-full cursor-pointer appearance-none rounded-full outline-none
                      [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none
                      [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-accent
@@ -144,7 +144,7 @@ async function playRandom(m: RandomMode) {
       </TransitionGroup>
 
       <p class="pt-2 text-center text-[11px] text-fg-muted">
-        随机结果将替换当前播放清单并立即播放
+        {{ t('random.random_hint') }}
       </p>
     </main>
   </div>
