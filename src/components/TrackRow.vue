@@ -33,7 +33,7 @@ const playTrack = (t: PlayTrack) => player.playTrack(t)
       <div class=" shrink-0">
         <div v-if="showArt" class=" h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-secondary">
           <img v-if="track?.cover" :src="track.cover" alt="" class=" h-full w-full object-cover" />
-          <svg v-else viewBox="0 0 24 24" class="m-auto mt-3 h-5 w-5 text-secondary" fill="currentColor">
+          <svg v-else viewBox="0 0 24 24" class="m-auto mt-3 h-5 w-5 text-fg-muted" fill="currentColor">
             <path d="M9 18V6l10-2v11.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
             <circle cx="6.5" cy="18" r="2.5" /><circle cx="16.5" cy="15.5" r="2.5" />
           </svg>

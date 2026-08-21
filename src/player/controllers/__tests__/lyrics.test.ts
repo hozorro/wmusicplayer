@@ -7,7 +7,7 @@ import { PlayerEvent } from '../../events'
 import type { PlayerEventMap } from '../../events'
 import type { PlayTrack } from '../../types'
 
-const T = (id: number): PlayTrack => ({ id, title: `t${id}`, artists: ['a'] })
+const T = (id: number): PlayTrack => ({ id, title: `t${id}`, artists: [{id: 1, name: 'a' }] })
 
 let bus: ReturnType<typeof createEmitter<PlayerEventMap>>
 let time: Ref<number>

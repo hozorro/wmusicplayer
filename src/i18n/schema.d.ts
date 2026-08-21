@@ -67,6 +67,7 @@ declare module 'vue-i18n' {
     no_detail: string
     cover: string
     detail: string
+    history: string
     not_playing: string
     favorite: string
     favorite_artist: string
@@ -74,7 +75,7 @@ declare module 'vue-i18n' {
     no_fav_artist: string
     no_fav_track: string
     fav_track_tip: string
-    fav_track_help: string
+    fav_track_hint: string
     previous: string
     next: string
     play: string
@@ -109,8 +110,8 @@ declare module 'vue-i18n' {
     search: string
     search_tip: string
     search_des: string
-    search_hint: string
     search_latest: string
+    search_hint: string
     search_no_track: string
     search_no_artist: string
     search_no_album: string
@@ -253,14 +254,14 @@ declare module 'vue-i18n' {
   }
   errors: {
     data_error: string
-    unknown: string
-    no_response: string
-    request_error: string
-    playlist_title_empty: string
     _401: string
     _403: string
     _404: string
     _500: string
+    unknown: string
+    no_response: string
+    request_error: string
+    playlist_title_empty: string
   }
 }
 }

@@ -15,12 +15,13 @@ import { usePlayer } from '@/composables/playback'
 import { usePlayerQueue } from '@/composables/player-queue'
 import { useLyrics } from '@/composables/lyrics'
 import { useI18n } from 'vue-i18n'
-import { toDetailText } from '@/services/transform'
 import AmbientBackground from './AmbientBackground.vue'
 import type { PlayMode } from '@/player/types'
 import { formatTime } from '@/utilies/general'
+import { parseHits } from '@/utilies/time-text'
 import QueueSheet from './QueueSheet.vue'
-import { getTrackMoreInfo, getFavoriteTrackIds } from '@/apis/methods/music.ts'
+import TrackInfoSheet from './TrackInfoSheet.vue'
+import { getFavoriteTrackIds, getTrackHits } from '@/apis/methods/music.ts'
 import { toggleTrackFav } from '@/idb/app-api/fav.ts'
 
 const player = usePlayer()
@@ -40,24 +41,39 @@ watch(expanded, e => { document.body.classList.toggle('overflow-hidden', e)})
 const track = computed(() => player.currentTrack.value)
 const artistsText = computed(() => track.value?.artists?.map(a => a.name).join(', ') ?? '')
 
-// —— 三模块切换（0 封面 / 1 歌词 / 2 详情） ——
+// —— 三模块切换（0 封面 / 1 歌词 / 2 听歌记忆） ——
 const moduleIndex = ref(0)
-let touchStartx = 0
-function onTouchStart(e: TouchEvent) { touchStartx = e.touches[0].clientX}
+let touchStartX = 0
+let touchStartY = 0
+function onTouchStart(e: TouchEvent) {
+  touchStartX = e.touches[0].clientX
+  touchStartY = e.touches[0].clientY
+}
 function onTouchEnd(e: TouchEvent) {
-  const dx = e.changedTouches[0].clientX - touchStartx
-  if (Math.abs(dx) < 48) return
-  moduleIndex.value = Math.max(0, Math.min(2,moduleIndex.value + (dx > 0 ? -1 : 1)))
+  const dx = e.changedTouches[0].clientX - touchStartX
+  const dy = e.changedTouches[0].clientY - touchStartY
+  // 仅水平意图手势才切换，避免与歌词垂直滚动手势互相干扰
+  if (Math.abs(dx) < 48 || Math.abs(dx) < Math.abs(dy)) return
+  moduleIndex.value = Math.max(0, Math.min(2, moduleIndex.value + (dx > 0 ? -1 : 1)))
 }
 
 // —— 歌词滚动 ——
 const lyricScroller = ref<HTMLElement>()
 function scrollLyricToCurrent(behavior: ScrollBehavior) {
-  if (lyrics.currentLine.value < 0) return
+  const idx = lyrics.currentLine.value
+  if (idx < 0) return
   nextTick(() => {
-    lyricScroller.value
-      ?.querySelector<HTMLElement>(`[data-line="${lyrics.currentLine.value}"]`)
-      ?.scrollIntoView({ behavior, block: 'center' })
+    const scroller = lyricScroller.value
+    const lineEl = scroller?.querySelector<HTMLElement>(`[data-line="${idx}"]`)
+    if (!scroller || !lineEl) return
+    // 显式计算 scrollTop 把滚动限定在 scroller 内；
+    // 不可用 scrollIntoView：它会递归滚动所有可滚动祖先（含 overflow-hidden
+    // 的全屏 section），造成页面整体偏移/顶栏被推出视野
+    const scrollerRect = scroller.getBoundingClientRect()
+    const lineRect = lineEl.getBoundingClientRect()
+    const top = scroller.scrollTop + (lineRect.top - scrollerRect.top)
+      - (scroller.clientHeight - lineRect.height) / 2
+    scroller.scrollTo({ top, behavior })
   })
 }
 watch(() => lyrics.currentLine.value, () => {
@@ -66,25 +82,36 @@ watch(() => lyrics.currentLine.value, () => {
 watch(moduleIndex, i => { if (i === 1) scrollLyricToCurrent('auto')})
 watch(track, () => { if (lyricScroller.value) lyricScroller.value.scrollTop = 0})
 
-// —— 歌曲详情（端口 + 竞态守卫） ——
-const detail = ref('')
-const detailStatus = ref<'loading' | 'ready' | 'none'>('none')
-let detailForId: number | null = null
+// —— 听歌记忆（切歌时一次性获取 hits，播放中冻结） ——
+// 冻结语义：history 内容以切歌时首次获取为准，hit-tracker 计次/模块切换均不重取，
+// 避免同一首歌播放中面板内容变化，也避免重复请求
+const history = ref<{ sentence: string; picUrl: string }>({ sentence: '', picUrl: '' })
+const historyLoading = ref(false)
+let hitsForId: number | null = null
 watch(track, async t => {
-  detail.value = ''
-  if (!t) { detailStatus.value = 'none'; return }
-  detailForId = t.id
-  detailStatus.value = 'loading'
+  if (!t) {
+    hitsForId = null
+    history.value = parseHits(undefined)
+    historyLoading.value = false
+    return
+  }
+  if (hitsForId === t.id) return   // 同曲目（含队列重建等引用变化）不重复请求
+  hitsForId = t.id
+  historyLoading.value = true
   try {
-    const info = await getTrackMoreInfo(t.id).send()
-    if (detailForId !== t.id) return
-    detail.value = toDetailText(info)
-    detailStatus.value = detail.value.trim() ? 'ready' : 'none'
+    const hits = await getTrackHits(t.id).send()
+    if (hitsForId !== t.id) return
+    history.value = parseHits(hits)
   } catch {
-    if (detailForId === t.id) return
-    detailStatus.value = 'none'
+    if (hitsForId !== t.id) return
+    history.value = parseHits(undefined)
+  } finally {
+    if (hitsForId === t.id) historyLoading.value = false
   }
 }, { immediate: true })
+
+// —— 详情面板开关（内容懒加载，见 TrackInfoSheet） ——
+const showInfo = ref(false)
 
 // —— 可拖动进度 ——
 const seekBar = ref<HTMLElement>()
@@ -193,7 +220,7 @@ onUnmounted(() => window.removeEventListener('idb-rebuilt', onLibraryRebuilt))
           <div class=" w-10"></div>
         </header>
 
-        <!-- ============ artwork / lyric / info ==============-->
+        <!-- ============ artwork / lyric / history ==============-->
         <div 
           class=" min-h-0 flex-1 touch-pan-y"
           @touchstart.passive="onTouchStart"
@@ -221,14 +248,14 @@ onUnmounted(() => window.removeEventListener('idb-rebuilt', onLibraryRebuilt))
 
             <!-- 模块 1：歌词 -->
             <section class=" w-full shrink-0 px-8">
-              <div ref="lyricScroller" class=" h-full overflow-y-auto py-14 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <div ref="lyricScroller" class=" h-full overflow-y-auto overflow-x-hidden py-14 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 <template v-if="lyrics.status.value === 'ready'">
                   <p
                     v-for="(line, i) in lyrics.lines.value"
                     :key="i"
                     :data-line="i"
-                    class="py-2.5 text-center transition-all duration-300"
-                    :class="i === lyrics.currentLine.value ? ' text-xl font-bold text-primary' : ' text-[15px] leading-6 text-fg-muted'"
+                    class="py-1.5 text-center transition-all duration-300"
+                    :class="i === lyrics.currentLine.value ? ' text-xl font-bold text-fg-primary' : ' text-[15px] leading-5 text-fg-muted'"
                   >
                     {{ line.text || '...' }}
                   </p>
@@ -243,18 +270,24 @@ onUnmounted(() => window.removeEventListener('idb-rebuilt', onLibraryRebuilt))
               </div>
             </section>
 
-            <!-- 模块 2：信息 -->
-            <section class=" w-full shrink-0 overflow-y-auto px-8 py-10 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              <template v-if="detailStatus === 'ready'">
-                <h3 class="text[11px] font-semibold uppercase tracking-[0.2em] text-fg-muted">{{ t('player.more_track_info') }}</h3>
-                <p class=" mt-4 whitespace-pre-wrap text-[15px] leading-6 text-secondary">{{ detail }}</p>
-              </template>
-              <div v-else-if="detailStatus === 'loading'" class=" flex h-full items-center justify-center gap-3 text-sm text-fg-muted">
-                <span class=" h-4 w-4 animate-spin rounded-full border-2 border-fg-secondary border-t-accent" />
-                {{ t('player.loading') }}
-              </div>
-              <div v-else class=" flex h-full items-center justify-center text-sm text-fg-muted">
-                {{ t('player.no_detail') }}
+            <!-- 模块 2：听歌记忆（hits 构建背景图 + 发光文字，切歌时获取后冻结） -->
+            <section class=" relative w-full shrink-0 overflow-hidden">
+              <img
+                v-if="history.picUrl"
+                :src="history.picUrl"
+                alt=""
+                class=" absolute inset-0 h-full w-full object-cover"
+              />
+              <!-- 顶部 scrim：图片上部较空，文字置上；渐变加深保障可读性 -->
+              <div aria-hidden="true" class=" absolute inset-x-0 top-0 h-44 bg-gradient-to-b from-black/45 to-transparent"></div>
+              <div class=" relative h-full overflow-y-auto overflow-x-hidden px-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <div v-if="historyLoading" class=" flex h-full items-center justify-center gap-3 text-sm text-fg-muted">
+                  <span class=" h-4 w-4 animate-spin rounded-full border-2 border-fg-muted border-t-accent" />
+                  {{ t('player.loading') }}
+                </div>
+                <p v-else class=" history-text whitespace-pre-wrap pt-16 text-center text-lg leading-8 text-white">
+                  {{ history.sentence }}
+                </p>
               </div>
             </section>
           </div>
@@ -266,8 +299,8 @@ onUnmounted(() => window.removeEventListener('idb-rebuilt', onLibraryRebuilt))
             v-for="i in 3"
             :key="i"
             class=" h-1.5 rounded-full transition-all duration-300"
-            :class="moduleIndex === i - 1 ? 'w-5 bg-secondary' : 'w-1.5 bg-primary/20 hover:bg-primary/30'"
-            :aria-label="[t('player.cover'), t('player.lyric'), t('player.detail')][i - 1]"
+            :class="moduleIndex === i - 1 ? 'w-5 bg-secondary' : 'w-1.5 bg-secondary/60 hover:bg-primary/30'"
+            :aria-label="[t('player.cover'), t('player.lyric'), t('player.history')][i - 1]"
             @click="moduleIndex = i - 1"
           />
         </div>
@@ -275,22 +308,36 @@ onUnmounted(() => window.removeEventListener('idb-rebuilt', onLibraryRebuilt))
         <!-- 信息 + 收藏（恒定显示） -->
         <div class=" flex items-start justify-between gap-4 px-7">
           <div class=" min-w-0">
-            <h2 class=" truncate text-xl font-bold text-primary">{{ track?.title ?? t('player.not_playing') }}{{ track?.id ?? '' }}</h2>
+            <h2 class=" truncate text-xl font-bold text-fg-primary">{{ track?.title ?? t('player.not_playing') }}{{ track?.id ?? '' }}</h2>
             <p class=" mt-0.5 truncate text-sm text-fg-muted">
               {{ artistsText }}<span v-if="track?.album"> - {{ track.album.title }}</span>
             </p>
           </div>
-          <button 
-            class=" mt-0.5 shrink-0 rounded-full p-2 transition active:scale-75"
-            :class="favorited ? 'text-rose-400' : 'text-fg-muted hover:text-fg-secondary'"
-            :aria-label="favorited ? t('common.cancel') : t('player.favorite')"
-            :disabled="!track"
-            @click="toggleFavorite"
-          >
-            <svg viewBox="0 0 24 24" class="h-5 w-5" :fill="favorited ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
-            </svg>
-          </button>
+          <div class=" flex shrink-0 items-center gap-1">
+            <button 
+              class=" mt-0.5 shrink-0 rounded-full p-2 transition active:scale-75"
+              :class="favorited ? 'text-rose-400' : 'text-fg-muted hover:text-fg-secondary'"
+              :aria-label="favorited ? t('common.cancel') : t('player.favorite')"
+              :disabled="!track"
+              @click="toggleFavorite"
+            >
+              <svg viewBox="0 0 24 24" class="h-5 w-5" :fill="favorited ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+              </svg>
+            </button>
+            <button
+              class=" mt-0.5 rounded-full p-2 text-fg-muted transition hover:text-fg-secondary active:scale-75 disabled:pointer-events-none disabled:opacity-40"
+              :aria-label="t('player.more_track_info')"
+              :disabled="!track"
+              @click="showInfo = true"
+            >
+              <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 11v5" />
+                <path d="M12 8h.01" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         <!-- 可拖动进度条（恒定显示） -->
@@ -303,9 +350,9 @@ onUnmounted(() => window.removeEventListener('idb-rebuilt', onLibraryRebuilt))
             @pointerup="onScrubEnd"
             @pointercancel="onScrubEnd"
           >
-            <div class=" h-1 w-full overflow-hidden rounded-full bg-primary/10">
+            <div class=" h-1 w-full overflow-hidden rounded-full bg-secondary/80">
               <div
-                class=" h-full rounded-full bg-primary"
+                class=" h-full rounded-full bg-fg-secondary/80"
                 :class=" scrubbing ? '' : 'transition-[width] duration-200 ease-linear'"
                 :style="{ width: `${displayRatio * 100}%`}">
               </div>
@@ -484,4 +531,19 @@ onUnmounted(() => window.removeEventListener('idb-rebuilt', onLibraryRebuilt))
 
   <!-- 播放清单 -->
   <QueueSheet v-model:open="showQueue" />
+
+  <!-- 曲目详情面板 -->
+  <TrackInfoSheet v-model:open="showInfo" :track-id="track?.id ?? null" />
 </template>
+
+<style scoped>
+/* 听歌记忆艺术字：衬线/楷体字栈 + 发光描边，昼夜风景背景图上均可辨认 */
+.history-text {
+  font-family: Georgia, 'Noto Serif SC', 'STKaiti', 'KaiTi', serif;
+  letter-spacing: 0.08em;
+  text-shadow:
+    0 0 4px rgba(255, 255, 255, 0.5),
+    0 0 16px rgba(255, 255, 255, 0.3),
+    0 1px 3px rgba(0, 0, 0, 0.5);
+}
+</style>

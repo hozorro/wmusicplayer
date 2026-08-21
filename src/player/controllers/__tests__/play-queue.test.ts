@@ -8,7 +8,7 @@ import type { PlayerEventMap } from '../../events'
 import type { Emitter } from '@/shared/emitter'
 import type { PlayTrack } from '../../types'
 
-const T = (id: number): PlayTrack => ({ id, title: `${id}`, artists: ['t'] })
+const T = (id: number): PlayTrack => ({ id, title: `${id}`, artists: [{ id: 1, name: 't' }] })
 
 let queue: ReturnType<typeof useQueueStore>
 let playQueue: ReturnType<typeof createPlayQueueController>

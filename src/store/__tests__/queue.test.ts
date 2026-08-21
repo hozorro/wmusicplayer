@@ -4,7 +4,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { useQueueStore } from '../queue'
 import type { PlayTrack } from '../../player/types'
 
-const T = (id: number): PlayTrack => ({ id, title: `t${id}`, artists: ['t'] })
+const T = (id: number): PlayTrack => ({ id, title: `t${id}`, artists: [{ id: 1, name: 't' }] })
 
 function seed(store: ReturnType<typeof useQueueStore>, ids: number[]) {
   store.tracks = ids.map(T)

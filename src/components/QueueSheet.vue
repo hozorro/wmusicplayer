@@ -25,9 +25,16 @@ const listEl = ref<HTMLElement>()
 watch(open, async o => {
   if(!o) { openMenuId.value = null; return }
   await nextTick()
-  listEl.value
-    ?.querySelector<HTMLElement>(`[data-index="${playQueue.currentIndex.value}"]`)
-    ?.scrollIntoView({ block: 'center'})
+  // 显式计算 scrollTop 把滚动限定在列表内；
+  // 不可用 scrollIntoView：它会递归滚动所有可滚动祖先（含 overflow-hidden 容器）
+  const list = listEl.value
+  const itemEl = list?.querySelector<HTMLElement>(`[data-index="${playQueue.currentIndex.value}"]`)
+  if (!list || !itemEl) return
+  const listRect = list.getBoundingClientRect()
+  const itemRect = itemEl.getBoundingClientRect()
+  const top = list.scrollTop + (itemRect.top - listRect.top)
+    - (list.clientHeight - itemRect.height) / 2
+  list.scrollTo({ top })
 })
 
 function selectAt(i: number) {
@@ -192,7 +199,7 @@ function onDragEnd() {
                 <!-- 删除 -->
                 <button
                   class=" shrink-0 rounded-full p-2 text-fg-muted transition hover:bg-fg-primary/5 hover:text-fg-primary active:scale-90"
-                  :aria-label="`${t('common.delete')} ${track.title}`"
+                  :aria-label="`${t('common.remove')} ${track.title}`"
                   @click="remove(i)"
                 >
                   <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">

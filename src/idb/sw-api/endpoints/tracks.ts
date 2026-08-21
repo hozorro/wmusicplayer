@@ -192,6 +192,16 @@ export const idbGetTrack: ApiHandler = async ({ params }) => {
   return json(toRawTrack(track))
 }
 
+/** 曲目播放时间序列：ISO 时间戳数组，老→新（与后端 gettrackhits 契约一致） */
+export const idbGetTrackHits: ApiHandler = async ({ params }) => {
+  const id = Number(params.track_id || 0)
+  if (!id) return MISS
+  const idb = await getLibraryIdb()
+  const track = await idb.get<IDBTrack>("tracks", id)
+  if (!track) return MISS
+  return json([...(track.hits ?? [])].sort())  // ISO8601 字典序 = 时间序，sort 兜底保证老→新
+}
+
 export const idbSearch: ApiHandler = async ({ query }) => {
   const kw = normalize(query.get('kw') ?? '')
   if (!kw) return json({ tracks: [], artists: [], albums: [] })

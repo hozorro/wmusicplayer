@@ -19,15 +19,16 @@ vi.mock('../../runtime', () => ({ createAudioRuntime: () => runtimeMock }))
 
 import { createPlayerFacade, type PlayerFacade } from '..'
 
-const T = (id: number): PlayTrack => ({ id, title: `t${id}`, artists: ['a'] })
+const T = (id: number): PlayTrack => ({ id, title: `t${id}`, artists: [{ id: 1, name: 'a' }] })
 
 let facade: PlayerFacade
 const fetchStreamUrl = vi.fn(async (id: number) => `stream/${id}`)
+const fetchLyric = vi.fn(async (_id: number) => '')
 
 beforeEach(() => {
   setActivePinia(createPinia())
   vi.clearAllMocks()
-  facade = createPlayerFacade({ fetchStreamUrl })
+  facade = createPlayerFacade({ fetchStreamUrl, fetchLyric })
 })
 
 const flushed = () => vi.waitFor(() => {

@@ -3,6 +3,7 @@ import { EngineEvent, PlayerEvent, type PlayerEventMap } from '../events'
 import type { Emitter } from '@/shared/emitter'
 import type { AudioRuntime } from '../runtime'
 import type { StreamResolver } from '@/services/stream-resolver'
+import type { CacheService } from '@/services/cache'
 import type { QueueStore } from '@/store/queue'
 import type { PlayTrack } from '../types'
 
@@ -20,10 +21,16 @@ export function createPlaybackController(
   runtime: AudioRuntime,
   queue: QueueStore,
   resolver: StreamResolver,
+  cache: CacheService,
   bus: Emitter<PlayerEventMap>,
   time: Ref<number>
 ) {
   let loadedId: number | null = null
+
+  /** 最近一次交付给 runtime 的源：本地键失败回退时的判据 */
+  let lastLoad: { id: number, local: boolean } | null = null
+  /** 本地键已被证实失效的曲目：本次会话内不再尝试，直走网络 */
+  const localFailed = new Set<number>()
 
   /** 连续失败熔断：防 loop-all 无限跳环，防坏队列 burn-through 请求 */
   let consecutiveFailures = 0
@@ -53,12 +60,16 @@ export function createPlaybackController(
   runtime.on(EngineEvent.Seeked, t => { time.value = t }) // 暂停态 seek 的 UI 回填
   runtime.on(EngineEvent.Error, e => {
     const t = queue.currentTrack
-    if (t) failTrack(t, e)
+    if (!t) return
+    // 本地键失效（配额清退等边缘）：forget + 一次性改走网络，避免直接跳曲
+    if (lastLoad?.id === t.id && lastLoad.local && fallbackLocal(t)) return
+    failTrack(t, e)
   })
 
   async function syncTrack(t: PlayTrack | null) {
     if (t === null) {
       loadedId = null
+      lastLoad = null
       time.value = 0
       queue.setDuration(0)
       await runtime.stop()
@@ -70,7 +81,7 @@ export function createPlaybackController(
     queue.setDuration(0)
     queue.setEngineState('loading')
 
-    const url = resolver.get(t.id) ?? await inlineResolve(t.id)
+    const { url, local } = await resolveUrl(t)
     if (url === null) {
       failTrack(t, null)
       return
@@ -78,6 +89,7 @@ export function createPlaybackController(
     if (queue.currentTrack?.id !== t.id) return // 异步间隙内曲目已变
 
     loadedId = t.id //提前置位：加载期间到达的 play 意图经 syncIntent 排队生效
+    lastLoad = { id: t.id, local }
     if (queue.intent == 'play') {
       // 原子换曲。拒绝 ≠ 曲目失败（NotAllowed/Abort），真实态由 native 事件回写
       runtime.swapAndPlay(url).catch(() => {})
@@ -85,6 +97,7 @@ export function createPlaybackController(
       try {
         await runtime.load(url)
       } catch (err) {
+        if (local && queue.currentTrack?.id === t.id && fallbackLocal(t)) return
         failTrack(t, err instanceof Error ? err : null)
         return
       }
@@ -100,6 +113,29 @@ export function createPlaybackController(
   function syncIntent(i: 'play' | 'pause') {
     if (loadedId === null) return // 无曲目可播；加载中的意图由 syncTrack 派发时读取
     i === 'play' ? runtime.play().catch(() => {}) : runtime.pause()
+  }
+
+  /**
+   * 取址优先级：本地稳定键（零网络，loadeddata 近乎瞬时）> resolver 同步读 > inline 兜底
+   * SW 未接管时（首次安装等）本地键不可用，回落网络路径
+   */
+  async function resolveUrl(t: PlayTrack): Promise<{ url: string | null, local: boolean }> {
+    await cache.ready   // 仅首次有毫秒级开销
+    if (!localFailed.has(t.id) && cache.has(t.id) && navigator.serviceWorker?.controller != null) {
+      return { url: cache.localUrl(t.id), local: true }
+    }
+    return { url: resolver.get(t.id) ?? await inlineResolve(t.id), local: false }
+  }
+
+  /** 本地键失效自愈：清掉失效条目，重入 syncTrack 走网络路径（localFailed 防循环） */
+  function fallbackLocal(t: PlayTrack): boolean {
+    if (localFailed.has(t.id)) return false
+    localFailed.add(t.id)
+    void cache.forget(t.id)
+    loadedId = null   // 放开同曲守卫，允许重入
+    lastLoad = null
+    void syncTrack(t)
+    return true
   }
 
   async function inlineResolve(trackId: number): Promise<string | null> {

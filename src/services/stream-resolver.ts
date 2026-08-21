@@ -7,6 +7,8 @@ export const RESOLVE_TTL_MS = 600 * 1000 * 0.8
  */
 export function createStreamResolver(fetcher: (trackId: number) => Promise<string>) {
   const cache = new Map<number, { url: string, expiresAt: number}>()
+  /** 在途合并：并发 prepare 同一 id 只产生一次 fetch（预热双层同时调用的防重闸） */
+  const inflight = new Map<number, Promise<void>>()
 
   function get(trackId: number): string | null {
     const hit = cache.get(trackId)
@@ -18,12 +20,22 @@ export function createStreamResolver(fetcher: (trackId: number) => Promise<strin
     return hit.url
   }
 
-  /** 幂等预热：缓存仍有效则跳过 */
-  async function prepare(trackId: number, ttlMs: number = RESOLVE_TTL_MS): Promise<void> {
-    if (get(trackId) !== null) return
-    const streamUrl = await fetcher(trackId)
-    const url = `/api/${streamUrl}`
-    cache.set(trackId, { url, expiresAt: Date.now() + ttlMs })
+  /** 幂等预热：缓存仍有效则跳过；在途请求直接搭车，不重复 fetch */
+  function prepare(trackId: number, ttlMs: number = RESOLVE_TTL_MS): Promise<void> {
+    if (get(trackId) !== null) return Promise.resolve()
+    const pending = inflight.get(trackId)
+    if (pending !== undefined) return pending
+    const task = (async () => {
+      try {
+        const streamUrl = await fetcher(trackId)
+        const url = `/api/${streamUrl}`
+        cache.set(trackId, { url, expiresAt: Date.now() + ttlMs })
+      } finally {
+        inflight.delete(trackId)  // 失败同样释出，后续调用可重试
+      }
+    })()
+    inflight.set(trackId, task)
+    return task
   }
 
   function invalidate(trackId?: number) {

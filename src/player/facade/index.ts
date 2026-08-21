@@ -31,9 +31,9 @@ export function createPlayerFacade(deps: PlayerFacadeDeps) {
     const playQueue = createPlayQueueController(queue, bus);
     const resolver = createStreamResolver(deps.fetchStreamUrl);
     const time = ref(0);
-    const playback = createPlaybackController(runtime, queue, resolver, bus, time);
-    const hitTracker = createHitTracker(queue, bus, time);
     const cacheService = createCacheService();
+    const playback = createPlaybackController(runtime, queue, resolver, cacheService, bus, time);
+    const hitTracker = createHitTracker(queue, bus, time);
     const preload = createPreloadController(queue, bus, resolver, cacheService);
     const lyrics = createLyricController(bus, time, deps.fetchLyric);
     

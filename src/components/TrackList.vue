@@ -7,7 +7,7 @@ import type { MenuSource } from '@/player/menu/types'
 import type { PlayTrack } from '@/player/types'
 import TrackRow from './TrackRow.vue';
 
-const props = defineProps<{ 
+defineProps<{ 
   tracks: PlayTrack[], 
   showArt: boolean,
   menuSource?: (t: PlayTrack) => MenuSource 

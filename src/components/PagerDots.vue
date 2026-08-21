@@ -1,7 +1,7 @@
 <!-- 可点按的页码圆点 -->
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
-const props = defineProps<{count: number; active: number}>()
+defineProps<{count: number; active: number}>()
 defineEmits<{go: [page: number]}>()
 
 const { t } = useI18n()

@@ -102,15 +102,7 @@ export const getArtist = (id: number) => {
 
 // #region Folder
 export const getFolder = (id: number) => {
-  return generalAlova.Get("/music/folder/" + id, {
-    name: 'getFolder',
-    transform: (rawData: FolderInfo) => {
-      return { 
-        ...rawData,
-        tracks: rawData?.tracks.map(item => ({...item, cover: new URL('/src/assets/imgs/trackc.png', import.meta.url).href})),
-      } 
-    }
-  })
+  return generalAlova.Get<FolderInfo>("/music/folder/" + id, { name: 'getFolder' })
 }
 // #endregion
 
@@ -122,15 +114,7 @@ export const getRandomGenres = () => {
   });
 }
 export const getGenres = () => { 
-  return generalAlova.Get("/music/genre/genres", {
-    name: 'getGenres',
-    transform: (rawData: Genre[]) => {
-      return rawData.map(genre => ({
-        ...genre,
-        cover: new URL('/src/assets/imgs/genrec.png', import.meta.url).href,
-      }))
-    }
-  })
+  return generalAlova.Get<Genre[]>("/music/genre/genres", { name: 'getGenres' })
 }
 export const getGenre = (id: number) => {
   return generalAlova.Get<Genre>("/music/genre/" + id, {name: 'getGenre'})
@@ -328,5 +312,8 @@ export const updatePlaylistHit = (playlist_id: number) => {
   return generalAlova.Put<string>('music/playback/updateplaylisthit', {
     playlist_id,
   }, {name: 'updatePlaylistHit'})
+};
+export const getTrackHits = (track_id: number) => {
+  return generalAlova.Get<string[]>("/music/playback/gettrackhits/" + track_id, {name: 'getTrackHits'})
 };
 // #endregion

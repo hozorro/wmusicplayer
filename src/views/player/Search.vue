@@ -244,7 +244,7 @@ const tabs = computed(() => [
                 </div>
                 <div class="min-w-0 flex-1">
                   <p class="truncate text-sm" :class="isCurrent(t.id) ? 'font-semibold text-accent' : 'font-medium text-fg-primary'">
-                    <template v-for="(seg, si) in segments(t.title)" :key="si">
+                    <template v-for="(seg, _si) in segments(t.title)" :key="_si">
                       <span :class="seg.hit && !isCurrent(t.id) ? 'text-accent' : ''">{{ seg.text }}</span>
                     </template>
                   </p>
@@ -278,7 +278,7 @@ const tabs = computed(() => [
               v-for="a in results.artists" :key="a.id"
               :id="a.id" :face="a.cover" :fallback="a.name.slice(0, 1)"
             >
-              <template v-for="(seg, si) in segments(a.name)" :key="si">
+              <template v-for="(seg, _si) in segments(a.name)" :key="_si">
                 <span :class="seg.hit ? 'text-accent' : ''">{{ seg.text }}</span>
               </template>
             </ArtistRow>
@@ -316,7 +316,7 @@ const tabs = computed(() => [
                 </div>
                 <div class="min-w-0 flex-1">
                   <p class="truncate text-sm font-medium text-fg-primary">
-                    <template v-for="(seg, si) in segments(al.title)" :key="si">
+                    <template v-for="(seg, _si) in segments(al.title)" :key="_si">
                       <span :class="seg.hit ? 'text-accent' : ''">{{ seg.text }}</span>
                     </template>
                   </p>

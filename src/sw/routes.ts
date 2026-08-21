@@ -15,7 +15,8 @@ import {
   idbGetTrack, idbSearch,
   idbGetRandomTracks, idbGetArtistRandomTracks, idbGetGenreRandomTracks,
   idbGetLatestTracks, idbGetHotTracks, idbGetCollectionTracks,
-  idbGetRndArtistSctdTracks, idbGetWgtRndArtistTracks, idbGetWgtRndTracks
+  idbGetRndArtistSctdTracks, idbGetWgtRndArtistTracks, idbGetWgtRndTracks,
+  idbGetTrackHits
 } from '@/idb/sw-api/endpoints/tracks'
 import { idbFavoritedTracks, idbFavoritedTrackIds } from '@/idb/sw-api/endpoints/tracks'
 
@@ -29,7 +30,8 @@ import type {
   getLatestTracks, getHotTracks, getCollectionTracks,
   getRandomConstraintedArtistTracks, getRandomWeightedArtistTracks, getRandomHitsWeightedTracks,
   getFavoriteTracks, getFavoriteTrackIds, 
-  searchLibrary
+  searchLibrary,
+  getTrackHits
 } from '@/apis/methods/music'
 
 /**
@@ -136,6 +138,10 @@ route('/api/music/playback/topplaylists', idbGetTopPlaylists)
 // "/music/playback/playlists": getPlaylists
 export type remoteGetPlaylists = typeof getPlaylists
 route('/api/music/playback/playlists', idbGetPlaylists)
+
+// "/music/playback/gettrackhits/" + track_id: getTrackHits
+export type remoteGetTrackHits = typeof getTrackHits
+route('/api/music/playback/gettrackhits/:track_id', idbGetTrackHits)
 
 // "/music/playback/" + id: getPlaylist
 export type remoteGetPlaylist = typeof getPlaylist
