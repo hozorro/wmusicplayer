@@ -13,3 +13,4 @@ declare interface PlayerOptions {
   timeUpdateInterval: number,
   transferBatchSize: number,
 }
+declare type AppTheme = 'light' | 'dark' | 'system'

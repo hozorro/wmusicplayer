@@ -1,33 +1,33 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-import piniaPluginPersistedState from 'pinia-plugin-persistedstate'
+import { createPersistedState} from 'pinia-plugin-persistedstate'
 import './style.css'
 import router from '@/router'
 import App from './App.vue'
 import i18n, { loadLocaleMessages} from '@/i18n'
 import { useMusicStore } from '@/store/music'
+import { initPlayer } from '@/player/facade/index.ts'
+import { initIdbState } from './services/idb-state.ts'
+
 
 const app = createApp(App)
 
-app.directive('default-src', (el: HTMLImageElement, binding) => {
-  const defaultSrc = binding.value
-  el.onerror =  () => {
-    el.crossOrigin = 'anonymous'
-    el.src = defaultSrc
-    el.onerror = null
-  }
-})
-
 const pinia = createPinia()
-pinia.use(piniaPluginPersistedState)
+pinia.use(createPersistedState())
 
 app.use(router).use(pinia).use(i18n)
 
+initPlayer()
+void initIdbState()
+
+// import { initSyncScheduler } from './services/lib-sync.ts'
+// initSyncScheduler()
+
 ;(async () => {
   const musicStore = useMusicStore()
-  await loadLocaleMessages(musicStore.locale)
 
-  document.documentElement.className = musicStore.isDark ? "dark" : "light"
+  await loadLocaleMessages(musicStore.locale)
+  musicStore.initTheme()
 
   app.mount('#app')
 })()

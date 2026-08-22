@@ -1,18 +1,103 @@
 @import "tailwindcss";
 @plugin "@iconify/tailwind4";
 
-@theme {
-  --color-light: #fcfcfc;
-  --color-dark: #002e2e;
-}
+/*
+  如果要通过 html.dark class 手动切换暗色主题，
+  需要声明 class 模式的 dark variant。
 
+  Tailwind CSS v4 默认 dark: 是跟随系统 prefers-color-scheme。
+  加了下面这句后，dark: 会根据 .dark class 生效。
+*/
 @custom-variant dark (&:where(.dark, .dark *));
 
-@layer components {
-  .btn {
-    @apply px-2 py-1 bg-stone-50/30 dark:bg-teal-800/50 text-stone-50 dark:text-teal-100 rounded-md;
+@theme {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* 1. Light theme */
+:root {
+  color-scheme: light;
+
+  --primary: oklch(96.7% 0.001 286.375);              /* 主背景(zinc-100) */
+  --secondary: oklch(92% 0.004 286.32);               /* 底部播放栏、侧边栏背景(zinc-200) */
+  --card: oklch(98.5% 0 none);                        /* 卡片、弹窗、列表想悬浮背景(zinc-50) */
+
+  --fg-primary: oklch(21% 0.006 285.885);             /* 主文字：歌名等(zinc-900) */
+  --fg-secondary: oklch(44.2% 0.017 285.786);         /* 次文字：歌手、专辑等(zinc-600) */
+  --fg-muted: oklch(70.5% 0.015 286.067);             /* 弱化文字：时长、占位等(zinc-400) */
+
+  --border: oklch(87.1% 0.006 286.286);               /* 分割线、边框(zinc-300) */
+
+  --btn-primary: oklch(70.4% 0.14 182.503);           /* 按钮主色(teal-500) */
+  --btn-primary-hover: oklch(77.7% 0.152 181.912);    /* 按钮悬停(teal-400) */
+  --btn-primary-active: oklch(55.1% 0.027 264.364);   /* 按钮点击激活(gray-500) */
+
+  --btn-secondary: oklch(87.1% 0.006 286.286);        /* 按钮次色(zinc-300) */
+  --btn-secondary-hover: oklch(70.5% 0.015 286.067);  /* 按钮次色悬停(zinc-400) */
+  --btn-secondary-active: oklch(55.1% 0.027 264.364); /* 按钮次色点击激活(zinc-500) */
+
+  --accent: oklch(70.4% 0.14 182.503);                /* 进度条、高亮选中(teal-500) */
+}
+
+/* 2. Dark theme */
+.dark {
+  color-scheme: dark;
+ 
+  --primary: oklch(21% 0.006 285.885);                /* 主背景(zinc-900) */
+  --secondary: oklch(37% 0.013 285.805);              /* 底部播放栏、侧边栏背景(zinc-700) */
+  --card: oklch(27.4% 0.006 286.033);                 /* 卡片、弹窗、列表想悬浮背景(zinc-800) */
+
+  --fg-primary: oklch(96.7% 0.001 286.375);           /* 主文字：歌名等(zinc-100) */
+  --fg-secondary: oklch(87.1% 0.006 286.286);         /* 次文字：歌手、专辑等(zinc-300) */
+  --fg-muted: oklch(55.2% 0.016 285.938);             /* 弱化文字：时长、占位等(zinc-500) */
+
+  --border: oklch(44.2% 0.017 285.786);               /* 分割线、边框(zinc-600) */
+
+  --btn-primary: oklch(77.7% 0.152 181.912);          /* 按钮主色(teal-400) */
+  --btn-primary-hover: oklch(60% 0.118 184.704);      /* 按钮悬停(teal-500) */
+  --btn-primary-active: oklch(55.1% 0.027 264.364);   /* 按钮点击激活(gray-500) */
+
+  --btn-secondary: oklch(37% 0.013 285.805);          /* 按钮次色(zinc-700) */
+  --btn-secondary-hover: oklch(70.5% 0.015 286.067);  /* 按钮次色悬停(zinc-400) */
+  --btn-secondary-active: oklch(55.2% 0.016 285.938); /* 按钮次色点击激活(zinc-500) */
+
+  --accent: oklch(70.4% 0.14 182.503);             /* 进度条、高亮选中(teal-300) */
+}
+
+/* 3. 把 CSS 变量映射成 Tailwind 颜色 */
+@theme inline {
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-card: var(--card);
+
+  --color-fg-primary: var(--fg-primary);
+  --color-fg-secondary: var(--fg-secondary);
+  --color-fg-muted: var(--fg-muted);
+
+  --color-border: var(--border);
+
+  --color-btn-primary: var(--btn-primary);
+  --color-btn-primary-hover: var(--btn-primary-hover);
+  --color-btn-primary-active: var(--btn-primary-active);
+
+  --color-btn-secondary: var(--btn-secondary);
+  --color-btn-secondary-hover: var(--btn-secondary-hover);
+  --color-btn-secondary-active: var(--btn-secondary-active);
+
+  --color-accent: var(--accent);
+}
+
+@layer base {
+  body {
+    @apply bg-primary text-fg-primary font-sans antialiased transition-colors;
   }
-  .btn-bar {
-    @apply  inline-block bg-cyan-700 dark:bg-teal-500 text-white dark:text-teal-100 text-sm place-content-center px-2 rounded-md shadow-sm;
+}
+
+@layer components {
+  .btn-primary {
+    @apply rounded-full bg-btn-primary px-5 py-2 text-sm font-bold text-fg-primary shadow-lg shadow-btn-primary/20 transition hover:bg-btn-primary-hover active:scale-95 disabled:pointer-events-none disabled:opacity-40;
+  }
+  .btn-secondary {
+    @apply rounded-full bg-btn-secondary px-5 py-2 text-sm font-semibold text-fg-secondary ring-1 ring-fg-primary/15 transition hover:bg-btn-secondary-hover active:scale-95 disabled:pointer-events-none disabled:opacity-40;
   }
 }

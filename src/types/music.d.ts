@@ -17,10 +17,14 @@ declare type DbMetaInfo = {
 
 declare type PopType = 'album' | 'artist' | 'track' | 'playlist' | 'folder' | 'genre';
 // #region Album
-declare interface Album {
+declare interface AlbumBase {
   id: number;
   title: string;
+}
+declare interface Album extends AlbumBase {
   cover_art_hash?: string;
+  cover?: string;
+  track_count?: number;
 }
 declare interface AlbumInfo extends Album { 
   album_artist: Omit<Artist, 'pinyin_initial'>;
@@ -32,19 +36,23 @@ declare interface AlbumInfo extends Album {
 // #endregion
 
 // #region Artist
-declare interface Artist {
+declare interface ArtistBase {
   id: number;
   name: string;
+}
+declare interface Artist extends ArtistBase {
   pinyin_initial: string;
   face_art_hash?: string;
   portrait_art_hash?: string;
+  cover?: string;
 }
 declare interface ArtistInfo extends Artist { 
   main_albums: Album[];
   track_albums: Album[];
   top_tracks: Track[];
   track_count: number
-  cover?: string;
+  face?: string;
+  portrait?: string;
 }
 // #endregion
 
@@ -53,9 +61,13 @@ declare interface Folder {
   id: number;
   name: string;
 }
+declare interface FolderBrief extends Folder {
+  subfolder_count?: number
+  track_count?: number
+}
 declare interface FolderInfo extends Folder {
-  parent_id?: number;
-  children: Folder[];
+  ancestors: Folder[];
+  subfolders: FolderBrief[];
   tracks: Track[];
 }
 // #endregion
@@ -65,6 +77,7 @@ declare interface Genre {
   id: number;
   name: string;
   color: string;
+  track_count?: number;
   info?: Record<string, any>;
 }
 // #endregion
@@ -73,7 +86,9 @@ declare interface Genre {
 declare type Track = {
   id: number;
   title: string;
-  artists?: string[];
+  duration?: number;
+  album?: AlbumBase;
+  artists?: ArtistBase[];
   cover_art_hash?: string;
   cover?: string;
 };
@@ -103,16 +118,26 @@ declare interface TrackMoreInfo {
 
 // #region Playlist
 declare interface Playlist {
-  id: number | string;
+  id: number;
   title: string;
   cover_art_hash?: string;
   cover?: string; // transform generated property
+  track_count?: number;
+}
+declare interface PlaylistTrack extends Track {
+  position: number;
 }
 declare interface PlaylistInfo extends Playlist {
   comment: string;
   created_at: string;
-  tracks: Track[];
+  tracks: PlaylistTrack[];
 }
+declare interface PlaylistFormPayload {
+  title: string
+  comment: string
+  cover: File | null
+}
+
 // #endregion
 
 declare interface LyricMeta {
@@ -129,4 +154,10 @@ declare interface LyricMeta {
 declare interface LyricLine {
   time: number;
   text: string;
+}
+
+declare interface SearchResults {
+  albums: Album[];
+  artists: Artist[];
+  tracks: Track[];
 }
