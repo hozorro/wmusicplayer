@@ -10,6 +10,10 @@ import fs from 'fs'
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd())
   const apiBase = env.VITE_API_BASE || 'http://127.0.0.1:8000'
+  // 仅当本地配置了证书路径时才启用 HTTPS（CI 构建无此变量，无条件 readFileSync 会因 undefined 报错）
+  const httpsCert = env.VITE_SSL_CERT && env.VITE_SSL_KEY
+    ? { cert: fs.readFileSync(env.VITE_SSL_CERT), key: fs.readFileSync(env.VITE_SSL_KEY) }
+    : undefined
 
   return {
     plugins: [
@@ -24,8 +28,10 @@ export default defineConfig(({ mode }) => {
         registerType: 'autoUpdate',
         injectRegister: 'auto',
         strategies: 'injectManifest',
-        srcDir: 'src',
-        filename: './sw/sw.ts',
+        // filename 不能含子目录：插件把 SW 构建产物输出到 outDir 根，
+        // 再 rename 到 dirname(swDest)，两者不一致会报 ENOENT
+        srcDir: 'src/sw',
+        filename: 'sw.ts',
         devOptions: {
           enabled: true,
           type: 'module',
@@ -74,10 +80,7 @@ export default defineConfig(({ mode }) => {
     server: {
       host: '0.0.0.0',
       port: 5174,
-      https: {
-        cert: fs.readFileSync(env.VITE_SSL_CERT),
-        key: fs.readFileSync(env.VITE_SSL_KEY),
-      },
+      https: httpsCert,
       proxy: {
         '/api': {
           target: apiBase,
