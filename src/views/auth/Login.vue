@@ -1,16 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue' 
+import { ref } from 'vue' 
 import { useRoute, useRouter } from 'vue-router'
-import { useMusicStore } from '@/store/music';
 import { useAuthStore } from '@/store/auth';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n()
-
-const store = useMusicStore();
-onMounted(() => {
-  store.playerBoxShow = false
-});
 
 const username = ref('')
 const password = ref('')

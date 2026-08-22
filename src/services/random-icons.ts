@@ -1,0 +1,15 @@
+// library/random-icons.ts —— 模式图标表（Home 与 RandomView 共用）
+export interface RandomIcon {
+  stroke?: boolean
+  evenodd?: boolean
+  d: string[]
+}
+
+export const RANDOM_ICONS: Record<string, RandomIcon> = {
+  pure: { stroke: true, d: ['M16 3h5v5', 'M4 20L21 3', 'M21 16v5h-5', 'M15 15l6 6', 'M4 4l5 5'] },
+  sparkles: { d: ['M12 2l2.2 5.3L20 9.5l-5.8 2.2L12 17l-2.2-5.3L4 9.5l5.8-2.2L12 2z', 'M19 14.5l1.1 2.6 2.6 1.1-2.6 1.1L19 22l-1.1-2.7-2.6-1.1 2.6-1.1 1.1-2.6z'] },
+  'artist-r': { d: ['M12 12a4.5 4.5 0 100-9 4.5 4.5 0 000 9z', 'M3.5 21c.6-4.2 3.9-6.5 8.5-6.5s7.9 2.3 8.5 6.5H3.5z'] },
+  'artist-c': { evenodd: true, d: ['M3 3h9.6L21 11.4a2 2 0 010 2.8l-6.8 6.8a2 2 0 01-2.8 0L3 12.6V3zm4.5 6a1.5 1.5 0 100-3 1.5 1.5 0 000 3z'] },
+  'artist-w': { evenodd: true, d: ['M12 21a9 9 0 100-18 9 9 0 000 18zm0-2.8a6.2 6.2 0 110-12.4 6.2 6.2 0 010 12.4z', 'M11 6.5h2v4.7l3 3-1.4 1.4-3.6-3.6V6.5z'] },
+  heat: { d: ['M12 2s1.2 3.8-1.3 6.3C8.2 10.8 6 12.4 6 15.5 6 19 8.7 22 12 22s6-3 6-6.5c0-2.6-1.4-4.6-2.9-6.2-.9 1.9-2 2.7-2 2.7S14.5 6.5 12 2z'] },
+}

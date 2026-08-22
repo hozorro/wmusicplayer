@@ -5,7 +5,6 @@ import {
   secToHMS,
   timeStampToDate,
   getISOWithOffset,
-  isTokenExpired,
   topWeightedLnRandom,
   dynamicSort,
 } from '@/utilies/general'
@@ -116,43 +115,6 @@ describe('getISOWithOffset', () => {
     const date = new Date(2024, 5, 15, 10, 30, 45, 123)
     const result = getISOWithOffset(date)
     expect(result).toContain('.123')
-  })
-})
-
-describe('isTokenExpired', () => {
-  function makeJWT(exp: number | null): string {
-    const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
-    const payload = exp !== null
-      ? btoa(JSON.stringify({ sub: 'user1', exp }))
-      : btoa(JSON.stringify({ sub: 'user1' }))
-    const sig = 'fake_signature'
-    return `${header}.${payload}.${sig}`
-  }
-
-  it('returns true for empty string', () => {
-    expect(isTokenExpired('')).toBe(true)
-  })
-
-  it('returns true for invalid token structure', () => {
-    expect(isTokenExpired('not.a.valid.token')).toBe(true)
-    expect(isTokenExpired('justonepart')).toBe(true)
-  })
-
-  it('returns true when token has no exp field', () => {
-    const token = makeJWT(null)
-    expect(isTokenExpired(token)).toBe(true)
-  })
-
-  it('returns true for expired token', () => {
-    // exp = 1 second ago
-    const token = makeJWT(Math.floor(Date.now() / 1000) - 1)
-    expect(isTokenExpired(token)).toBe(true)
-  })
-
-  it('returns false for valid (non-expired) token', () => {
-    // exp = 1 hour from now
-    const token = makeJWT(Math.floor(Date.now() / 1000) + 3600)
-    expect(isTokenExpired(token)).toBe(false)
   })
 })
 

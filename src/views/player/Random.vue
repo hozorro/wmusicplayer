@@ -1,104 +1,151 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import { 
-  getRandomArtistTracks, 
-  getRandomConstraintedArtistTracks, 
-  getRandomWeightedArtistTracks, 
-  getRandomHitsWeightedTracks 
-} from "@/apis/methods/music";
-import { PlayChangeMode } from "@/constants/play-constants";
-import { useMusicStore } from "@/store/music";
+/**
+ * 随机播放页 —— P7.6.3：注册表驱动的模式调音台（A61 修订形态）
+ * 带参模式 = 滑块调参 + 触发；零参模式 = 点按即播行。
+ * 新增模式 = 注册表(random-model)加一行，本页自动收录。
+ */
+import { reactive, ref } from "vue";
+import { useRouter } from "vue-router";
+import ModeIcon from "@/components/ModeIcon.vue";
+import { RANDOM_MODES, type RandomMode } from "@/services/random-model";
+import { toPlayTrack } from "@/services/transform";
+import { usePlayer } from "@/composables/playback";
+import { getModedRandomTracks } from "@/apis/methods/music";
 import { useI18n } from "vue-i18n";
 
 const { t } = useI18n();
+const router = useRouter();
+const player = usePlayer();
 
-const store = useMusicStore();
-const trackPerArtist = ref(2);
-const weightRateArtist = ref(2);
-const weightRateHit = ref(2);
+/** 各带参模式的当前值：默认值初始化 */
+const paramValues = reactive(
+  Object.fromEntries(
+    RANDOM_MODES.filter(m => m.param).map(m => [m.key, m.param!.defaultValue])
+  )
+)
 
-function handleGetRandomArtistTracks() {
-  getRandomArtistTracks(50).then(res => {
-    console.log(res);
-    store.addListToCurPlaylist(res, PlayChangeMode.REPLACE_LIST)
-  });
+const busy = ref<string | null>(null)
+const playedKey = ref<string | null>(null)
+
+/** 轨道填充：已走部分 amber，未走部分白色 10% */
+function sliderBg(m: RandomMode): string {
+  const p = m.param!
+  const pct = ((paramValues[m.key] - p.min) / (p.max - p.min)) * 100
+  return `linear-gradient(to right, #96f7e4 ${pct}%, rgba(255,255,255,0.6) ${pct}%)`;
 }
-function handleGetRandomConstraintedArtistTracks() {
-  getRandomConstraintedArtistTracks(50, trackPerArtist.value).then(res => {
-    store.addListToCurPlaylist(res, PlayChangeMode.REPLACE_LIST)
-  });
-}
-function handleGetRandomWeightedArtistTracks() {
-  getRandomWeightedArtistTracks(50, weightRateArtist.value).then(res => {
-    store.addListToCurPlaylist(res, PlayChangeMode.REPLACE_LIST)
-  });
-}
-function handleGetRandomHitWeightedTracks() {
-  getRandomHitsWeightedTracks(50, weightRateHit.value).then(res => {
-    store.addListToCurPlaylist(res, PlayChangeMode.REPLACE_LIST)
-  });
+
+async function playRandom(m: RandomMode) {
+  if (busy.value !== null) return
+  busy.value = m.key
+  try {
+    const tracks = await getModedRandomTracks(m.key, m.param ? paramValues[m.key] : undefined).send();
+    player.playAll(tracks.map(t => toPlayTrack(t)));
+    playedKey.value = m.key;
+    setTimeout(() => {
+      if (playedKey.value === m.key) playedKey.value = null;
+    }, 900)
+  } finally {
+    busy.value = null;
+  }
 }
 </script>
 
 <template>
-  <div class=" p-2">
-    <div>
-      <router-link to="/" class=" flex-none text-lg font-semibold">
-        <span class=" icon-[solar--alt-arrow-left-linear] align-middle text-gray-600"></span>
-        <span class=" text-lg font-semibold">{{ t('random.advance') }}</span>
-      </router-link>
+  <div class="min-h-dvh">
+    <!-- 氛围底色：左上暖光 + 右下微光，与首页单暖光区分 -->
+    <div class="pointer-events-none fixed inset-0 -z-10" aria-hidden="true">
+      <div class="absolute -left-24 -top-32 h-96 w-96 rounded-full bg-accent/[0.05] blur-3xl" />
+      <div class="absolute -bottom-32 -right-24 h-96 w-96 rounded-full bg-accent/[0.04] blur-3xl" />
     </div>
-    <div class=" mt-4">
-      <div class=" flex mt-2 p-2 rounded-md bg-gray-200">
-        <div class=" flex-1 text-gray-500 text-sm">{{ t('random.artist_tip') }}</div>
-        <div class=" flex-none button" @click="handleGetRandomArtistTracks">
-          <span class="icon-[solar--user-speak-outline] text-4xl block mx-auto" style="color: #f48e00;"></span>
-          <span class=" block">{{ t('random.artist') }}</span>
-        </div>
-      </div>
-      <div class=" flex mt-2 p-2 rounded-md bg-gray-200">
-        <div class=" flex-1">
-          <div class=" flex-1 text-gray-500 text-sm">{{ t('random.constraint_tip') }}</div>
-          <div class=" mt-2 text-center text-amber-500">
-            <input type="range" min="2" max="9" v-model="trackPerArtist" class=" w-1/2" /> {{ trackPerArtist }}
-          </div>
-        </div>
-        <div class=" flex-none button" @click="handleGetRandomConstraintedArtistTracks">
-          <span class="icon-[solar--magnet-wave-outline] text-4xl block mx-auto" style="color: #f48e00;"></span>
-          <span class=" block">{{ t('random.constraint') }}</span>
-        </div>
-      </div>
-      <div class=" flex mt-2 p-2 rounded-md bg-gray-200">
-        <div class=" flex-1">
-          <div class=" flex-1 text-gray-500 text-sm">{{ t('random.weighted_tip') }}</div>
-          <div class=" mt-2 text-center text-amber-500">
-            <input type="range" min="2" max="9" v-model="weightRateArtist" class=" w-1/2" /> {{ weightRateArtist }}
-          </div>
-        </div>
-        <div class=" flex-none button" @click="handleGetRandomWeightedArtistTracks">
-          <span class="icon-[solar--translation-2-broken] text-4xl block mx-auto" style="color: #f48e00;"></span>
-          <span class=" block">{{ t('random.weighted') }}</span>
-        </div>
-      </div>
-      <div class=" flex mt-2 p-2 rounded-md bg-gray-200">
-        <div class=" flex-1">
-          <div class=" flex-1 text-gray-500 text-sm">{{ t('random.familiar_tip') }}</div>
-          <div class=" mt-2 text-center text-amber-500">
-            <input type="range" min="2" max="9" v-model="weightRateHit" class=" w-1/2" /> {{ weightRateHit }}
-          </div>
-        </div>
-        <div class=" flex-none button" @click="handleGetRandomHitWeightedTracks">
-          <span class="icon-[solar--cup-music-outline] text-4xl block mx-auto" style="color: #f48e00;"></span>
-          <span class=" block">{{ t('random.familiar') }}</span>
-        </div>
+
+    <!-- 粘性导航 -->
+    <div class="sticky top-0 z-30 border-b border-white/5 bg-primary/90 backdrop-blur-md">
+      <div class="mx-auto flex max-w-2xl items-center gap-3 px-4 py-2.5 pt-[calc(env(safe-area-inset-top)+10px)]">
+        <button
+          class="rounded-full p-2 text-fg-secondary transition hover:bg-white/8 hover:text-zinc-50 active:scale-90"
+          :aria-label="t('common.back')"
+          @click="router.back()"
+        >
+          <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
+        </button>
+        <h1 class="min-w-0 flex-1 text-lg font-bold text-fg-primary">{{ t('random.advance') }}</h1>
+        <span class="text-xs tabular-nums text-fg-muted">{{ RANDOM_MODES.length }} {{ t('random.mode_count') }}</span>
       </div>
     </div>
+
+    <main class="mx-auto max-w-2xl px-4 pb-32 pt-4">
+      <TransitionGroup
+        appear
+        enter-active-class="transition duration-500 ease-out"
+        enter-from-class="opacity-0 translate-y-3"
+      >
+        <section
+          v-for="(m, i) in RANDOM_MODES"
+          :key="m.key"
+          class="group mb-3 rounded-xl bg-accent/5 p-4 ring-1 ring-white/5 transition hover:bg-white/[0.05] hover:ring-white/10"
+          :style="{ transitionDelay: `${i * 50}ms` }"
+        >
+          <div class="flex items-center gap-3">
+            <!-- 模式图标 -->
+            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-accent/15 text-accent transition-transform duration-200 group-hover:scale-105">
+              <ModeIcon :icon="m.icon" class="h-5 w-5" />
+            </span>
+
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-sm font-bold text-fg-primary">{{ m.name }}</p>
+              <p class="mt-0.5 text-[11px] text-fg-muted">
+                {{ m.param ? t('random.drag_tip') : t('random.click_tip') }}
+              </p>
+            </div>
+
+            <!-- 带参模式：当前值读出 -->
+            <span class="text-base font-black tabular-nums text-accent">
+              {{ m.param ? m.param.format(paramValues[m.key]) : '' }}
+            </span>
+
+            <!-- 触发键：busy 旋转 / 成功对勾闪现 / 常态三角 -->
+            <button
+              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-primary shadow-lg shadow-accent/20 transition hover:bg-accent/90 active:scale-90 disabled:pointer-events-none disabled:opacity-40"
+              :disabled="busy !== null"
+              :aria-label="t('random.mode_play', { mode: m.name })"
+              @click="playRandom(m)"
+            >
+              <span v-if="busy === m.key" class="h-4 w-4 animate-spin rounded-full border-2 border-border/30 border-t-primary" />
+              <svg v-else-if="playedKey === m.key" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 13l4 4L19 7" />
+              </svg>
+              <svg v-else viewBox="0 0 24 24" class="ml-0.5 h-5 w-5" fill="currentColor"><path d="M6 5.5v13l9-6.5z" /></svg>
+            </button>
+          </div>
+
+          <!-- 调参滑块：仅带参模式渲染 -->
+          <div v-if="m.param" class="mt-4">
+            <input
+              type="range"
+              :min="m.param.min" :max="m.param.max" :step="m.param.step"
+              v-model.number="paramValues[m.key]"
+              :aria-label="`${m.name} ${t('random.weight')}`"
+              class="h-1.5 w-full cursor-pointer appearance-none rounded-full outline-none
+                     [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none
+                     [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-accent
+                     [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:shadow-black/40
+                     [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:duration-150
+                     [&::-webkit-slider-thumb]:hover:scale-110 [&::-webkit-slider-thumb]:active:scale-125
+                     [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:rounded-full
+                     [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-accent"
+              :style="{ background: sliderBg(m) }"
+            />
+            <div class="mt-1.5 flex justify-between text-[10px] tabular-nums text-fg-muted">
+              <span>{{ m.param.format(m.param.min) }}</span>
+              <span>{{ m.param.format(m.param.max) }}</span>
+            </div>
+          </div>
+        </section>
+      </TransitionGroup>
+
+      <p class="pt-2 text-center text-[11px] text-fg-muted">
+        {{ t('random.random_hint') }}
+      </p>
+    </main>
   </div>
 </template>
-
-<style scoped> 
-@reference "tailwindcss";
-.button {
-  @apply ml-2 w-24 aspect-square rounded-md border border-cyan-500 bg-cyan-50 text-lg text-gray-600 font-bold text-center content-center;
-}
-</style>

@@ -76,9 +76,17 @@ export function timeText (dt: dayjs.Dayjs) {
   return t('sentence.time_detail', { year: yrWord, month: monWord, time: tmWord })
 }
 
-export function parseHits(hits: string[] | undefined) {
-  if (!hits) return t('sentence.not_listened')
-  if (hits.length === 0) return t('sentence.not_listened')
+function makePicUrl(dt: dayjs.Dayjs) {
+  const month = String(dt.month() + 1).padStart(2, '0')  // 对齐 public/imgs 文件名：01day.jpg ~ 12night.jpg
+  const tm = dt.hour()
+  let tm_str = tm < 19 && tm > 5 ? 'day' : 'night'
+  return `/imgs/${month}${tm_str}.jpg`
+}
+
+export function parseHits(hits: string[] | undefined): { sentence: string, picUrl: string } {
+  let sentence: string = ''
+  if (!hits) return { sentence: t('sentence.not_listened'), picUrl: '' }
+  if (hits.length === 0) return { sentence: t('sentence.not_listened'), picUrl: '' }
 
   const [earliest, latest] = hits.reduce((acc, hit) => {
     const hitTime = dayjs(hit)
@@ -89,22 +97,24 @@ export function parseHits(hits: string[] | undefined) {
 
   let hitText = `${timeText(earliest)}\n${t('sentence.first_listened')}\n`
   
-  if (earliest.isSame(latest)) return hitText + `\n${t('sentence.then_not_listened')}`
+  if (earliest.isSame(latest)) sentence = hitText + `\n${t('sentence.then_not_listened')}`
 
   const nowTime = dayjs()
   const count = hits.length
+  
   if (count == 2) {
     if (latest.year() === earliest.year() && nowTime.month() - latest.month() < 2) 
-      return `${hitText}\n${t('sentence.recent_listened')}`
-    else return `${hitText}${t('sentence.then_second_listened', { full_time: timeText(latest) })}`
+      sentence = `${hitText}\n${t('sentence.recent_listened')}`
+    else sentence = `${hitText}${t('sentence.then_second_listened', { full_time: timeText(latest) })}`
   } else if (count < 6) {
-    return `${hitText}${t('sentence.then_recent_listened', { full_time: timeText(latest) })}`
+    sentence = `${hitText}${t('sentence.then_recent_listened', { full_time: timeText(latest) })}`
   } else if (count > 5) {
     const mostHitHourNum = getMostHitHourNum(hits)
-    return `${hitText}${t('sentence.then_often_listened', { 
+    sentence = `${hitText}${t('sentence.then_often_listened', { 
       count: count - 1, 
       time: timeWord(mostHitHourNum),
       full_time: timeText(latest)
     })}`
   }
+  return { sentence, picUrl: makePicUrl(earliest) }
 }
