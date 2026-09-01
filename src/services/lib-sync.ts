@@ -7,6 +7,7 @@
  * afterId 为其游标（null = 从头）——续传零特判
  */
 import { reactive } from "vue"
+import { invalidateCache } from "alova"
 import { sleep } from "@/utilies/general"
 import { getLibraryIdb, getMeta, setMeta } from "@/idb"
 import { getSyncPull, getSyncSummary } from "@/apis/methods/sync"
@@ -161,6 +162,7 @@ export async function syncLibrary(opts?: { forceFull?: boolean }): Promise<'full
   } finally {
     syncing = false
     syncState.running = false
+    invalidateCache()
   }
 }
 

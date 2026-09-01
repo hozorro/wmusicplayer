@@ -130,7 +130,9 @@
     "manage_tip": "변경은 즉시 적용됨",
     "empty": "재생목록 없음",
     "empty_tip": "곡 메뉴에서 '재생목록에 추가'로 등록",
-    "create_first": "첫 재생목록 만들기"
+    "create_first": "첫 재생목록 만들기",
+    "crop_tip": "드래그로 위치 조정, 스크롤로 확대/축소",
+    "crop": "자르기"
   },
   "sentence": {
     "greet_night": "밤이 깊었습니다",

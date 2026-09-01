@@ -149,7 +149,7 @@ const tabs = computed(() => [
             type="search"
             :placeholder="t('player.search_tip')"
             enterkeyhint="search"
-            class="w-full rounded-full bg-fg-primary/[0.06] py-2.5 pl-10 pr-16 text-[15px] text-fg-primary outline-none ring-1 ring-fg-primary/10 transition placeholder:text-fg-muted focus:bg-fg-primary/[0.08] focus:ring-2 focus:ring-accent/50 [&::-webkit-search-cancel-button]:hidden"
+            class="w-full rounded-full bg-fg-primary/[0.06] py-2.5 pl-10 pr-16 text-[16px] text-fg-primary outline-none ring-1 ring-fg-primary/10 transition placeholder:text-fg-muted focus:bg-fg-primary/[0.08] focus:ring-2 focus:ring-accent/50 [&::-webkit-search-cancel-button]:hidden"
             @keydown.enter="searchNow"
           />
           <div class="absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-1.5">

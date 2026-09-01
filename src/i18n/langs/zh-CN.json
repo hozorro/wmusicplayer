@@ -130,7 +130,9 @@
     "manage_tip": "调整即时生效",
     "empty": "还没有歌单",
     "empty_tip": "歌单为空——在任意曲目菜单选择'添加到歌单'即可收集",
-    "create_first": "创建第一个歌单"
+    "create_first": "创建第一个歌单",
+    "crop_tip": "拖动调整位置，滚轮缩放",
+    "crop": "裁剪"
   },
   "sentence": {
     "greet_night": "夜深了",
