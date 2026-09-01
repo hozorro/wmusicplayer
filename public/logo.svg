@@ -1,54 +1,31 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- Created with Inkscape (http://www.inkscape.org/) -->
-
-<svg
-   width="32"
-   height="32"
-   viewBox="0 0 32 32"
-   version="1.1"
-   id="svg1"
-   inkscape:version="1.4.2 (f4327f4, 2025-05-13)"
-   sodipodi:docname="logo.svg"
-   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:svg="http://www.w3.org/2000/svg">
-  <sodipodi:namedview
-     id="namedview1"
-     bordercolor="#000000"
-     borderopacity="0.25"
-     inkscape:showpageshadow="2"
-     inkscape:pageopacity="0.0"
-     inkscape:pagecheckerboard="0"
-     inkscape:deskcolor="#d1d1d1"
-     inkscape:document-units="px"
-     inkscape:zoom="5.8281067"
-     inkscape:cx="2.23057"
-     inkscape:cy="25.136808"
-     inkscape:window-width="2240"
-     inkscape:window-height="1311"
-     inkscape:window-x="2391"
-     inkscape:window-y="-9"
-     inkscape:window-maximized="1"
-     inkscape:current-layer="layer1"
-     pagecolor="#ffffff" />
-  <defs
-     id="defs1" />
-  <g
-     inkscape:label="图层 1"
-     inkscape:groupmode="layer"
-     id="layer1">
-    <text
-       style="font-size:24.2182px;font-family:'Bauhaus 93';-inkscape-font-specification:'Bauhaus 93, ';text-align:center;letter-spacing:-1.34576px;fill:#c83737;stroke-width:1.29742"
-       transform="scale(0.84728256,1.1802438)"
-       x="-0.10868117"
-       y="21.627283"
-       id="text10">W</text>
-    <text
-       style="font-size:24.2182px;font-family:'Bauhaus 93';-inkscape-font-specification:'Bauhaus 93, ';text-align:center;letter-spacing:-1.34576px;fill:#008080;stroke-width:1.29742"
-       transform="scale(0.84728256,1.1802438)"
-       x="18.211021"
-       y="21.627283"
-       id="text9">M</text>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0D2137"/>
+      <stop offset="100%" stop-color="#143A5C"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="512" height="512" fill="url(#bgGrad)"/>
+  <!-- 黑胶环 -->
+  <circle cx="256" cy="256" r="188" fill="none" stroke="#00E5FF" stroke-width="2" opacity="0.35"/>
+  <circle cx="256" cy="256" r="162" fill="none" stroke="#00E5FF" stroke-width="1.5" opacity="0.28"/>
+  <circle cx="256" cy="256" r="136" fill="none" stroke="#00E5FF" stroke-width="1.5" opacity="0.28"/>
+  <!-- 4层M/W波形 -->
+  <path d="M 86 256 L 156 180 L 256 220 L 356 180 L 426 256" fill="none" stroke="#00E5FF" stroke-width="3.5" opacity="0.95" stroke-linejoin="round"/>
+  <path d="M 86 256 L 156 332 L 256 292 L 356 332 L 426 256" fill="none" stroke="#00E5FF" stroke-width="3.5" opacity="0.95" stroke-linejoin="round"/>
+  <path d="M 116 256 L 176 194 L 256 226 L 336 194 L 396 256" fill="none" stroke="#00E5FF" stroke-width="3" opacity="0.8" stroke-linejoin="round"/>
+  <path d="M 116 256 L 176 318 L 256 286 L 336 318 L 396 256" fill="none" stroke="#00E5FF" stroke-width="3" opacity="0.8" stroke-linejoin="round"/>
+  <path d="M 146 256 L 196 208 L 256 232 L 316 208 L 366 256" fill="none" stroke="#00E5FF" stroke-width="2.5" opacity="0.65" stroke-linejoin="round"/>
+  <path d="M 146 256 L 196 304 L 256 280 L 316 304 L 366 256" fill="none" stroke="#00E5FF" stroke-width="2.5" opacity="0.65" stroke-linejoin="round"/>
+  <path d="M 176 256 L 216 222 L 256 240 L 296 222 L 336 256" fill="none" stroke="#00E5FF" stroke-width="2" opacity="0.5" stroke-linejoin="round"/>
+  <path d="M 176 256 L 216 290 L 256 272 L 296 290 L 336 256" fill="none" stroke="#00E5FF" stroke-width="2" opacity="0.5" stroke-linejoin="round"/>
+  <!-- 播放按钮 -->
+  <polygon points="242,236 242,276 278,256" fill="#00E5FF"/>
+  <!-- 声波线 -->
+  <line x1="66" y1="246" x2="66" y2="266" stroke="#00E5FF" stroke-width="2" opacity="0.6"/>
+  <line x1="78" y1="240" x2="78" y2="272" stroke="#00E5FF" stroke-width="2" opacity="0.75"/>
+  <line x1="90" y1="246" x2="90" y2="266" stroke="#00E5FF" stroke-width="2" opacity="0.6"/>
+  <line x1="422" y1="246" x2="422" y2="266" stroke="#00E5FF" stroke-width="2" opacity="0.6"/>
+  <line x1="434" y1="240" x2="434" y2="272" stroke="#00E5FF" stroke-width="2" opacity="0.75"/>
+  <line x1="446" y1="246" x2="446" y2="266" stroke="#00E5FF" stroke-width="2" opacity="0.6"/>
 </svg>

@@ -19,12 +19,13 @@ import { getPlaylist } from "@/apis/methods/music";
 import { updatePlaylist, removePlaylistTrack, movePlaylistTrack, bumpPlaylistHit } from "@/idb/app-api";
 import { toast } from "@/services/toast";
 import dayjs from "dayjs";
+import ImageCropper from "@/components/ImageCropper.vue";
 
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const player = usePlayer()
-const { heroStyle, compactStyle, reset: resetCollapse } = useCollapseHeader({ range: 220, parallax: 56 })
+const { heroStyle, compactStyle, isCollapsed, reset: resetCollapse } = useCollapseHeader({ range: 220, parallax: 56 })
 
 const editing = ref(false)
 
@@ -83,7 +84,6 @@ const editTitle = ref('')
 const editComment = ref('')
 const coverPreview = ref<string>()
 const coverFile = ref<File | null>(null)
-const fileInput = ref<HTMLInputElement>()
 const updating = ref(false)
 
 function openEdit() {
@@ -92,13 +92,13 @@ function openEdit() {
   editComment.value = playlist.value.comment
   editOpened.value = true
 }
-function onFileChange(e: Event) {
-  const file = (e.target as HTMLInputElement).files?.[0]
-  if (!file) return
-  if (coverPreview.value?.startsWith('blob:')) URL.revokeObjectURL(coverPreview.value)
+
+function onCrop(file: File) {
   coverFile.value = file
+  if (coverPreview.value?.startsWith('blob:')) {
+    URL.revokeObjectURL(coverPreview.value)
+  }
   coverPreview.value = URL.createObjectURL(file)
-  coverFile.value = file
 }
 
 async function handleSubmit() {
@@ -138,7 +138,7 @@ async function handleSubmit() {
 
     <template v-if="playlist">
       <!-- ═══ hero：封面 + 信息 + 编辑 + 动作 ═══ -->
-      <header :style="heroStyle" class=" will-change-transform">
+      <header :style="heroStyle" :class="{ 'pointer-events-none': isCollapsed }" class=" will-change-transform">
         <div class="mx-auto max-w-2xl px-4 pb-5 pt-[calc(env(safe-area-inset-top)+64px)]">
           <div class="flex items-start gap-4">
             <div class="h-28 w-28 shrink-0 overflow-hidden rounded-xl bg-primary shadow-2xl shadow-primary/60 ring-1 ring-fg-primary/10">
@@ -158,31 +158,32 @@ async function handleSubmit() {
                 {{ dayjs(playlist.created_at).format('YYYY-MM-DD HH:mm') }} {{ t('common.create') }} · {{ playlist.tracks.length }} {{ t('player.unit_track') }}
               </p>
             </div>
-            <button
-              class="shrink-0 rounded-full p-2 text-fg-muted transition hover:bg-fg-primary/8 hover:text-fg-primary active:scale-90"
-              :aria-label="t('playlist.edit')" @click="openEdit"
-            >
-              <svg viewBox="0 0 24 24" class="h-4.5 w-4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z" />
-              </svg>
-            </button>
           </div>
 
-          <div class="mt-5 flex gap-2.5">
+          <div class="mt-5 flex justify-between">
+            <div class="flex-1 flex gap-2.5">
+              <button
+                class=" btn-primary"
+                :disabled="!tracks.length"
+                @click="handlePlayAll"
+              >
+                {{ t('player.playall') }}
+              </button>
+              <button
+                class=" btn-secondary"
+                :disabled="!tracks.length"
+                @click="handlePlayRandom"
+              >
+                {{ t('player.randomplay') }}
+              </button>
+            </div>
             <button
-              class=" btn-primary"
-              :disabled="!tracks.length"
-              @click="handlePlayAll"
-            >
-              {{ t('player.playall') }}
-            </button>
-            <button
-              class=" btn-secondary"
-              :disabled="!tracks.length"
-              @click="handlePlayRandom"
-            >
-              {{ t('player.randomplay') }}
-            </button>
+                class=" btn-secondary"
+                :disabled="!tracks.length"
+                @click="openEdit"
+              >
+                编辑
+              </button>
           </div>
         </div>
       </header>
@@ -280,9 +281,9 @@ async function handleSubmit() {
   >
     <section 
       v-if="editOpened" 
-      class=" absolute inset-x-0 bottom-0 h-[calc(100%-(--spacing(12)))] pb-[env(safe-area-inset-bottom)] rounded-t-2xl bg-primary shadow-2xl shadow-primary/60 ring-1 ring-fg-primary/10""
+      class=" absolute inset-x-0 bottom-0 h-[calc(100%-(--spacing(12)))] pb-[env(safe-area-inset-bottom)] rounded-t-2xl bg-primary shadow-2xl shadow-primary/60 ring-1 ring-fg-primary/10"
     >
-      <div class=" flex justify-baseline pt-3"><div class=" h-1 w-10 rounded-full bg-secondary/80" /></div>
+      <div class=" flex justify-center pt-3"><div class=" h-1 w-10 rounded-full bg-secondary/80" /></div>
       <div class=" flex justify-between px-4 pt-2 pb-4">
         <div class="  flex-none text-lg text-fg-muted" @click="editOpened = false">{{ t('common.cancel') }}</div>
         <div class=" flex-1 text-lg text-center font-semibold">{{ t('playlist.edit') }}</div>
@@ -292,27 +293,14 @@ async function handleSubmit() {
         </div>
       </div>
 
-      <div class=" flex gap-4 px-4">
+      <div class=" mt-4 px-4">
         <div class=" flex gap-4 justify-between">
           <div class=" text-fg-primary">{{ t('playlist.cover') }}</div>
           <div class=" flex-1">
-            <button
-              class=" group relative h-24 w-24 shrink-0 overflow-hidden rounded-xl ring-1 ring-white/10 transition active:scale-95"
-              :class="coverPreview ? '' : 'border-2 border-dashed border-border bg-secondary/50'"
-              @click="fileInput?.click()"
-            >
-              <img v-if="coverPreview" :src="coverPreview" alt="" class="h-full w-full object-cover" />
-              <div v-else class="flex h-full flex-col items-center justify-center gap-1 text-fg-muted">
-                <svg viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" />
-                </svg>
-                <span class="text-[10px] font-medium">{{ t('playlist.cover_tip') }}</span>
-              </div>
-              <div v-if="coverPreview" class="absolute inset-0 flex items-center justify-center bg-primary/50 opacity-0 transition group-hover:opacity-100 group-active:opacity-100">
-                <span class="text-[11px] font-medium text-fg-primary">{{ t('common.change') }}</span>
-              </div>
-            </button>
-            <input type="file" class=" hidden" ref="fileInput" accept="image/*" @change="onFileChange" />
+            <ImageCropper
+              v-model="coverPreview"
+              @crop="onCrop"
+            />
           </div>
         </div>
 

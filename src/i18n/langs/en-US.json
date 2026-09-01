@@ -130,7 +130,9 @@
     "manage_tip": "Changes apply instantly",
     "empty": "No playlists yet",
     "empty_tip": "Add tracks via menu: Add to Playlist",
-    "create_first": "Create your first playlist"
+    "create_first": "Create your first playlist",
+    "crop_tip": "Drag to position, scroll to zoom",
+    "crop": "Crop"
   },
   "sentence": {
     "greet_night": "Late night",

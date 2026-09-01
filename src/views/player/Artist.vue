@@ -80,7 +80,7 @@ async function toggleFavorite() {
     </div>
 
     <!-- ═══ 固定顶栏：返回 + 折叠标题 ═══ -->
-    <div class="fixed inset-x-0 top-0 z-30 bg-gradient-to-b from-fg-primary/75 via-fg-primary/40 to-transparent pb-6 pt-[calc(env(safe-area-inset-top)+10px)]">
+    <div class="fixed inset-x-0 top-0 z-30 bg-gradient-to-b from-bg-primary/75 via-bg-primary/40 to-transparent pb-6 pt-[calc(env(safe-area-inset-top)+10px)]">
       <div class="mx-auto flex max-w-2xl items-center gap-3 px-4">
         <button
           class="shrink-0 rounded-full bg-primary/60 p-2 text-fg-secondary ring-1 ring-primary/10 backdrop-blur-sm transition hover:bg-fg-primary/85 active:scale-90"

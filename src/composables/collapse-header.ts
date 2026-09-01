@@ -1,4 +1,4 @@
-import { computed, onMounted, onUnmounted, ref, type CSSProperties } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 
 export interface CollapseHeaderOptions {
   /** 完成折叠的滚动军力（px）：按 hero 高度调 */
@@ -36,12 +36,14 @@ export function useCollapseHeader(options: CollapseHeaderOptions = {}) {
     window.removeEventListener('scroll', onScroll)
   })
 
-  /** hero：淡出 + 视差后退，60%处关闭指针事件 */
+  /** hero：淡出 + 视差后退 */
   const heroStyle = computed(() => ({
     opacity: String(Math.max(0, 1 - collapse.value * 1.5)),
     transform: `translateY(${(collapse.value * parallax).toFixed(1)}px)`,
-    pointerEvents: (collapse.value > 0.6 ? 'none' : 'auto') as CSSProperties['pointerEvents'],
   }))
+
+  /** hero 是否已折叠（用于条件类名） */
+  const isCollapsed = computed(() => collapse.value > 0.6)
 
   /** 折叠标题：最后 40% 行程淡入 */
   const compactStyle = computed(() => ({
@@ -53,5 +55,5 @@ export function useCollapseHeader(options: CollapseHeaderOptions = {}) {
     collapse.value = 0
   }
 
-  return { collapse, heroStyle, compactStyle, reset }
+  return { collapse, heroStyle, compactStyle, isCollapsed, reset }
 }

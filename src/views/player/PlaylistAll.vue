@@ -6,6 +6,7 @@ import { useI18n } from 'vue-i18n'
 import { getPlaylists } from '@/apis/methods/music'
 import { createPlaylist } from '@/idb/app-api'
 import { toast } from '@/services/toast'
+import ImageCropper from '@/components/ImageCropper.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -16,17 +17,15 @@ const openCreate = ref(false)
 const title = ref('')
 const comment = ref('')
 const coverPreview = ref<string>()
-const fileInput = ref<HTMLInputElement>()
 const coverFile = ref<File | null>(null)
 const creating = ref(false)
 
-function onFileChange(e: Event) {
-  const file = (e.target as HTMLInputElement).files?.[0]
-  if (!file) return
-  if (coverPreview.value?.startsWith('blob:')) URL.revokeObjectURL(coverPreview.value)
+function onCrop(file: File) {
   coverFile.value = file
+  if (coverPreview.value?.startsWith('blob:')) {
+    URL.revokeObjectURL(coverPreview.value)
+  }
   coverPreview.value = URL.createObjectURL(file)
-  coverFile.value = file
 }
 
 
@@ -130,30 +129,17 @@ async function handleSubmit() {
         <div class=" flex gap-4 justify-between">
           <div class=" text-fg-primary">{{ t('playlist.cover') }}</div>
           <div class=" flex-1">
-            <button
-              class=" group relative h-24 w-24 shrink-0 overflow-hidden rounded-xl ring-1 ring-white/10 transition active:scale-95"
-              :class="coverPreview ? '' : 'border-2 border-dashed border-border bg-border/50'"
-              @click="fileInput?.click()"
-            >
-              <img v-if="coverPreview" :src="coverPreview" alt="" class="h-full w-full object-cover" />
-              <div v-else class="flex h-full flex-col items-center justify-center gap-1 text-fg-secondary">
-                <svg viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" />
-                </svg>
-                <span class="text-[10px] font-medium text-fg-secondary">{{ t('playlist.cover_tip') }}</span>
-              </div>
-              <div v-if="coverPreview" class="absolute inset-0 flex items-center justify-center bg-primary/50 opacity-0 transition group-hover:opacity-100 group-active:opacity-100">
-                <span class="text-[11px] font-medium text-fg-primary">{{ t('common.change') }}</span>
-              </div>
-            </button>
-            <input type="file" class=" hidden" ref="fileInput" accept="image/*" @change="onFileChange" />
+            <ImageCropper
+              v-model="coverPreview"
+              @crop="onCrop"
+            />
           </div>
         </div>
         <div class=" flex gap-4 mt-4 justify-between">
           <div class=" text-fg-primary">{{ t('playlist.title') }}</div>
           <input 
             v-model.trim="title" maxlength="50" 
-            class=" flex-1 rounded-lg bg-secondary/50 px-3.5 py-2 text-sm text-fg-primary outline-none ring-1 ring-fg-primary/10 transition placeholder:text-fg-secondary focus:ring-2 focus:ring-accent/60" 
+            class=" flex-1 rounded-lg bg-secondary/50 px-3.5 py-2 text-[16px] text-fg-primary outline-none ring-1 ring-fg-primary/10 transition placeholder:text-fg-secondary focus:ring-2 focus:ring-accent/60" 
             :placeholder="`${t('playlist.title_placeholder')} *`"
           />
         </div>
@@ -161,7 +147,7 @@ async function handleSubmit() {
           <div class=" text-fg-primary">{{ t('playlist.comment') }}</div>
           <textarea 
             v-model="comment" rows="2" maxlength="200" :placeholder="t('playlist.comment_placeholder')"
-            class=" flex-1 rounded-lg bg-secondary/50 px-3.5 py-2 text-sm text-fg-primary outline-none ring-1 ring-fg-primary/10 transition placeholder:text-fg-secondary focus:ring-2 focus:ring-accent/60"
+            class=" flex-1 rounded-lg bg-secondary/50 px-3.5 py-2 text-[16px] text-fg-primary outline-none ring-1 ring-fg-primary/10 transition placeholder:text-fg-secondary focus:ring-2 focus:ring-accent/60"
           />
         </div>
       </div>

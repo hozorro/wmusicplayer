@@ -61,6 +61,7 @@ async function addToPlaylist(pId: number) {
   addPlaylistTrack(pId, s.track.id)
   invalidateCache(getPlaylist(pId))
   addingId.value = null 
+  closeEntityMenu()
 }
 
 function goToPlaylists() {
