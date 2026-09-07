@@ -8,7 +8,7 @@ import { idbReady } from '@/services/idb-state';
 import RouteMenuItem from '@/components/RouteMenuItem.vue';
 import { langsMap, loadLocaleMessages } from '@/i18n';
 import { useI18n } from 'vue-i18n';
-import { SW_VERSION } from '@/sw/sw';
+import { SW_VERSION } from '@/constants/app-info';
 
 const { t } = useI18n();
 const { theme, toggleTheme } = useTheme();
