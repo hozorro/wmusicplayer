@@ -73,7 +73,7 @@ async function resolveFolderTracks(c: CollectionItem): Promise<PlayTrack[]> {
     <!-- 粘性头部：导航栏 + 面包屑 -->
     <div class=" sticky top-0 z-30 border-b border-fg-primary/5 backdrop-blur-md">
       <!-- 导航栏 -->
-      <div class=" mx-auto flex max-w-2xl items-center gap-3 px-4 pb-1.5 pt-[calc(env(safe-area-inset-top)+10px)]">
+      <div class=" mx-auto flex max-w-2xl items-center gap-2 pl-2 pr-4 pb-1.5 pt-[calc(env(safe-area-inset-top)+10px)]">
         <button
           class=" shrink-0 rounded-full p-2 text-fg-secondary transition hover:bg-fg-primary/8 hover:text-fg-primary active:scale-90"
           :aria-label="t('common.back')"
@@ -82,7 +82,7 @@ async function resolveFolderTracks(c: CollectionItem): Promise<PlayTrack[]> {
           <span class=" icon-[solar--alt-arrow-left-linear]"></span>
         </button>
         <h1 class=" min-w-0 flex-1 truncate text-lg font-bold text-fg-primary">
-          {{ folder?.name ?? t('player.folder') }}
+          {{ folder?.name || t('player.folder') }}
         </h1>
       </div>
 

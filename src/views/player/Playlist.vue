@@ -25,7 +25,7 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const player = usePlayer()
-const { heroStyle, compactStyle, isCollapsed, reset: resetCollapse } = useCollapseHeader({ range: 220, parallax: 56 })
+const { heroStyle, compactStyle, collapse, isCollapsed, reset: resetCollapse } = useCollapseHeader({ range: 220, parallax: 56 })
 
 const editing = ref(false)
 
@@ -122,17 +122,24 @@ async function handleSubmit() {
 <template>
   <div class=" min-h-dvh">
     <!-- 固定顶栏 -->
-    <div class=" fixed inset-x-0 top-0 z-30 bg-gradient-to-b from-primary/60 via-primary/30 to-transparent pb-6 pt-[calc(env(safe-area-inset-top)+10px)]">
+    <div class=" fixed inset-x-0 top-0 z-30 backdrop-blur-sm pb-4 pt-[calc(env(safe-area-inset-top)+10px)]">
       <div class=" mx-auto flex max-w-2xl items-center gap-3 px-4">
         <button
-          class="shrink-0 rounded-full bg-primary/30 p-2 text-fg-primary ring-1 ring-fg-primary/10 transition hover:bg-primary/50 active:scale-90"
+          class="shrink-0 rounded-full bg-primary/30 p-2 text-fg-primary transition hover:bg-primary/50 active:scale-90"
           :aria-label="t('common.back')" @click="router.back()"
         >
           <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
         </button>
-        <h2 :style="compactStyle" class="min-w-0 flex-1 truncate text-base font-bold text-fg-primary">
-          {{ playlist?.title ?? '...' }}
+        <h2 :style="collapse > 0.3 ? compactStyle : {}" class="min-w-0 flex-1 truncate text-base font-bold text-fg-primary">
+          {{ collapse > 0.3 ? playlist?.title ?? '...' : t('player.playlist') }}
         </h2>
+        <button
+          class=" btn-secondary px-2 py-1"
+          :disabled="!tracks.length"
+          @click="openEdit"
+        >
+          编辑
+        </button>
       </div>
     </div>
 
@@ -177,13 +184,6 @@ async function handleSubmit() {
                 {{ t('player.randomplay') }}
               </button>
             </div>
-            <button
-                class=" btn-secondary"
-                :disabled="!tracks.length"
-                @click="openEdit"
-              >
-                编辑
-              </button>
           </div>
         </div>
       </header>

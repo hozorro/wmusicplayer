@@ -124,7 +124,7 @@ const tabs = computed(() => [
   <div class="min-h-dvh">
     <!-- ═══ 粘性头部：返回 + 搜索输入 + tabs ═══ -->
     <div class="sticky top-0 z-30 border-b border-fg-primary/5 backdrop-blur-md">
-      <div class="mx-auto flex max-w-2xl items-center gap-2.5 px-4 py-2.5 pt-[calc(env(safe-area-inset-top)+10px)]">
+      <div class="mx-auto flex max-w-2xl items-center gap-2.5 pl-2 pr-4 py-2.5 pt-[calc(env(safe-area-inset-top)+10px)]">
         <button
           class="shrink-0 rounded-full p-2 text-fg-secondary transition hover:bg-fg-primary/8 hover:text-fg-primary active:scale-90"
           :aria-label="t('common.back')"

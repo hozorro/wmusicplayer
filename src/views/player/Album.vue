@@ -30,7 +30,7 @@ const playTracks = computed(() =>
 )
 
 // —— 折叠页头：单一 collapse ref(0..1)驱动全部插值 ——
-const { heroStyle, compactStyle, reset:resetCollapse } = useCollapseHeader({ range: 220 })
+const { heroStyle, compactStyle, isCollapsed, reset:resetCollapse } = useCollapseHeader({ range: 220 })
 
 // —— artists 展开 / 收起 ——
 const ARTIST_VISIBLE = 3
@@ -59,10 +59,13 @@ watch(() => route.params.id, async id => {
     </div>
 
     <!-- 固定顶栏：返回键 + 折叠标题 -->
-    <div class=" fixed inset-x-0 top-0 z-30 bg-gradient-to-b from-fg-primary/75 via-fg-primary/40 to-transparent pb-6 pt-[calc(env(safe-area-inset-top)+10px)]">
+    <div 
+      class=" fixed inset-x-0 top-0 z-30 pb-6 pt-[calc(env(safe-area-inset-top)+10px)]"
+      :class="isCollapsed ? 'backdrop-blur-md' : 'bg-gradient-to-b from-fg-primary/30 via-fg-primary/10 to-transparent'"
+    >
       <div class=" mx-auto flex max-w-2xl items-center gap-3 px-4">
         <button
-          class=" shrink-0 rounded-full bg-primary/60 p-2 text-fg-secondary ring-1 ring-primary/10 backdrop-blur-sm transition hover:bg-primary/85 active:scale-90"
+          class=" shrink-0 rounded-full p-2 text-fg-secondary ring-1 ring-primary/10 backdrop-blur-sm transition hover:bg-primary/85 active:scale-90"
           :aria-label="t('common.back')"
           @click="router.back()"
         >
@@ -70,7 +73,7 @@ watch(() => route.params.id, async id => {
             <path d="M15 6l-6 6 6 6" />
           </svg>
         </button>
-        <h2 :style="compactStyle" class=" min-w-0 flex-1 truncate text-base font-bold text-fg-primary">
+        <h2 :style="compactStyle" class=" min-w-0 flex-1 truncate text-base font-bold text-fg-primary backdrop-blur-sm">
           {{ album?.title ?? '...' }}
         </h2>
       </div>

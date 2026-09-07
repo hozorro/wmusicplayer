@@ -11,7 +11,8 @@ import { routeApi } from './router';
 // 即使 sw.ts 源文件无变化，__WB_MANIFEST 的 revision 变化也会反映到构建产物
 // 注意：__SW_VERSION__ 会被 @rollup/plugin-replace 替换为 JSON 字符串（含引号）
 declare const __SW_VERSION__: string;
-const SW_VERSION = __SW_VERSION__;
+// 在开发环境中，__SW_VERSION__ 可能未定义，使用默认值
+export const SW_VERSION = typeof __SW_VERSION__ !== 'undefined' ? __SW_VERSION__ : 'dev';
 declare let self: ServiceWorkerGlobalScope & { __WB_MANIFEST: unknown[]; __SW_VERSION__: string }
 
 // 版本号写入全局，便于调试时确认当前 SW 版本

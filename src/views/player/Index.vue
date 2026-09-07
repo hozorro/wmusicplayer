@@ -114,7 +114,7 @@ async function playRandom(m: RandomMode) {
   <div class=" min-h-svh">
     <!-- 粘性顶栏：假搜索框 + settings -->
     <div class=" sticky top-0 z-30 backdrop-blur-md">
-      <div class=" mx-auto flex max-w-2xl items-center gap-3 px-4 pb-3 pt-[calc(env(safe-area-inset-top)+12px)]">
+      <div class=" mx-auto flex max-w-2xl items-center gap-2.5 px-4 pb-3 pt-[calc(env(safe-area-inset-top)+12px)]">
         <button
           class="group flex min-w-0 flex-1 items-center gap-2.5 rounded-full bg-white/20 px-4 py-2.5 ring-1 ring-white/10 transition hover:bg-white/[0.09] hover:ring-white/20 active:scale-[0.98]"
           :aria-label="t('player.search')"
@@ -154,7 +154,7 @@ async function playRandom(m: RandomMode) {
           enter-active-class="transition duration-500 ease-out"
           enter-from-class="opacity-0 translate-y-2"
         >
-          <div v-if="playlistsLoaded" class=" flex gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div v-if="playlistsLoaded" class=" flex gap-3 overflow-x-auto px-4 pt-2 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <MediaCard
               :title="t('player.favorited')" :subtitle="t('player.favorited_tracks')"
               :cover="favTracksCover" badge="heart" to="/favourite"

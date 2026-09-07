@@ -6,6 +6,7 @@ import { useRouter } from 'vue-router'
 import type { PlayTrack } from '@/player/types.ts'
 import type { CollectionKind, CollectionItem } from '@/player/menu/types'
 import EntityMenuButton from './EntityMenuButton.vue'
+import { useMusicStore } from '@/store/music.ts'
 
 const props = defineProps<{ 
   kind: CollectionKind
@@ -14,6 +15,14 @@ const props = defineProps<{
 }>()
 
 const router = useRouter()
+const musicStore = useMusicStore()
+
+function handlePush(c: CollectionItem) {
+  if (c.to instanceof Object && (c.to as { name: string, params: { id: string } }).name === 'album') {
+    musicStore.setArtistPageTab('albums')
+  }
+  router.push(c.to)
+}
 </script>
 
 <template>
@@ -35,7 +44,7 @@ const router = useRouter()
           </svg>
         </div>
 
-        <button class=" min-w-0 flex-1 py-0.5 text-left" @click="router.push(c.to)">
+        <button class=" min-w-0 flex-1 py-0.5 text-left" @click="handlePush(c)">
           <p class=" truncate text-sm font-medium text-fg-primary">{{ c.title }}</p>
           <p v-if="c.subinfo" class=" mt-0.5 truncate text-xs text-fg-muted">{{ c.subinfo }}</p>
         </button>

@@ -20,7 +20,7 @@ const router = useRouter()
 const { t } = useI18n()
 const player = usePlayer()
 const playQueue = usePlayerQueue()
-const { heroStyle, compactStyle, reset } = useCollapseHeader({ range: 160, parallax: 40 })
+const { heroStyle, compactStyle, collapse, reset } = useCollapseHeader({ range: 160, parallax: 40 })
 
 const tracks = ref<PlayTrack[] | null>(null)
 
@@ -39,16 +39,16 @@ const loaded = computed(() => tracks.value !== null)
   <div class="min-h-dvh">
     <!-- 固定顶栏：返回 + 折叠标题 -->
     <div class="fixed inset-x-0 top-0 z-30 bg-gradient-to-b from-primary/60 via-primary/30 to-transparent pb-6 pt-[calc(env(safe-area-inset-top)+10px)]">
-      <div class="mx-auto flex max-w-2xl items-center gap-3 px-4">
+      <div class="mx-auto flex max-w-2xl items-center gap-2 pl-2 pr-4">
         <button
-          class="shrink-0 rounded-full bg-primary/30 p-2 text-fg-primary ring-1 ring-fg-primary/10 transition hover:bg-primary/50 active:scale-90"
+          class="shrink-0 rounded-full bg-primary/30 p-2 text-fg-primary transition hover:bg-primary/50 active:scale-90"
           :aria-label="t('common.back')"
           @click="router.back()"
         >
           <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
         </button>
-        <h2 :style="compactStyle" class="min-w-0 flex-1 truncate text-base font-bold text-fg-primary">
-          {{ t('player.favorited_tracks') }}
+        <h2 :style="collapse > 0.3 ? compactStyle : {}" class="min-w-0 flex-1 truncate text-base font-bold text-fg-primary">
+          {{ collapse > 0.3 ? t('player.favorited_tracks') : t('player.playlist') }}
         </h2>
       </div>
     </div>
