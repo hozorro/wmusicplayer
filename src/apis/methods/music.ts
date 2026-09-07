@@ -9,7 +9,10 @@ export const login = (username: string, password: string) => {
     password,
     device_id: TokenStorage.getDeviceId(),
   })
-  method.meta = { authRole: 'login' }
+  method.meta = { 
+    authRole: 'login',
+    errorDisplay: 'form'
+  }
   return method;
 }
 export const refreshToken = (refresh_token: string) => { 
@@ -19,6 +22,9 @@ export const refreshToken = (refresh_token: string) => {
 }
 export const getCurrentUser = () => { 
   return generalAlova.Get("/auth/me")
+}
+export const logout = () => { 
+  return generalAlova.Post("/auth/logout")
 }
 
 // #region Album
@@ -196,6 +202,9 @@ export const searchLibrary = (kw: string, limit?: number) => {
 export const getRandomArtistTracks = (num: number) => { 
   return generalAlova.Get<Track[]>('/music/track/rndartisttracks?num=' + num + '&numpa=1', {name: 'getRandomArtistTracks', cacheFor: 0})
 }
+export const getRndUnhitTracks = (num: number) => { 
+  return generalAlova.Get<Track[]>('/music/track/rndunhittracks?num=' + num, {name: 'getRndUnhitTracks', cacheFor: 0})
+}
 export const getRandomConstraintedArtistTracks = (num: number, numpa: number) => { 
   return generalAlova.Get<Track[]>('/music/track/rndartisttracks?num=' + num + '&numpa=' + numpa, {name: 'getRandomConstraintedArtistTracks', cacheFor: 0})
 }
@@ -209,6 +218,7 @@ export const getModedRandomTracks = (key: RandomModeKey, param?: number) => {
   switch (key) {
     case "pure": return getRandomTracks()
     case "artist-r": return getRandomArtistTracks(50)
+    case "unhit": return getRndUnhitTracks(50)
     case "heat": return getRandomHitsWeightedTracks(50, param ?? 2)
     case "artist-c": return getRandomConstraintedArtistTracks(50, param ?? 2)
     case "artist-w": return getRandomWeightedArtistTracks(50, param ?? 2)

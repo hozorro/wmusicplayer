@@ -22,7 +22,7 @@ onMounted(async () => {
 <template>
   <div class="min-h-dvh">
     <!-- 粘性导航（standalone PWA 无浏览器返回手势，返回键必须常驻）-->
-    <div class="sticky top-0 z-30 border-b border-fg-primary/5 bg-primary">
+    <div class="sticky top-0 z-30 border-b border-fg-primary/5 backdrop-blur-md">
       <div class="mx-auto flex max-w-2xl items-center gap-3 px-4 py-2.5 pt-[calc(env(safe-area-inset-top)+10px)]">
         <button
           class="rounded-full p-2 text-fg-secondary transition hover:bg-fg-primary/85 hover:text-fg-primary active:scale-90"

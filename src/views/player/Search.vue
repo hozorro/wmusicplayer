@@ -122,13 +122,8 @@ const tabs = computed(() => [
 
 <template>
   <div class="min-h-dvh">
-    <!-- 氛围底色：顶部冷调微光，工具页气质 -->
-    <div class="pointer-events-none fixed inset-0 -z-10" aria-hidden="true">
-      <div class="absolute -top-36 left-1/2 h-80 w-[130%] -translate-x-1/2 rounded-[100%] bg-sky-300/[0.05] blur-3xl" />
-    </div>
-
     <!-- ═══ 粘性头部：返回 + 搜索输入 + tabs ═══ -->
-    <div class="sticky top-0 z-30 border-b border-fg-primary/5 bg-primary/90 backdrop-blur-md">
+    <div class="sticky top-0 z-30 border-b border-fg-primary/5 backdrop-blur-md">
       <div class="mx-auto flex max-w-2xl items-center gap-2.5 px-4 py-2.5 pt-[calc(env(safe-area-inset-top)+10px)]">
         <button
           class="shrink-0 rounded-full p-2 text-fg-secondary transition hover:bg-fg-primary/8 hover:text-fg-primary active:scale-90"
@@ -149,7 +144,7 @@ const tabs = computed(() => [
             type="search"
             :placeholder="t('player.search_tip')"
             enterkeyhint="search"
-            class="w-full rounded-full bg-fg-primary/[0.06] py-2.5 pl-10 pr-16 text-[16px] text-fg-primary outline-none ring-1 ring-fg-primary/10 transition placeholder:text-fg-muted focus:bg-fg-primary/[0.08] focus:ring-2 focus:ring-accent/50 [&::-webkit-search-cancel-button]:hidden"
+            class="w-full rounded-full bg-fg-primary/[0.06] py-1 pl-10 pr-16 text-[16px] text-fg-primary outline-none ring-1 ring-fg-primary/10 transition placeholder:text-fg-muted focus:bg-fg-primary/[0.08] focus:ring-2 focus:ring-accent/50 [&::-webkit-search-cancel-button]:hidden"
             @keydown.enter="searchNow"
           />
           <div class="absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-1.5">

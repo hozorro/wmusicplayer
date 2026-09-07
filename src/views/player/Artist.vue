@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { useMusicStore } from "@/store/music";
 import AmbientBackground from "@/components/AmbientBackground.vue";
 import TrackList from "@/components/TrackList.vue";
 import CollectionList from "@/components/CollectionList.vue";
@@ -16,11 +17,11 @@ import { toggleArtistFav } from "@/idb/app-api";
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
+const musicStore = useMusicStore();
 const player = usePlayer();
 
 const artist = ref<ArtistInfo | null>(null)
 const artistFav = ref(false)
-const activeTab = ref<'tracks' | 'albums'>('tracks')
 
 // ── 折叠页头：与 Album 同一插值模型（A52），视差量加大以匹配全出血 hero ──
 const { heroStyle, compactStyle, reset:resetCollapse } = useCollapseHeader({ range: 260, parallax: 70 })
@@ -29,7 +30,7 @@ const { heroStyle, compactStyle, reset:resetCollapse } = useCollapseHeader({ ran
 watch(() => route.params.id, async id => {
   if (!id) return
   artist.value = null
-  activeTab.value = 'tracks'
+  musicStore.setArtistPageTab('tracks')
   resetCollapse()
   window.scrollTo({ top: 0, behavior: 'smooth' })
   artist.value = await getArtist(Number(id)).send()
@@ -48,7 +49,7 @@ const toAlbumItem = (a: Album) => ({
   id: a.id,
   title: a.title,
   cover: a.cover,
-  subinfo: a.track_count !== undefined ? `${a.track_count} ${t('unit_tracks')}` : '',
+  subinfo: a.track_count !== undefined ? `${a.track_count} ${t('player.unit_track')}` : '',
   to: { name: 'album', params: { id: a.id } }
 })
 const mainAlbumItems = computed(() => artist.value?.main_albums.map(toAlbumItem) ?? [])
@@ -166,10 +167,10 @@ async function toggleFavorite() {
             v-for="tab in ([['tracks', 'Top 20'], ['albums', t('player.album')]] as const)"
             :key="tab[0]"
             class="flex-1 rounded-full py-1.5 text-sm font-medium transition"
-            :class="activeTab === tab[0]
+            :class="musicStore.artistPageTab === tab[0]
               ? 'bg-fg-primary text-primary shadow-sm'
               : 'text-fg-muted hover:text-fg-secondary'"
-            @click="activeTab = tab[0]"
+            @click="musicStore.setArtistPageTab(tab[0])"
           >
             {{ tab[1] }}
           </button>
@@ -183,7 +184,7 @@ async function toggleFavorite() {
           leave-to-class="opacity-0 -translate-y-1"
         >
           <!-- Top 20：序号即排名 -->
-          <div v-if="activeTab === 'tracks'" key="tracks" class="pt-4">
+          <div v-if="musicStore.artistPageTab === 'tracks'" key="tracks" class="pt-4">
             <TrackList v-if="topTracks.length" :tracks="topTracks" :show-art="false" />
             <p v-else class="py-16 text-center text-sm text-fg-muted">{{ t('player.no_tracks') }}</p>
           </div>

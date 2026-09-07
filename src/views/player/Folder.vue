@@ -71,7 +71,7 @@ async function resolveFolderTracks(c: CollectionItem): Promise<PlayTrack[]> {
 <template>
   <div class=" min-h-svh">
     <!-- 粘性头部：导航栏 + 面包屑 -->
-    <div class=" sticky top-0 z-30 border-b border-fg-primary/5 bg-primary">
+    <div class=" sticky top-0 z-30 border-b border-fg-primary/5 backdrop-blur-md">
       <!-- 导航栏 -->
       <div class=" mx-auto flex max-w-2xl items-center gap-3 px-4 pb-1.5 pt-[calc(env(safe-area-inset-top)+10px)]">
         <button

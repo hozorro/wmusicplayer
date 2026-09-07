@@ -16,7 +16,7 @@ import {
   idbGetRandomTracks, idbGetArtistRandomTracks, idbGetGenreRandomTracks,
   idbGetLatestTracks, idbGetHotTracks, idbGetCollectionTracks,
   idbGetRndArtistSctdTracks, idbGetWgtRndArtistTracks, idbGetWgtRndTracks,
-  idbGetTrackHits
+  idbGetTrackHits, idbGetRndUnhitTracks
 } from '@/idb/sw-api/endpoints/tracks'
 import { idbFavoritedTracks, idbFavoritedTrackIds } from '@/idb/sw-api/endpoints/tracks'
 
@@ -31,7 +31,7 @@ import type {
   getRandomConstraintedArtistTracks, getRandomWeightedArtistTracks, getRandomHitsWeightedTracks,
   getFavoriteTracks, getFavoriteTrackIds, 
   searchLibrary,
-  getTrackHits
+  getTrackHits, getRndUnhitTracks
 } from '@/apis/methods/music'
 
 /**
@@ -118,6 +118,10 @@ route('/api/music/track/collection/:ctype/:cid', idbGetCollectionTracks)
 // '/music/track/rndartisttracks?num=' + num + '&numpa=1': getRandomConstraintedArtistTracks
 export type remoteGetRandomArtistTracks = typeof getRandomConstraintedArtistTracks
 route('/api/music/track/rndartisttracks', idbGetRndArtistSctdTracks)
+
+// "/music/track/rndunhittracks?num=" + num: getRndUnhitTracks
+export type remoteGetRndUnhitTracks = typeof getRndUnhitTracks
+route('/api/music/track/rndunhittracks', idbGetRndUnhitTracks)
 
 // '/music/track/rndwgttracks?num=' + num + '&weight=' + weightRate: getRandomWeightedArtistTracks
 export type remoteGetRandomWeightedArtistTracks = typeof getRandomWeightedArtistTracks

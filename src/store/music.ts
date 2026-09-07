@@ -45,6 +45,12 @@ export const useMusicStore = defineStore("music", () => {
     // 主题变化时同步到 <html class="dark">
     watch(isDark, applyThemeToDom, { immediate: true })
   }
+
+  /* App status */
+  const artistPageTab = ref<'tracks' | 'albums'>('tracks')
+  function setArtistPageTab(tab: 'tracks' | 'albums') {
+    artistPageTab.value = tab
+  }
   
   /* Player params */
   const params = ref<PlayerOptions>({
@@ -70,6 +76,8 @@ export const useMusicStore = defineStore("music", () => {
     setTheme,
     toggleTheme,
     initTheme,
+    artistPageTab,
+    setArtistPageTab,
     params,
     setLocale,
     getParam,

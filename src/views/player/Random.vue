@@ -52,14 +52,8 @@ async function playRandom(m: RandomMode) {
 
 <template>
   <div class="min-h-dvh">
-    <!-- 氛围底色：左上暖光 + 右下微光，与首页单暖光区分 -->
-    <div class="pointer-events-none fixed inset-0 -z-10" aria-hidden="true">
-      <div class="absolute -left-24 -top-32 h-96 w-96 rounded-full bg-accent/[0.05] blur-3xl" />
-      <div class="absolute -bottom-32 -right-24 h-96 w-96 rounded-full bg-accent/[0.04] blur-3xl" />
-    </div>
-
     <!-- 粘性导航 -->
-    <div class="sticky top-0 z-30 border-b border-white/5 bg-primary/90 backdrop-blur-md">
+    <div class="sticky top-0 z-30 border-b border-white/5 backdrop-blur-md">
       <div class="mx-auto flex max-w-2xl items-center gap-3 px-4 py-2.5 pt-[calc(env(safe-area-inset-top)+10px)]">
         <button
           class="rounded-full p-2 text-fg-secondary transition hover:bg-white/8 hover:text-zinc-50 active:scale-90"
@@ -94,7 +88,7 @@ async function playRandom(m: RandomMode) {
             <div class="min-w-0 flex-1">
               <p class="truncate text-sm font-bold text-fg-primary">{{ m.name }}</p>
               <p class="mt-0.5 text-[11px] text-fg-muted">
-                {{ m.param ? t('random.drag_tip') : t('random.click_tip') }}
+                {{ m.description }}
               </p>
             </div>
 

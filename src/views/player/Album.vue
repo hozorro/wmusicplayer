@@ -145,7 +145,7 @@ watch(() => route.params.id, async id => {
         <h2 class=" pb-2 pt-7 text-[11px] font-semibold uppercase tracking-[0.2em] text-fg-muted">
           {{ t('player.track') }} <span class=" tabular-nums"> {{ playTracks.length }}</span>
         </h2>
-        <TrackList :tracks="playTracks" :show-art="true" />
+        <TrackList :tracks="playTracks" :show-art="false" />
       </template>
 
       <!-- skeleton -->

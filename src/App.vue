@@ -2,7 +2,7 @@
 </script>
 
 <template>
-  <div class=" container text-fg-primary">
+  <div class=" container">
     <RouterView />
   </div>
 </template>

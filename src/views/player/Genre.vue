@@ -190,7 +190,7 @@ async function playRandomTracks() {
           {{ t('player.loading') }}
         </div>
         <p v-else-if="isLastPage && tracks.length" class="py-6 text-center text-xs text-fg-secondary">
-          {{ t('common..page_load_complete') }} {{ tracks.length }} {{ t('player.unit_track') }}
+          {{ t('common.page_load_complete') }} {{ tracks.length }} {{ t('player.unit_track') }}
         </p>
       </main>
     </template>
