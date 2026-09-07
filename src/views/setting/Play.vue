@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useRouter } from 'vue-router';
 import { useMusicStore } from '@/store/music';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n()
+const router = useRouter()
 
 const store = useMusicStore();
 const playRatio = computed({
@@ -39,9 +41,13 @@ const syncBatchSize = computed({
 <template>
   <div class=" px-2 pt-[calc(env(safe-area-inset-top)+10px)]">
     <div class=" flex justify-between">
-      <router-link to="/setting" class=" flex-none text-lg font-semibold">
-        <span class=" icon-[solar--alt-arrow-left-linear] align-middle text-gray-600"></span>
-      </router-link>
+      <button
+        class="shrink-0 rounded-full p-2 text-fg-secondary ring-1 ring-primary/10 backdrop-blur-sm transition hover:bg-fg-primary/85 active:scale-90"
+        :aria-label="t('common.back')"
+        @click="router.back()"
+      >
+        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
+      </button>
       <div class=" flex-1 text-lg font-semibold text-right">{{ t('settings.play.item') }}</div>
     </div>
     <div class=" mt-2 p-2">

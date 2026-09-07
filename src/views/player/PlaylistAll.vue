@@ -49,17 +49,17 @@ async function handleSubmit() {
 
 <template>
   <div class="min-h-dvh">
-    <div class="sticky top-0 z-30 border-b border-white/5">
-      <div class="mx-auto flex max-w-2xl items-center gap-3 px-4 py-2.5 pt-[calc(env(safe-area-inset-top)+10px)]">
+    <div class="sticky top-0 z-30 border-b border-white/5 backdrop-blur-md">
+      <div class="mx-auto flex max-w-2xl items-center gap-2 pl-2 pr-4 py-2.5 pt-[calc(env(safe-area-inset-top)+10px)]">
         <button
-          class="rounded-full p-2 text-fg-primary transition hover:bg-white/8 hover:text-fg-primary active:scale-90"
+          class="rounded-full p-1 text-fg-primary transition hover:bg-white/8 hover:text-fg-primary active:scale-90"
           :aria-label="t('common.back')" @click="router.back()"
         >
           <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
         </button>
         <h1 class="min-w-0 flex-1 text-lg font-bold text-fg-primary">{{ t('player.playlist') }}</h1>
         <button
-          class="rounded-full bg-accent p-2 text-fg-primary shadow-lg shadow-accent/20 transition hover:bg-accent/90 active:scale-90"
+          class="rounded-full bg-accent p-1 text-fg-primary shadow-lg shadow-accent/20 transition hover:bg-accent/90 active:scale-90"
           :aria-label="t('playlist.create')" @click="openCreate = true"
         >
           <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14" /></svg>

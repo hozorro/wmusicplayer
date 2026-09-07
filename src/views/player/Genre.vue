@@ -118,7 +118,7 @@ async function playRandomTracks() {
     <div class="fixed inset-x-0 top-0 z-30 bg-gradient-to-b from-primary/60 via-primary/30 to-transparent pb-6 pt-[calc(env(safe-area-inset-top)+10px)]">
       <div class="mx-auto flex max-w-2xl items-center gap-3 px-4">
         <button
-          class="shrink-0 rounded-full bg-primary/30 p-2 text-fg-secondary ring-1 ring-fg-primary/10 transition hover:bg-primary/50 active:scale-90"
+          class="shrink-0 rounded-full bg-primary/30 p-2 text-fg-secondary transition hover:bg-primary/50 active:scale-90"
           :aria-label="t('common.back')"
           @click="router.back()"
         >

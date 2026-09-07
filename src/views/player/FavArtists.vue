@@ -21,7 +21,7 @@ onMounted(async () => {
   <div class="min-h-dvh">
     <!-- 粘性导航 -->
     <div class="sticky top-0 z-30 border-b border-fg-primary/5">
-      <div class="mx-auto flex max-w-2xl items-center gap-3 px-4 py-2.5 pt-[calc(env(safe-area-inset-top)+10px)]">
+      <div class="mx-auto flex max-w-2xl items-center gap-2 pl-2 pr-4 py-2.5 pt-[calc(env(safe-area-inset-top)+10px)]">
         <button
           class="rounded-full p-2 text-fg-secondary transition hover:bg-fg-primary/8 hover:text-fg-primary active:scale-90"
           :aria-label="t('common.back')"

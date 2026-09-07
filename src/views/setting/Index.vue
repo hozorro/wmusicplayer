@@ -1,5 +1,6 @@
 <script setup lang="ts"> 
 import { computed } from 'vue';
+import { useRouter } from 'vue-router';
 import { useMusicStore } from '@/store/music';
 import { useTheme } from '@/composables/themes';
 import { appInfo } from '@/constants/app-info';
@@ -7,12 +8,15 @@ import { idbReady } from '@/services/idb-state';
 import RouteMenuItem from '@/components/RouteMenuItem.vue';
 import { langsMap, loadLocaleMessages } from '@/i18n';
 import { useI18n } from 'vue-i18n';
+import { SW_VERSION } from '@/sw/sw';
 
 const { t } = useI18n();
 const { theme, toggleTheme } = useTheme();
+const router = useRouter()
 
 const appName = appInfo.VUE_APP_NAME
 const appVersion = appInfo.VUE_APP_VERSION
+const swVersion = SW_VERSION
 const menuList = computed(() => {// must be computed, or the menu will not update when language changes
   const menuItems = [ 
     { title: t('settings.play.item'), to: '/setting/play', icon: 'icon-[solar--tuning-square-2-outline]' },
@@ -43,9 +47,13 @@ async function changeLocale(locale: SupportedLocale) {
 <template>
   <div class=" px-2 pt-[calc(env(safe-area-inset-top)+10px)]">
     <div class=" flex justify-between">
-      <router-link to="/" class=" flex-none text-lg font-semibold">
-        <span class=" icon-[solar--alt-arrow-left-linear] align-middle text-fg-muted"></span>
-      </router-link>
+      <button
+        class="shrink-0 rounded-full p-2 text-fg-secondary ring-1 ring-primary/10 backdrop-blur-sm transition hover:bg-fg-primary/85 active:scale-90"
+        :aria-label="t('common.back')"
+        @click="router.back()"
+      >
+        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
+      </button>
       <div class=" flex-1 text-lg font-semibold text-right">{{ t('settings.title') }}</div>
     </div>
     <div class=" mt-4 flex justify-between p-2">
@@ -54,8 +62,8 @@ async function changeLocale(locale: SupportedLocale) {
       </div>
       <div class=" flex-1 pl-4">
         <div class=" text-lg font-semibold text-fg-primary">{{ appName }}</div>
-        <div class=" text-sm text-fg-secondary">{{ appVersion }}</div>
-        <div class=" w-full mt-1 pl-1 rounded-md bg-secondary text-sm">{{ t('settings.comment') }}</div>
+        <div class=" text-sm text-fg-secondary">{{ appVersion }} ({{ swVersion }})</div>
+        <div class=" w-full mt-1 pl-1 rounded-md text-sm">{{ t('settings.comment') }}</div>
       </div>
     </div>
     <div class=" mt-4 p-2 bg-secondary rounded-md text-sm">

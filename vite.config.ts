@@ -37,6 +37,8 @@ export default defineConfig(({ mode }) => {
         devOptions: {
           enabled: true,
           type: 'module',
+          // 在开发环境中也注入版本号
+          navigateFallback: undefined,
         },
         injectManifest: {
           // globDirectory: 'dist',
@@ -65,9 +67,12 @@ export default defineConfig(({ mode }) => {
           },
         },
         manifest: {
+          id: '/',
           name: 'WMusicPlayer',
           short_name: 'WMusic',
           description: 'PWA Music Player from weyeco',
+          start_url: '/',
+          scope: '/',
           display: 'standalone',
           theme_color: '#18181b',
           background_color: '#18181b',
@@ -87,11 +92,7 @@ export default defineConfig(({ mode }) => {
               sizes: '512x512',
               type: 'image/png',
               purpose: 'any maskable',
-            },
-            {
-              src: '/icons/icon-any.svg',
-              sizes: '513x513',
-            },
+            }
           ],
         }
       })

@@ -10,6 +10,7 @@
  * 3. 所有文字 / 按钮用固定 zinc 色阶 + dark: 变体，从不从调色板派生前景色
  */
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { invalidateCache } from 'alova'
 import { useRoute } from 'vue-router'
 import { usePlayer } from '@/composables/playback'
 import { usePlayerQueue } from '@/composables/player-queue'
@@ -168,6 +169,7 @@ async function toggleFavorite() {
   if (!res) return
   const next = new Set(favIds.value)
   res.fav ? next.add(t.id) : next.delete(t.id)
+  invalidateCache(getFavoriteTrackIds())
   favIds.value = next
 }
 

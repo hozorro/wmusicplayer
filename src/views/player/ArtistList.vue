@@ -56,7 +56,7 @@ function charClass(c: CharInfo):string {
     <!-- ═══ 粘性头部：导航栏 + 字母块 ═══ -->
     <div class="sticky top-0 z-30 border-b border-white/5 bg-card">
       <!-- 导航栏 -->
-      <div class="mx-auto flex max-w-2xl items-center gap-3 px-4 pb-2 pt-[calc(env(safe-area-inset-top)+10px)]">
+      <div class="mx-auto flex max-w-2xl items-center gap-2 pl-2 pr-4 pb-2 pt-[calc(env(safe-area-inset-top)+10px)]">
         <button
           class="rounded-full p-2 text-zinc-300 transition hover:bg-white/8 hover:text-zinc-50 active:scale-90"
           :aria-label="t('common.back')"
