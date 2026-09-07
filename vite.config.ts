@@ -3,6 +3,7 @@ import vue from '@vitejs/plugin-vue'
 import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import replace from '@rollup/plugin-replace'
 import path from 'path'
 import fs from 'fs'
 
@@ -25,8 +26,9 @@ export default defineConfig(({ mode }) => {
         compositionOnly: true,
       }),
       VitePWA({
-        registerType: 'autoUpdate',
-        injectRegister: 'auto',
+        registerType: 'prompt',
+        // 必须注入注册脚本：usePWAUpdate 依赖 navigator.serviceWorker.ready 获取 registration
+        injectRegister: 'script',
         strategies: 'injectManifest',
         // filename 不能含子目录：插件把 SW 构建产物输出到 outDir 根，
         // 再 rename 到 dirname(swDest)，两者不一致会报 ENOENT
@@ -41,30 +43,53 @@ export default defineConfig(({ mode }) => {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,ttf,woff,woff2}'],
           maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         },
+        // 通过 integration.configureCustomSWViteBuild 直接修改 SW 构建的 inlineConfig
+        integration: {
+          configureCustomSWViteBuild(inlineConfig) {
+            // 确保每次构建 sw.js 内容不同，触发浏览器更新检测
+            const version = Date.now().toString(36)
+            console.log('[PWA] Injecting __SW_VERSION__:', version)
+            // 使用 @rollup/plugin-replace 在 Rollup 构建时替换 __SW_VERSION__
+            inlineConfig.build = inlineConfig.build ?? {}
+            inlineConfig.build.rollupOptions = inlineConfig.build.rollupOptions ?? {}
+            const existingPlugins = inlineConfig.build.rollupOptions.plugins
+            inlineConfig.build.rollupOptions.plugins = [
+              ...(Array.isArray(existingPlugins) ? existingPlugins : existingPlugins ? [existingPlugins] : []),
+              replace({
+                preventAssignment: true,
+                values: {
+                  __SW_VERSION__: JSON.stringify(version),
+                },
+              }) as any,
+            ]
+          },
+        },
         manifest: {
           name: 'WMusicPlayer',
-          short_name: 'WPlayer',
+          short_name: 'WMusic',
           description: 'PWA Music Player from weyeco',
           display: 'standalone',
           theme_color: '#18181b',
+          background_color: '#18181b',
           icons: [
             {
-              src: '/imgs/manifest/web-app-manifest-48x48.png',
+              src: '/icons/icon-48.png',
               sizes: '48x48',
               type: 'image/png',
             },
             {
-              src: '/imgs/manifest/web-app-manifest-192x192.png',
+              src: '/icons/icon-192.png',
               sizes: '192x192',
               type: 'image/png',
             },
             {
-              src: '/imgs/manifest/web-app-manifest-512x512.png',
+              src: '/icons/icon-512.png',
               sizes: '512x512',
               type: 'image/png',
+              purpose: 'any maskable',
             },
             {
-              src: '/imgs/manifest/web-app-manifest.svg',
+              src: '/icons/icon-any.svg',
               sizes: '513x513',
             },
           ],

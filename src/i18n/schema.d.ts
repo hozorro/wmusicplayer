@@ -26,6 +26,11 @@ declare module 'vue-i18n' {
     remove: string
     change: string
   }
+  pwa: {
+    update_available: string
+    update_now: string
+    update_later: string
+  }
   auth: {
     username: string
     username_placeholder: string
@@ -136,6 +141,8 @@ declare module 'vue-i18n' {
     empty: string
     empty_tip: string
     create_first: string
+    crop_tip: string
+    crop: string
   }
   sentence: {
     greet_night: string
@@ -185,6 +192,8 @@ declare module 'vue-i18n' {
     advance: string
     artist: string
     artist_tip: string
+    unhit: string
+    unhit_tip: string
     constraint: string
     constraint_tip: string
     weighted: string
@@ -254,14 +263,59 @@ declare module 'vue-i18n' {
   }
   errors: {
     data_error: string
-    _401: string
-    _403: string
-    _404: string
-    _500: string
-    unknown: string
-    no_response: string
-    request_error: string
     playlist_title_empty: string
+    NETWORK_ERROR: string
+    TIMEOUT: string
+    UNAUTHORIZED: string
+    FORBIDDEN: string
+    NOT_FOUND: string
+    UNKNOWN_ERROR: string
+    VALIDATION_ERROR: string
+    HTTP_400: string
+    HTTP_401: string
+    HTTP_403: string
+    HTTP_404: string
+    HTTP_409: string
+    HTTP_413: string
+    HTTP_415: string
+    HTTP_416: string
+    HTTP_422: string
+    HTTP_423: string
+    HTTP_500: string
+    HTTP_503: string
+    HTTP_UNKNOWN: string
+    biz: {
+      10001: string
+      10422: string
+      10500: string
+      20001: string
+      20002: string
+      20003: string
+      20004: string
+      20005: string
+      20006: string
+      20007: string
+      20008: string
+      20009: string
+      30104: string
+      30204: string
+      30301: string
+      30302: string
+      30303: string
+      30304: string
+      30305: string
+      30501: string
+      30502: string
+      30503: string
+      30504: string
+      30505: string
+      30506: string
+      30507: string
+      30508: string
+      30509: string
+      30515: string
+      30601: string
+    }
   }
 }
 }

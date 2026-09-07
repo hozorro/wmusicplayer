@@ -466,7 +466,7 @@ onUnmounted(() => window.removeEventListener('idb-rebuilt', onLibraryRebuilt))
   </Transition>
 
   <!-- ============ 悬浮条 ==============-->
-  <div v-show="!hidden" class=" fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+20px)] z-40">
+  <div v-show="!hidden" class=" fixed inset-x-3 shadow-sm bottom-[calc(env(safe-area-inset-bottom)+20px)] z-40">
     <div 
       class=" relative overflow-hidden rounded-xl bg-primary/90 shadow-2xl shadow-primary/15 ring-1 ring-primary/5 backdrop-blur-xl transition-transform duration-150 active:scale-[0.98]"
       role="button"

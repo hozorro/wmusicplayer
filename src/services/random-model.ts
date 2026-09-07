@@ -8,7 +8,7 @@ export interface RandomModeParam {
   format: (v: number) => string
 }
 
-export type RandomModeKey = 'pure' | 'artist-r' | 'heat' | 'artist-c' | 'artist-w'
+export type RandomModeKey = 'pure' | 'artist-r' | 'unhit' | 'heat' | 'artist-c' | 'artist-w'
 
 export interface RandomMode {
   key: RandomModeKey            // getRandomTracks 的 mode 参数
@@ -32,6 +32,11 @@ export const RANDOM_MODES: RandomMode[] = [
     get name() { return t('random.artist') }, 
     get description() { return t('random.artist_tip') },
     icon: 'artist-r' 
+  },{
+    key: 'unhit',
+    get name() { return t('random.unhit') },
+    get description() { return t('random.unhit_tip') },
+    icon: 'unhit',
   },{ 
     key: 'heat',   
     get name() { return t('random.familiar') }, 

@@ -5,9 +5,11 @@ import { createClientTokenAuthentication } from "alova/client";
 import VueHook from "alova/vue";
 import { refreshToken } from "./methods/music";
 import { toast } from "@/services/toast";
-import { isTokenExpired } from "@/utilies/auth";
+import { isTokenExpired, TokenStorage } from "@/utilies/auth";
+import { generateTraceId } from "@/utilies/general";
 import { t } from '@/utilies/use-i18n'
-import { TokenStorage } from "@/utilies/auth";
+import { normalizeError } from "@/errors/normalizeError";
+import { handleGlobalApiError } from "@/errors/handlers";
 
 const { onAuthRequired, onResponseRefreshToken } = createClientTokenAuthentication<typeof VueHook, typeof axiosRequestAdapter>({
   assignToken: (method) => {
@@ -50,6 +52,11 @@ export const generalAlova = createAlova({
   beforeRequest: onAuthRequired(method => {
     method.config.headers['X-Client-Type'] = import.meta.env.VITE_CLIENT_TYPE || 'player'
     method.config.headers['X-Device-ID'] = TokenStorage.getDeviceId()
+    const traceId = generateTraceId()
+    method.config.headers['X-Request-ID'] = traceId
+
+    // 同时存入meta，方便错误上报时读取
+    method.meta = { ...method.meta, traceId }
   }),
   responded: onResponseRefreshToken({
     onSuccess: async (response) => {
@@ -61,26 +68,10 @@ export const generalAlova = createAlova({
       }
       return resData.data
     },
-    onError: (error: AxiosError) => {
-      if (error.response) {
-        switch (error.response.status) { 
-          case 401: 
-            toast(t('errors._401'), 'error')
-            break;
-          case 404:
-            toast(t('errors._404'), 'error')
-            break;
-          case 500: 
-            toast(t('errors._500'), 'error')
-            break;
-          default: 
-            toast(`${t('errors.unknown')}[${error.response.status}]:${error.message}`, 'error')
-        }
-      } else if (error.request) {
-        toast(`${t('errors.no_response')}:${error.request}`, 'error')
-      } else {
-        toast(`${t('errors.request_error')}:${error.message}`, 'error')
-      }
+    onError: (rawError: AxiosError, method) => {
+      const error = normalizeError(rawError, method)
+      handleGlobalApiError(error, method)
+      throw error
     }
   })
 });

@@ -41,6 +41,7 @@ const todayLine = computed(() => {
 // 模块数据：独立加载，互补阻塞
 const playlists = ref<Playlist[]>([])
 const playlistsLoaded = ref(false)
+const rndModes = computed(() => paramlessModes.slice(0,3))
 const artists = ref<Artist[]>([])
 const artistsLoaded = ref(false)
 const genres = ref<Genre[]>([])
@@ -111,12 +112,6 @@ async function playRandom(m: RandomMode) {
 
 <template>
   <div class=" min-h-svh">
-    <!-- 氛围底色：顶部暖光晕 + 底部微光，衬于内容之下 -->
-    <div class=" pointer-events-none fixed inset-0 -z-10" aria-hidden="true">
-      <div class=" absolute -top-40 left-1/2 h-[26rem] w-[140%] -translate-x-1/2 rounded-[100%] bg-accent/10 blur-3xl" />
-      <div class=" absolute -bottom-28 -right-20 h-80 w-80 rounded-full bg-accent/10 blur-3xl" />
-    </div>
-
     <!-- 粘性顶栏：假搜索框 + settings -->
     <div class=" sticky top-0 z-30 backdrop-blur-md">
       <div class=" mx-auto flex max-w-2xl items-center gap-3 px-4 pb-3 pt-[calc(env(safe-area-inset-top)+12px)]">
@@ -185,7 +180,7 @@ async function playRandom(m: RandomMode) {
         <ModuleHeader :title="t('random.random')" to="/random" />
         <div class=" flex gap-3 px-4 pt-2">
           <button
-            v-for="m in paramlessModes" :key="m.key"
+            v-for="m in rndModes" :key="m.key"
             class="flex items-center gap-2.5 rounded-full bg-primary/60 py-2 pl-2.5 pr-4 shadow-sm ring-1 ring-white/10 transition hover:bg-primary/10 hover:ring-white/20 active:scale-95 disabled:pointer-events-none disabled:opacity-40"
             :disabled="randomBusy !== null"
             @click="playRandom(m)"

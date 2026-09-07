@@ -17,12 +17,10 @@ async function handleLogin() {
   errorMsg.value = ''
   const result = await authStore.login(username.value, password.value)
 
-  if (result.success) {
+  if (result) {
     const redirect = route.query.redirect as string
     const targetPath = redirect || '/'
     router.push(targetPath)
-  } else {
-    errorMsg.value = result.message
   }
 }
 </script>
@@ -46,7 +44,7 @@ async function handleLogin() {
         <div class=" w-full mt-4">
           <button class=" w-full h-8 rounded-md bg-cyan-500 text-white" @click="handleLogin">{{ `${t('auth.login')}${authStore.isLogining ? '...' : ''}` }}</button>
         </div>
-        <p v-if="errorMsg" class=" mt-2 text-sm text-red-400">{{ errorMsg }} </p>
+        <p v-if="authStore.loginErrors?.form" class=" mt-2 text-sm text-red-400">{{ authStore.loginErrors.form }} </p>
       </div>
     </div>
   </div>

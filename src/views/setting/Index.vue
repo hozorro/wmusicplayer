@@ -41,7 +41,7 @@ async function changeLocale(locale: SupportedLocale) {
 </script>
 
 <template>
-  <div class=" p-2">
+  <div class=" px-2 pt-[calc(env(safe-area-inset-top)+10px)]">
     <div class=" flex justify-between">
       <router-link to="/" class=" flex-none text-lg font-semibold">
         <span class=" icon-[solar--alt-arrow-left-linear] align-middle text-fg-muted"></span>

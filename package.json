@@ -36,6 +36,7 @@
     "@iconify-json/svg-spinners": "^1.2.2",
     "@iconify/tailwind4": "^1.0.6",
     "@intlify/unplugin-vue-i18n": "^11.0.3",
+    "@rollup/plugin-replace": "^6.0.3",
     "@types/node": "^22.15.26",
     "@vitejs/plugin-vue": "^5.2.3",
     "@vitest/coverage-v8": "4.1.10",

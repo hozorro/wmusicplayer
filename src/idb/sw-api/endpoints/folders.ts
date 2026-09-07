@@ -21,5 +21,10 @@ export const idbGetFolder: ApiHandler = async ({ params }) => {
     ancestors.unshift({ id: parent.id, name: parent.name })
     cur = parent
   }
-  return json({ ...folder, ancestors, subfolders, tracks: tracks.map(toRawTrack) })
+  return json({ 
+    ...folder, 
+    ancestors, 
+    subfolders: subfolders.sort((a, b) => a.name.localeCompare(b.name)), 
+    tracks: tracks.sort((a, b) => a.title_lower.localeCompare(b.title_lower)).map(toRawTrack) 
+  })
 }

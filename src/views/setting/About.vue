@@ -5,7 +5,7 @@ const { t } = useI18n();
 </script>
 
 <template>
-  <div class=" p-2">
+  <div class=" px-2 pt-[calc(env(safe-area-inset-top)+10px)]">
     <div class=" flex justify-between">
       <router-link to="/setting" class=" flex-none text-lg font-semibold">
         <span class=" icon-[solar--alt-arrow-left-linear] align-middle text-gray-600"></span>

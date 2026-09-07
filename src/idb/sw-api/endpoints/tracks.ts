@@ -61,7 +61,7 @@ export const idbGetLatestTracks: ApiHandler = async () => {
 
 export const idbGetHotTracks: ApiHandler = async () => {
   const idb = await getLibraryIdb()
-  // hit_count 缺失 = 从未播放 = 不入索引，对应页面中无内容，语义天然正确
+  // hit_count = 0 表示从未播放，排在索引末尾，prev 方向取前 N 时自然被排除
   const rows = await idb.topByIndex<IDBTrack>('tracks', 'hit_count', 16, { direction: 'prev' })
   return json(rows.map(toRawTrack))
 }
@@ -105,8 +105,8 @@ const alpha = (w: number) => (w - 1) / 4
  * 约束：每位 ≤ m，总量 ≤ n，跨歌手去重（多歌手曲目防重复入选）
  */
 export const idbGetRndArtistSctdTracks: ApiHandler = async ({ query }) => {
-  const m = Math.min(SCATTER_M_CAP, Math.max(1, Number(query.get("num") || SCATTER_M_DEFAULT)))
-  const nRaw = Number(query.get("numpa") || SCATTER_N_DEFAULT)
+  const m = Math.min(SCATTER_M_CAP, Math.max(1, Number(query.get("numpa") || SCATTER_M_DEFAULT)))
+  const nRaw = Number(query.get("num") || SCATTER_N_DEFAULT)
   const n = Math.min(SCATTER_N_CAP, Math.max(m + 1, nRaw))  // 强制 n > m
 
   const idb = await getLibraryIdb()
@@ -179,6 +179,18 @@ export const idbGetWgtRndTracks: ApiHandler = async ({ query }) => {
   if (!tracks.length) return MISS
   const picked = weightedSample(tracks, x => (1 + (x.hit_count ?? 0)) ** a, num)
   return json(picked.map(toRawTrack))
+}
+
+/**
+ * 随机获取未播放过的 tracks：hit_count = 0 表示从未播放
+ * 通过 hit_count 索引精确匹配 + 随机偏移采样，避免全量物化
+ */
+export const idbGetRndUnhitTracks: ApiHandler = async ({ query }) => {
+  const num = Number(query.get("num") || RANDOM_DEFAULT_NUM)
+  const idb = await getLibraryIdb()
+  const tracks = await idb.getRandomByIndex<IDBTrack>("tracks", "hit_count", IDBKeyRange.only(0), num)
+  if (!tracks.length) return MISS
+  return json(tracks.map(toRawTrack))
 }
 
 // # endregion
