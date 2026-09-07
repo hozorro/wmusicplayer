@@ -15,8 +15,12 @@ export default defineConfig(({ mode }) => {
   const httpsCert = env.VITE_SSL_CERT && env.VITE_SSL_KEY
     ? { cert: fs.readFileSync(env.VITE_SSL_CERT), key: fs.readFileSync(env.VITE_SSL_KEY) }
     : undefined
+  const version = Date.now().toString(36)
 
   return {
+    define: {
+      __SW_VERSION__: version,
+    },
     plugins: [
       vue(),
       tailwindcss(),
@@ -49,7 +53,6 @@ export default defineConfig(({ mode }) => {
         integration: {
           configureCustomSWViteBuild(inlineConfig) {
             // 确保每次构建 sw.js 内容不同，触发浏览器更新检测
-            const version = Date.now().toString(36)
             console.log('[PWA] Injecting __SW_VERSION__:', version)
             // 使用 @rollup/plugin-replace 在 Rollup 构建时替换 __SW_VERSION__
             inlineConfig.build = inlineConfig.build ?? {}
