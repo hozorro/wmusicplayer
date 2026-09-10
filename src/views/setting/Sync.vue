@@ -4,25 +4,50 @@
  * 进度预算来自 summary counts；完成判定以游标为协议真值
  * 就绪状态决定按钮语义与首起文案
  */
-import { idbReady } from '@/services/idb-state'
-import { SYNC_STORES, syncLibrary, syncState } from '@/services/lib-sync'
-import { computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { idbReady } from '@/services/idb-state'
+import { SYNC_STORES, syncLibrary, syncState } from '@/services/lib-sync'
+import { getSyncSummary } from '@/apis/methods/sync'
+import { getMeta } from '@/idb'
+import { useRequest } from 'alova/client'
 
 
 const router = useRouter()
 const { t } = useI18n()
+const since = ref<string | undefined>(undefined)
 
 const STORE_LABEL: Record<string, string> = {
   tracks: t('player.track'), artists: t('player.artist'), albums: t('player.album'),
   genres: t('player.genre'), folders: t('player.folder'), playlists: t('player.playlist'),
 }
 
+const {
+  data: summary, 
+  send: refreshSummary
+} = useRequest(() => getSyncSummary(since.value ?? null), {
+  initialData: { counts: {} },
+  immediate: false
+})
+const newData = computed(() => {
+  return Object.entries(summary.value.counts).filter(([_k, v]) => v > 0)
+})
+
 const overallPct = computed(() => syncState.totalBatches
   ? Math.min(100, Math.round((syncState.doneBatches / syncState.totalBatches) * 100))
   : 0
 )
+onMounted(async () => {
+  since.value = await getMeta<string>('sync:lastSyncAt')
+  await refreshSummary()
+})
+
+async function handleSync() {
+  await syncLibrary()
+  since.value = await getMeta<string>('sync:lastSyncAt')
+  await refreshSummary()
+}
 </script>
 
 <template>
@@ -45,8 +70,13 @@ const overallPct = computed(() => syncState.totalBatches
 
     <main class=" mx-auto max-w-2xl px-4 pb-32 pt-6">
       <p class=" text-xs text-fg-muted">
-        {{ idbReady ? t('settings.sync.last_sync', { time: syncState.lastSyncAt ?? '-' }) : t('settings.sync.not_init') }}
+        {{ idbReady ? t('settings.sync.last_sync', { time: since ?? '-' }) : t('settings.sync.not_init') }}
       </p>
+      <p v-if="newData.length > 0" class=" mt-2 text-xs text-fg-muted">
+        <span class=" text-accent">{{ t('settings.sync.has_new') }}: </span>
+        <span class=" ml-2" v-for="item in newData" :key="item[0]">{{ STORE_LABEL[item[0]] }}({{ item[1] }})</span>
+      </p>
+      <p v-else class=" mt-2 text-xs text-fg-muted">{{ t('settings.sync.no_new') }}</p>
 
       <!-- 总进度 -->
       <Transition
@@ -82,7 +112,7 @@ const overallPct = computed(() => syncState.totalBatches
       <button
         class=" mt-8 w-full rounded-full bg-accent py-2.5 text-sm font-bold text-primary shadow-lg shadow-accent/20 transition hover:bg-accent/90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40"
         :disabled="syncState.running"
-        @click="syncLibrary()"
+        @click="handleSync"
       >
         {{ syncState.running ? `${t('settings.sync.syncing')}...` : idbReady ? t('settings.sync.incremental') : t('settings.sync.syncall') }}
       </button>

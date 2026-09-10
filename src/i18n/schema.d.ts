@@ -233,6 +233,8 @@ declare module 'vue-i18n' {
       sync_batch_size_tip: string
     }
     sync: {
+      has_new: string
+      no_new: string
       item: string
       last_sync: string
       not_init: string

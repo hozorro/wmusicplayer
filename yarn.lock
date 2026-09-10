@@ -2,17 +2,22 @@
 # yarn lockfile v1
 
 
-"@alova/adapter-axios@^2.0.14":
-  version "2.0.14"
-  resolved "https://registry.npmmirror.com/@alova/adapter-axios/-/adapter-axios-2.0.14.tgz"
-  integrity sha512-AcP0fi5tv9BGmeSzZ4swm0dSxkQJDL23+lWB1S3GnyX7IQVyz3dYcZHgQQjxJE5Be3JH6RwVp+ETg5MIbcXBGg==
+"@alova/adapter-axios@2.0.19":
+  version "2.0.19"
+  resolved "https://registry.npmmirror.com/@alova/adapter-axios/-/adapter-axios-2.0.19.tgz#640748261e36acfbde2292384fae8ed05e0ba8ce"
+  integrity sha512-n7RMMXjZf1dyiFYdgxJ5wolekmNizsDGnkkbJtjZ3ml4tYgl9zkMW57iHwLGi5jgvjqB8Cfkq/WpLWissvK97g==
   dependencies:
-    "@alova/shared" "1.2.0"
+    "@alova/shared" "1.3.3"
 
 "@alova/shared@1.2.0":
   version "1.2.0"
   resolved "https://registry.npmmirror.com/@alova/shared/-/shared-1.2.0.tgz"
   integrity sha512-/LSlP4VqpD+ji7+BwTwfKJObDb0LV3mNT6sE3TUjnopjz2HQaL6f1Qicjf8vplv4dlHki9HEbFFAu8sBNDAMrA==
+
+"@alova/shared@1.3.3":
+  version "1.3.3"
+  resolved "https://registry.npmmirror.com/@alova/shared/-/shared-1.3.3.tgz#daf3ef9b096b34ece9ab7290394a5fa3e2a8461a"
+  integrity sha512-sIXqkoG6gs/KlnpTOLQAxui5jocnJclkPJw0Gk2gT7kHxFLyTFiaMkZFqw4zTZciDRscBA+VUkyGBrMFlu5NIg==
 
 "@ampproject/remapping@^2.2.0", "@ampproject/remapping@^2.3.0":
   version "2.3.0"

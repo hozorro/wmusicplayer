@@ -19,7 +19,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     define: {
-      __SW_VERSION__: version,
+      __SW_VERSION__: JSON.stringify(version),
     },
     plugins: [
       vue(),
