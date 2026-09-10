@@ -77,12 +77,14 @@ async function applyDeleted(deleted: syncDeleted): Promise<void> {
 }
 
 function initBatchProgress(counts: Record<string, number>) {
+  console.log('Sync batch progress:', counts)
   syncState.batches = Object.fromEntries(SYNC_STORES.map(s => {
     const total = counts[s] ?? 0
     return [s, { total, batches: Math.ceil(total / SYNC_PAGE_SIZE), done: 0, received: 0 }]
   }))
   syncState.totalBatches = Object.values(syncState.batches).reduce((sum, b) => sum + b.batches, 0)
   syncState.doneBatches = 0
+  console.log('Sync batch progress initialized')
 }
 
 function onBatch(store: string, received: number) {
@@ -141,7 +143,7 @@ export async function syncLibrary(opts?: { forceFull?: boolean }): Promise<'full
     }
     
     const summary = await getSyncSummary(progress.since).send()
-    if (progress.since !== null && summary.deleted) {
+    if (progress.since !== null && summary.deleted && Object.keys(summary.deleted).length > 0) {
       await applyDeleted(summary.deleted) // 墓碑先于分页落地
     }
     initBatchProgress(summary.counts)
@@ -158,6 +160,7 @@ export async function syncLibrary(opts?: { forceFull?: boolean }): Promise<'full
     notifyRebuilt()
     return syncState.lastMode
   } catch {
+    console.error('Sync failed')
     return 'failed'
   } finally {
     syncing = false

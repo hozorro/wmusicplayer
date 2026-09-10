@@ -11,6 +11,25 @@ import { t } from '@/utilies/use-i18n'
 import { normalizeError } from "@/errors/normalizeError";
 import { handleGlobalApiError } from "@/errors/handlers";
 
+const alvoaStorageAdapter = () => {
+  const prefix = 'alova_cache_'
+  return {
+    set: (key: string, value: any) => {
+      localStorage.setItem(prefix + key, JSON.stringify(value))
+    },
+    get: (key: string) => {
+      const data = localStorage.getItem(prefix + key)
+      return data ? JSON.stringify(data) : data
+    },
+    remove: (key: string) => {
+      localStorage.removeItem(prefix + key)
+    },
+    clear: () => {
+      Object.keys(localStorage).filter(k => k.startsWith(prefix)).forEach(k => localStorage.removeItem(k))
+    }
+  }
+}
+
 const { onAuthRequired, onResponseRefreshToken } = createClientTokenAuthentication<typeof VueHook, typeof axiosRequestAdapter>({
   assignToken: (method) => {
     const token = TokenStorage.getAccessToken()
@@ -47,6 +66,7 @@ export const generalAlova = createAlova({
   baseURL: "/api/",
   statesHook: VueHook,
   requestAdapter: axiosRequestAdapter(),
+  l2Cache: alvoaStorageAdapter(),
   cacheFor: { GET: 1000 * 60 * 5, POST: 0 },
   timeout: 1000 * 60 * 2,
   beforeRequest: onAuthRequired(method => {

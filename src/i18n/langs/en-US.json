@@ -228,6 +228,8 @@
       "sync_batch_size_tip": "Record count per sync request batch"
     },
     "sync": {
+      "has_new": "Library updates",
+      "no_new": "Library is up to date",
       "item": "Library Sync",
       "last_sync": "Last sync: {time}",
       "not_init": "Library not initialized",
