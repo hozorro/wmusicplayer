@@ -12,6 +12,7 @@ export const PlayerEvent = {
   /** 唯一发射点：PlaylistController各变更方法 */
   QueueChanged: 'player:queue-changed',
   ModeChanged: 'player:mode-changed',
+  LyricLineChanged: 'player:lyric-line-changed',
   /** 唯一发射点：PlaybackController.handleError。事件描述事实，含处置结果 */
   PlaybackError: 'player:playback-error',
 } as const
@@ -34,4 +35,5 @@ export interface PlayerEventMap {
   [PlayerEvent.QueueChanged]: QueueChangeType
   [PlayerEvent.ModeChanged]: PlayMode
   [PlayerEvent.PlaybackError]: PlaybackErrorInfo
+  [PlayerEvent.LyricLineChanged]: string
 }

@@ -11,7 +11,7 @@
  */
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { invalidateCache } from 'alova'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { usePlayer } from '@/composables/playback'
 import { usePlayerQueue } from '@/composables/player-queue'
 import { useLyrics } from '@/composables/lyrics'
@@ -29,6 +29,7 @@ const player = usePlayer()
 const playQueue = usePlayerQueue()
 const lyrics = useLyrics()
 const route = useRoute()
+const router = useRouter()
 const { t } = useI18n()
 
 // —— 形态 ——
@@ -186,6 +187,16 @@ async function onLibraryRebuilt() {
   favIds.value = new Set(await getFavoriteTrackIds().send())
 }
 
+function goToArtist(id: number) {
+  expanded.value = false
+  router.push({ name: 'artist', params: { id } })
+}
+
+function goToAlbum(id: number) {
+  expanded.value = false
+  router.push({ name: 'album', params: { id } })
+}
+
 onMounted(() => window.addEventListener('idb-rebuilt', onLibraryRebuilt))
 onUnmounted(() => window.removeEventListener('idb-rebuilt', onLibraryRebuilt))
 </script>
@@ -310,9 +321,21 @@ onUnmounted(() => window.removeEventListener('idb-rebuilt', onLibraryRebuilt))
         <!-- 信息 + 收藏（恒定显示） -->
         <div class=" flex items-start justify-between gap-4 px-7">
           <div class=" min-w-0">
-            <h2 class=" truncate text-xl font-bold text-fg-primary">{{ track?.title ?? t('player.not_playing') }}{{ track?.id ?? '' }}</h2>
-            <p class=" mt-0.5 truncate text-sm text-fg-muted">
-              {{ artistsText }}<span v-if="track?.album"> - {{ track.album.title }}</span>
+            <h2 class=" truncate text-xl font-bold text-fg-primary">{{ track?.title ?? t('player.not_playing') }}</h2>
+            <p class=" mt-0.5 truncate text-sm text-accent/75">
+              <template v-if="track?.artists">
+                <span 
+                  v-for="(artist, _i) in track.artists" 
+                  :key="artist.id" 
+                  class=" mr-2"
+                  @click="goToArtist(artist.id)"
+                >{{ artist.name }}</span>
+              </template>
+            </p>
+            <p class=" mt-0.5 truncate text-sm text-amber-500/75">
+              <template v-if="track?.album">
+                <span @click="goToAlbum(track.album.id)">{{ track.album.title }}</span>
+              </template>
             </p>
           </div>
           <div class=" flex shrink-0 items-center gap-1">
@@ -468,9 +491,9 @@ onUnmounted(() => window.removeEventListener('idb-rebuilt', onLibraryRebuilt))
   </Transition>
 
   <!-- ============ 悬浮条 ==============-->
-  <div v-show="!hidden" class=" fixed inset-x-3 shadow-sm bottom-[calc(env(safe-area-inset-bottom)+20px)] z-40">
+  <div v-show="!hidden" class=" fixed inset-x-3 overflow-hidden rounded-xl shadow-2xl shadow-accent/50 ring-1 ring-accent/15  bottom-[calc(env(safe-area-inset-bottom)+10px)] z-40">
     <div 
-      class=" relative overflow-hidden rounded-xl bg-primary/90 shadow-2xl shadow-primary/15 ring-1 ring-primary/5 backdrop-blur-xl transition-transform duration-150 active:scale-[0.98]"
+      class=" relative overflow-hidden bg-primary/90 backdrop-blur-xl transition-transform duration-150 active:scale-[0.98]"
       role="button"
       tabindex="0"
       :aria-label="t('common.expand')"
@@ -487,7 +510,7 @@ onUnmounted(() => window.removeEventListener('idb-rebuilt', onLibraryRebuilt))
         </div>
 
         <div class=" min-w-0 flex-1">
-          <p class=" truncate text-sm font-semibold text-fg-primary">{{ track?.title ?? t('player.not_playing') }}{{ track?.id ?? '' }}</p>
+          <p class=" truncate text-sm font-semibold text-fg-primary">{{ track?.title ?? t('player.not_playing') }}</p>
           <p class=" truncate text-xs text-fg-muted">{{ track ? artistsText : t('player.click_to_open_player') }}</p>
         </div>
 

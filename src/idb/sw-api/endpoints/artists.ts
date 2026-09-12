@@ -23,7 +23,7 @@ export const idbGetArtistChars: ApiHandler = async () => {
   const idb = await getLibraryIdb()
   const artists = await idb.getAll<IDBArtist>('artists')
   const present = new Set(artists.map(a => /^[A-Z]$/.test(a.pinyin_initial) ? a.pinyin_initial : '_'))
-  return json('ABCDEFGHIJKLMNOPQRSTUVWXYZ#'.split('').map(c => ({ charName: c, hasArtist: present.has(c) })))
+  return json('ABCDEFGHIJKLMNOPQRSTUVWXYZ#'.split('').map(c => ([c, present.has(c)])))
 }
 
 export const idbGetArtists: ApiHandler = async ({ params }) => {

@@ -13,19 +13,6 @@ export function toPlayTrack(track: Track, extra?: { [key in keyof PlayTrack]?: a
   };
 }
 
-export function toDetailText(track: TrackMoreInfo): string {
-  const text = `
-  TITLE: ${track.title}\n
-  YEAR: ${track.year ?? 'Unknown'}\n
-  BITRATE: ${track.bitrate ?? 'Unknown'}\n
-  BR_MODE: ${track.bitrate_mode ?? 'Unknown'}\n
-  ACOUSTID: ${track.acoustid_id ?? 'Unknown'}\n
-  MB_TRACKID: ${track.mb_trackid ?? 'Unknown'}\n
-  PATH: ${track.path ?? 'Unknown'}\n
-  `
-  return text
-}
-
 export function coverUrl(
   entity: 'track' | 'album' | 'artist' | 'playlist',
   id: number | string,

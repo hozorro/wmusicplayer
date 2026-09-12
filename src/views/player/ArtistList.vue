@@ -20,7 +20,7 @@ const chars = ref<CharInfo[]>([]);
 let fetchSeq = 0
 
 onMounted(async () => {
-  chars.value = (await getArtistChars().send());
+  chars.value = await getArtistChars().send();
   const first = chars.value.find(c => c.hasArtist);
   if (first) {
     selectedChar.value = first.charName;
