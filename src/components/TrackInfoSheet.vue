@@ -7,7 +7,6 @@
 import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { getTrackMoreInfo } from '@/apis/methods/music';
-import { toDetailText } from '@/services/transform';
 
 const open = defineModel<boolean>('open', { default: false });
 const props = defineProps<{ trackId: number | null }>();
@@ -15,19 +14,18 @@ const props = defineProps<{ trackId: number | null }>();
 const { t } = useI18n()
 
 // —— 详情（懒加载 + 竞态守卫） ——
-const detail = ref('')
 const detailStatus = ref<'loading' | 'ready' | 'none'>('none')
+const trackInfo = ref<TrackMoreInfo | null>(null)
 let detailForId: number | null = null
 
 async function loadDetail(id: number) {
   detailForId = id
-  detail.value = ''
+  trackInfo.value = null
   detailStatus.value = 'loading'
   try {
-    const info = await getTrackMoreInfo(id).send()
+    trackInfo.value = await getTrackMoreInfo(id).send()
     if (detailForId !== id) return
-    detail.value = toDetailText(info)
-    detailStatus.value = detail.value.trim() ? 'ready' : 'none'
+    detailStatus.value = trackInfo.value !== null ? 'ready' : 'none'
   } catch {
     if (detailForId !== id) return
     detailStatus.value = 'none'
@@ -121,7 +119,20 @@ function onDragEnd() {
         <!-- 内容 -->
         <div class=" min-h-0 flex-1 overflow-y-auto px-5 pb-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <template v-if="detailStatus === 'ready'">
-            <p class=" whitespace-pre-wrap text-[15px] leading-6 text-fg-muted">{{ detail }}</p>
+            <div class=" mt-4 grid grid-cols-[128px_1fr_100px_1fr] gap-2 text-[15px] text-fg-muted leading-6">
+              <div class=" text-right">TITLE:</div>
+              <div class=" col-span-3 whitespace-pre-wrap">{{ trackInfo?.title }}</div>
+              <div class=" text-right">ID:</div><div>{{ trackInfo?.id }}</div>
+              <div class=" text-right">YEAR:</div><div>{{ trackInfo?.year }}</div>
+              <div class=" text-right">BITRATE:</div><div>{{ trackInfo?.bitrate }}</div>
+              <div class=" text-right">BR_MODE:</div><div>{{ trackInfo?.bitrate_mode || 'Unknown' }}</div>
+              <div class=" text-right">ACOUSTID:</div>
+              <div class=" col-span-3 whitespace-pre-wrap">{{ trackInfo?.acoustid_id }}</div>
+              <div class=" text-right">MB_TRACKID:</div>
+              <div class=" col-span-3 whitespace-pre-wrap">{{ trackInfo?.mb_trackid }}</div>
+              <div class=" text-right">PATH:</div>
+              <div class=" col-span-3 whitespace-pre-wrap">{{ trackInfo?.path }}</div>
+            </div>
           </template>
           <div v-else-if="detailStatus === 'loading'" class=" flex items-center justify-center gap-3 py-14 text-sm text-fg-muted">
             <span class=" h-4 w-4 animate-spin rounded-full border-2 border-fg-muted border-t-accent" />
