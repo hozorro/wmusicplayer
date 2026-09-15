@@ -11,6 +11,7 @@ import fs from 'fs'
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd())
   const apiBase = env.VITE_API_BASE || 'http://127.0.0.1:8000'
+  const isLocalBackend = /127\.0\.0\.1|localhost/.test(apiBase)
   // 仅当本地配置了证书路径时才启用 HTTPS（CI 构建无此变量，无条件 readFileSync 会因 undefined 报错）
   const httpsCert = env.VITE_SSL_CERT && env.VITE_SSL_KEY
     ? { cert: fs.readFileSync(env.VITE_SSL_CERT), key: fs.readFileSync(env.VITE_SSL_KEY) }
@@ -114,6 +115,9 @@ export default defineConfig(({ mode }) => {
         '/api': {
           target: apiBase,
           changeOrigin: true,
+          ...(isLocalBackend && {
+            rewrite: (path) => path.replace(/^\/api/, '/api/v1'),
+          })
         },
         '/media': {
           target: apiBase,

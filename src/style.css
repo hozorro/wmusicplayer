@@ -21,6 +21,7 @@
   --primary: oklch(96.7% 0.001 286.375);              /* 主背景(zinc-100) */
   --secondary: oklch(92% 0.004 286.32);               /* 底部播放栏、侧边栏背景(zinc-200) */
   --card: oklch(98.5% 0 none);                        /* 卡片、弹窗、列表想悬浮背景(zinc-50) */
+  --warning: oklch(68.1% 0.162 75.834);              /* 警告、错误等(yellow-100) */
 
   --fg-primary: oklch(21% 0.006 285.885);             /* 主文字：歌名等(zinc-900) */
   --fg-secondary: oklch(44.2% 0.017 285.786);         /* 次文字：歌手、专辑等(zinc-600) */
@@ -46,6 +47,7 @@
   --primary: oklch(21% 0.006 285.885);                /* 主背景(zinc-900) */
   --secondary: oklch(37% 0.013 285.805);              /* 底部播放栏、侧边栏背景(zinc-700) */
   --card: oklch(27.4% 0.006 286.033);                 /* 卡片、弹窗、列表想悬浮背景(zinc-800) */
+  --warning: oklch(55.4% 0.135 66.442);               /* 警告、错误等(yellow-700) */
 
   --fg-primary: oklch(96.7% 0.001 286.375);           /* 主文字：歌名等(zinc-100) */
   --fg-secondary: oklch(87.1% 0.006 286.286);         /* 次文字：歌手、专辑等(zinc-300) */
@@ -61,7 +63,7 @@
   --btn-secondary-hover: oklch(70.5% 0.015 286.067);  /* 按钮次色悬停(zinc-400) */
   --btn-secondary-active: oklch(55.2% 0.016 285.938); /* 按钮次色点击激活(zinc-500) */
 
-  --accent: oklch(70.4% 0.14 182.503);             /* 进度条、高亮选中(teal-300) */
+  --accent: oklch(70.4% 0.14 182.503);                /* 进度条、高亮选中(teal-300) */
 }
 
 /* 3. 把 CSS 变量映射成 Tailwind 颜色 */
@@ -69,6 +71,7 @@
   --color-primary: var(--primary);
   --color-secondary: var(--secondary);
   --color-card: var(--card);
+  --color-warning: var(--warning);
 
   --color-fg-primary: var(--fg-primary);
   --color-fg-secondary: var(--fg-secondary);

@@ -143,6 +143,28 @@ declare module 'vue-i18n' {
     create_first: string
     crop_tip: string
     crop: string
+    import: string
+    import_netease: string
+    step_input_id: string
+    step_confirm_match: string
+    step_create: string
+    netease_id_placeholder: string
+    netease_input_placeholder: string
+    netease_input_hint: string
+    netease_input_tip: string
+    fetch_playlist: string
+    match_tracks: string
+    matched_count: string
+    unmatched_count: string
+    select_candidate: string
+    no_import: string
+    create_playlist: string
+    import_success: string
+    import_failed: string
+    invalid_playlist_id: string
+    playlist_not_found: string
+    no_tracks_to_import: string
+    create_playlist_tip: string
   }
   sentence: {
     greet_night: string
@@ -284,6 +306,7 @@ declare module 'vue-i18n' {
     HTTP_422: string
     HTTP_423: string
     HTTP_500: string
+    HTTP_502: string
     HTTP_503: string
     HTTP_UNKNOWN: string
     biz: {
@@ -316,6 +339,14 @@ declare module 'vue-i18n' {
       30508: string
       30509: string
       30515: string
+      30520: string
+      30521: string
+      30522: string
+      30523: string
+      30524: string
+      30525: string
+      30526: string
+      30527: string
       30601: string
     }
   }

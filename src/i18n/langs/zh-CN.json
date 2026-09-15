@@ -137,7 +137,29 @@
     "empty_tip": "歌单为空——在任意曲目菜单选择'添加到歌单'即可收集",
     "create_first": "创建第一个歌单",
     "crop_tip": "拖动调整位置，滚轮缩放",
-    "crop": "裁剪"
+    "crop": "裁剪",
+    "import": "导入歌单",
+    "import_netease": "从网易云导入",
+    "step_input_id": "输入歌单ID",
+    "step_confirm_match": "确认匹配",
+    "step_create": "创建歌单",
+    "netease_id_placeholder": "请输入网易云歌单ID",
+    "netease_input_placeholder": "歌单ID或分享链接",
+    "netease_input_hint": "请输入网易云歌单ID，或粘贴分享链接（如：分享歌单: xxx https://163cn.tv/xxx）",
+    "netease_input_tip": "支持直接输入歌单ID，或粘贴从网易云音乐APP分享的链接内容",
+    "fetch_playlist": "获取歌单",
+    "match_tracks": "匹配歌曲",
+    "matched_count": "已匹配 {count} 首",
+    "unmatched_count": "未匹配 {count} 首",
+    "select_candidate": "选择候选",
+    "no_import": "不导入",
+    "create_playlist": "创建歌单",
+    "import_success": "导入成功",
+    "import_failed": "导入失败",
+    "invalid_playlist_id": "无效的歌单ID",
+    "playlist_not_found": "歌单不存在",
+    "no_tracks_to_import": "没有可导入的歌曲",
+    "create_playlist_tip": "匹配后歌曲会去重，导入数量可能与匹配数量不一致。导入并创建歌单后，需要在设置-曲库同步中手动同步歌单。"
   },
   "sentence": {
     "greet_night": "夜深了",
@@ -279,6 +301,7 @@
     "HTTP_422": "请求字段错误",
     "HTTP_423": "资源被锁定",
     "HTTP_500": "服务器错误，请稍后再试",
+    "HTTP_502": "Service unavailable",
     "HTTP_503": "服务不可用，请稍后重试",
     "HTTP_UNKNOWN": "未知错误",
     "biz": {
@@ -311,7 +334,15 @@
       "30508": "更新播放列表时出错",
       "30509": "更新成功但保存播放列表图像时出错",
       "30515": "仅允许jpg和png文件作为播放列表图像",
-      "30601": "无效store名称"
+      "30520": "要么提供playlist_id，要么提供share_text",
+      "30521": "网易云接口请求失败",
+      "30522": "网易云接口请求失败，网络错误",
+      "30523": "网易云接口请求失败，未知错误",
+      "30524": "网易云接口请求失败，播放列表未找到",
+      "30525": "网易云接口请求失败，歌曲数据处理错误",
+      "30526": "无法从share text提取播放列表id",
+      "30527": "创建播放列表时出错",
+      "30601": "无效的store名称"
     }
   }
 }

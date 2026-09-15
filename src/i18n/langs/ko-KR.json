@@ -137,7 +137,29 @@
     "empty_tip": "곡 메뉴에서 '재생목록에 추가'로 등록",
     "create_first": "첫 재생목록 만들기",
     "crop_tip": "드래그로 위치 조정, 스크롤로 확대/축소",
-    "crop": "자르기"
+    "crop": "자르기",
+    "import": "재생목록 가져오기",
+    "import_netease": "Netease에서 가져오기",
+    "step_input_id": "재생목록 ID 입력",
+    "step_confirm_match": "매칭 확인",
+    "step_create": "재생목록 만들기",
+    "netease_id_placeholder": "Netease 재생목록 ID 입력",
+    "netease_input_placeholder": "재생목록 ID 또는 공유 링크",
+    "netease_input_hint": "Netease 재생목록 ID 입력 또는 공유 링크 붙여넣기 (예: 分享歌单: xxx https://163cn.tv/xxx)",
+    "netease_input_tip": "재생목록 ID 직접 입력 또는 Netease Music 앱에서 공유 링크 붙여넣기 지원",
+    "fetch_playlist": "재생목록 가져오기",
+    "match_tracks": "곡 매칭",
+    "matched_count": "{count}곡 매칭됨",
+    "unmatched_count": "{count}곡 매칭 안 됨",
+    "select_candidate": "후보 선택",
+    "no_import": "가져오지 않음",
+    "create_playlist": "재생목록 만들기",
+    "import_success": "가져오기 성공",
+    "import_failed": "가져오기 실패",
+    "invalid_playlist_id": "잘못된 재생목록 ID",
+    "playlist_not_found": "재생목록을 찾을 수 없음",
+    "no_tracks_to_import": "가져올 곡이 없음",
+    "create_playlist_tip": "매칭 후 중복된 곡은 제거되므로, 가져온 곡의 수와 매칭된 곡의 수가 다를 수 있습니다. 가져오고 생성한 재생목록은 설정-곡庫동기화에서 수동으로 동기화 필요."
   },
   "sentence": {
     "greet_night": "밤이 깊었습니다",
@@ -279,6 +301,7 @@
     "HTTP_422": "요청 필드 오류",
     "HTTP_423": "리소스가 잠겨 있습니다",
     "HTTP_500": "서버 오류",
+    "HTTP_502": "서비스를 사용할 수 없습니다",
     "HTTP_503": "서비스를 사용할 수 없습니다",
     "HTTP_UNKNOWN": "알 수 없는 오류",
     "biz": {
@@ -311,6 +334,14 @@
       "30508": "재생목록 업데이트 중 오류가 발생했습니다",
       "30509": "업데이트는 성공했지만 재생목록 이미지 저장 중 오류가 발생했습니다",
       "30515": "재생목록 이미지는 jpg 및 png 파일만 허용됩니다",
+      "30520": "playlist_id 또는 share_text 중 하나를 제공해야 합니다",
+      "30521": "Netease API 요청 실패",
+      "30522": "네트워크 오류로 인해 Netease API 요청에 실패했습니다.",
+      "30523": "알 수 없는 오류로 인해 Netease API 요청에 실패했습니다.",
+      "30524": "Netease에서 재생목록을 찾을 수 없습니다.",
+      "30525": "곡 데이터 처리 오류로 인해 Netease API 요청이 실패했습니다.",
+      "30526": "공유 텍스트에서 재생목록 ID를 추출하지 못했습니다.",
+      "30527": "재생목록 생성 시 오류",
       "30601": "유효하지 않은 스토어 이름입니다"
     }
   }

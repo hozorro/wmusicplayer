@@ -43,6 +43,7 @@ const routes: RouteRecordRaw[] = [
         path: "/playlist",
         children: [
           { path: "", name: "playlist-all", component: () => import("@/views/player/PlaylistAll.vue") },
+          { path: "import", name: "playlist-import", component: () => import("@/views/player/PlaylistImport.vue") },
           { path: ":id", name: "playlist", component: () => import("@/views/player/Playlist.vue") }
         ]
       },

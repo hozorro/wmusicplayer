@@ -330,3 +330,26 @@ export const getTrackHits = (track_id: number) => {
   })
 };
 // #endregion
+
+// #region Netease Import
+export const getNeteasePlaylist = (data: NeteaseFetchRequest) => {
+  return generalAlova.Post<NeteasePlaylistResponse>('/music/netease/playlist', data, {
+    name: 'getNeteasePlaylist',
+    cacheFor: 0
+  })
+}
+
+export const matchNeteaseTracks = (data: NeteaseMatchRequest) => {
+  return generalAlova.Post<NeteaseMatchResponse>('/music/netease/match', data, {
+    name: 'matchNeteaseTracks',
+    cacheFor: 0
+  })
+}
+
+export const createPlaylistFromNetease = (data: NeteaseCreateRequest) => {
+  return generalAlova.Post<NeteaseCreateResponse>('/music/netease/create', data, {
+    name: 'createPlaylistFromNetease',
+    cacheFor: 0
+  })
+}
+// #endregion

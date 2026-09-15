@@ -137,7 +137,29 @@
     "empty_tip": "曲メニューから「プレイリストに追加」で登録",
     "create_first": "最初のプレイリストを作成",
     "crop_tip": "ドラッグで位置調整、スクロールでズーム",
-    "crop": "切り抜き"
+    "crop": "切り抜き",
+    "import": "プレイリストをインポート",
+    "import_netease": "Neteaseからインポート",
+    "step_input_id": "プレイリストIDを入力",
+    "step_confirm_match": "マッチング確認",
+    "step_create": "プレイリスト作成",
+    "netease_id_placeholder": "NeteaseプレイリストIDを入力",
+    "netease_input_placeholder": "プレイリストIDまたは共有リンク",
+    "netease_input_hint": "NeteaseプレイリストIDを入力、または共有リンクを貼り付け（例：分享歌单: xxx https://163cn.tv/xxx）",
+    "netease_input_tip": "プレイリストIDの直接入力、またはNetease Musicアプリから共有リンクを貼り付け可能",
+    "fetch_playlist": "プレイリスト取得",
+    "match_tracks": "曲をマッチング",
+    "matched_count": "{count}曲マッチ済み",
+    "unmatched_count": "{count}曲未マッチ",
+    "select_candidate": "候補を選択",
+    "no_import": "インポートしない",
+    "create_playlist": "プレイリスト作成",
+    "import_success": "インポート成功",
+    "import_failed": "インポート失敗",
+    "invalid_playlist_id": "無効なプレイリストID",
+    "playlist_not_found": "プレイリストが見つかりません",
+    "no_tracks_to_import": "インポートする曲がありません",
+    "create_playlist_tip": "マッチング後に楽曲の重複が排除されるため、インポートされる曲数がマッチング数と一致しない場合があります。プレイリストをインポート・作成した後、「設定」の「ライブラリ同期」で手動同期を行う必要があります。"
   },
   "sentence": {
     "greet_night": "夜も更けました",
@@ -279,6 +301,7 @@
     "HTTP_422": "リクエストフィールドエラー",
     "HTTP_423": "リソースロック",
     "HTTP_500": "サーバーエラー",
+    "HTTP_502": "サービス利用不可",
     "HTTP_503": "サービス利用不可",
     "HTTP_UNKNOWN": "不明なエラー",
     "biz": {
@@ -311,6 +334,14 @@
       "30508": "プレイリスト更新時にエラーが発生しました",
       "30509": "更新は成功しましたが、プレイリスト画像の保存でエラーが発生しました",
       "30515": "プレイリスト画像はjpgとpngファイルのみ許可されています",
+      "30520": "playlist_id または share_text のいずれかを指定する必要があります。",
+      "30521": "Netease APIへのリクエストが失敗しました",
+      "30522": "ネットワークエラーにより、Netease APIへのリクエストが失敗しました。",
+      "30523": "不明なエラーにより、Netease APIへのリクエストが失敗しました。",
+      "30524": "Neteaseでプレイリストが見つかりません",
+      "30525": "楽曲データの処理中にエラーが発生し、Netease APIへのリクエストに失敗しました。",
+      "30536": "共有テキストからプレイリストIDを抽出できませんでした",
+      "30527": "プレイリスト作成時にエラーが発生しました",
       "30601": "無効なストア名です"
     }
   }
