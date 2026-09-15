@@ -28,8 +28,6 @@ export function createLyricController(
   const offTime = watch(time, t => {
     const line = findLine(lines.value, t)
     if (line !== currentLine.value) currentLine.value = line
-    if (time.value > 3 && lines.value.length > 0  && lines.value[currentLine.value]?.text.trim())
-      bus.emit(PlayerEvent.LyricLineChanged, lines.value[currentLine.value].text.trim())
   })
 
   async function loadLyrics(t: PlayTrack) {

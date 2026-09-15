@@ -58,12 +58,24 @@ async function handleSubmit() {
           <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
         </button>
         <h1 class="min-w-0 flex-1 text-lg font-bold text-fg-primary">{{ t('player.playlist') }}</h1>
-        <button
-          class="rounded-full bg-accent p-1 text-fg-primary shadow-lg shadow-accent/20 transition hover:bg-accent/90 active:scale-90"
-          :aria-label="t('playlist.create')" @click="openCreate = true"
-        >
-          <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14" /></svg>
-        </button>
+        <div class="flex items-center gap-2">
+          <button
+            class="inline-flex items-center justify-center rounded-full bg-accent/30 px-3 h-7 ring-1 ring-accent/50 text-fg-primary shadow-lg transition hover:bg-accent/60 active:scale-90"
+            :aria-label="t('playlist.import')" @click="router.push('/playlist/import')"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 1024 1024">
+              <path d="M0 0h1024v1024H0z" fill="none" />
+              <path fill="currentColor" fill-rule="evenodd" d="M880 912H144c-17.7 0-32-14.3-32-32V144c0-17.7 14.3-32 32-32h360c4.4 0 8 3.6 8 8v56c0 4.4-3.6 8-8 8H184v656h656V520c0-4.4 3.6-8 8-8h56c4.4 0 8 3.6 8 8v360c0 17.7-14.3 32-32 32M653.3 424.6l52.2 52.2c4.7 4.7 1.9 12.8-4.7 13.6l-179.4 21c-5.1.6-9.5-3.7-8.9-8.9l21-179.4c.8-6.6 8.9-9.4 13.6-4.7l52.4 52.4l256.2-256.2c3.1-3.1 8.2-3.1 11.3 0l42.4 42.4c3.1 3.1 3.1 8.2 0 11.3z" />
+            </svg>
+            <span class="ml-2 text-sm">{{ t('playlist.import') }}</span>
+          </button>
+          <button
+            class="rounded-full bg-accent ml-3 p-1 text-fg-primary shadow-lg shadow-accent/20 transition hover:bg-accent/90 active:scale-90"
+            :aria-label="t('playlist.create')" @click="openCreate = true"
+          >
+            <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14" /></svg>
+          </button>
+        </div>
       </div>
     </div>
 

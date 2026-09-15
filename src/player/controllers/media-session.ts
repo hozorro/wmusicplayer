@@ -1,8 +1,8 @@
-import { watch, ref, type Ref } from 'vue'
+import { watch, type Ref } from 'vue'
 import { PlayerEvent, type PlayerEventMap } from '../events'
 import type { Emitter } from '@/shared/emitter'
 import type { QueueStore } from '@/store/queue'
-import type { PlayerIntents } from '../types'
+import type { PlayerIntents, PlayTrack } from '../types'
 
 const MIME_BY_EXT: Record<string, string> = {
   jpg: 'image/jpeg',
@@ -39,20 +39,13 @@ export function createMediaSessionController(
 
   const ms = navigator.mediaSession
 
-  const title = ref('')
-  const artist = ref('')
-  const album = ref('')
-  // 用于临时覆盖 album 的歌词内容
-  const fakeAlbum = ref('')
-  const artwork = ref<MediaImage[]>([])
-
-  // —— 出站：状态投影 ——
-  function projectMetadata() {
+   // —— 出站：状态投影 ——
+  function projectMetadata(t: PlayTrack) {
     ms.metadata = new MediaMetadata({
-      title: title.value,
-      artist: artist.value,
-      album: fakeAlbum.value,
-      artwork: artwork.value,
+      title: t.title,
+      artist: t.artists?.map(a => a.name).join(', ') ?? '',
+      album: t.album?.title ?? '',
+      artwork: artworkOf(t.cover),
     })
   }
 
@@ -82,25 +75,13 @@ export function createMediaSessionController(
   }
 
   const offTrack = bus.on(PlayerEvent.TrackChanged, t => {
-    title.value = t.title
-    artist.value = t.artists?.map(a => a.name).join(', ') ?? ''
-    album.value = t.album?.title ?? ''
-    fakeAlbum.value = t.album?.title ?? ''
-    artwork.value = artworkOf(t.cover)
-
-    projectMetadata()
+    projectMetadata(t)
     projectState()
     lastSecond = -1
     projectPosition(true) // 换曲立即重置进度投影
   })
 
   const offState = bus.on(PlayerEvent.StateChanged, () => projectState())
-
-  const offLyric = bus.on(PlayerEvent.LyricLineChanged, (lyricLine) => {
-    fakeAlbum.value = lyricLine ? lyricLine : album.value
-    projectMetadata()
-  })
-
   const offDuration = watch(() => queue.duration, () => projectPosition(true))
   const offTime = watch(time, () => projectPosition())
 
@@ -129,7 +110,6 @@ export function createMediaSessionController(
   function dispose() {
     offTrack()
     offState()
-    offLyric()
     offDuration()
     offTime()
     for (const [action] of actions) {

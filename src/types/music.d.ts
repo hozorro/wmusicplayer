@@ -161,3 +161,85 @@ declare interface SearchResults {
   artists: Artist[];
   tracks: Track[];
 }
+
+// #region Netease Import
+declare interface NeteaseFetchRequest {
+  playlist_id?: number;
+  share_text?: string;
+}
+
+declare interface NeteaseTrackInfo {
+  id: number;
+  name: string;
+  mainTitle?: string;
+  artists: string[];
+  album: string;
+  duration: number; // 毫秒
+}
+
+declare interface NeteasePlaylistResponse {
+  id: number;
+  name: string;
+  coverImgUrl: string;
+  trackCount: number;
+  tracks: NeteaseTrackInfo[];
+}
+
+declare interface NeteaseMatchTrackItem {
+  name: string;
+  mainTitle?: string;
+  artists: string[];
+  album: string;
+}
+
+declare interface NeteaseMatchRequest {
+  tracks: NeteaseMatchTrackItem[];
+}
+
+declare interface NeteaseMatchCandidate {
+  track_id: number;
+  title: string;
+  artists: string[];
+  album: string;
+  duration: number; // 秒
+  cover_art_hash?: string;
+}
+
+declare interface NeteaseMatchResult {
+  netease_index: number;
+  netease_name: string;
+  netease_artists: string[];
+  netease_album: string;
+  candidates: NeteaseMatchCandidate[];
+}
+
+declare interface NeteaseUnmatchedItem {
+  netease_index: number;
+  netease_name: string;
+  netease_artists: string[];
+  netease_album: string;
+}
+
+declare interface NeteaseMatchResponse {
+  matched: NeteaseMatchResult[];
+  unmatched: NeteaseUnmatchedItem[];
+  total: number;
+  matched_count: number;
+  unmatched_count: number;
+}
+
+declare interface NeteaseCreateRequest {
+  title: string;
+  comment?: string;
+  cover_url?: string;
+  tracks: number[]; // 本地track ids
+}
+
+declare interface NeteaseCreateResponse {
+  id: number;
+  title: string;
+  cover_art_hash?: string;
+  track_count: number;
+  created_at: string;
+}
+// #endregion

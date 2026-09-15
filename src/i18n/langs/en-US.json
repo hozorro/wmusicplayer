@@ -137,7 +137,29 @@
     "empty_tip": "Add tracks via menu: Add to Playlist",
     "create_first": "Create your first playlist",
     "crop_tip": "Drag to position, scroll to zoom",
-    "crop": "Crop"
+    "crop": "Crop",
+    "import": "Import Playlist",
+    "import_netease": "Import from Netease",
+    "step_input_id": "Enter Playlist ID",
+    "step_confirm_match": "Confirm Match",
+    "step_create": "Create Playlist",
+    "netease_id_placeholder": "Enter Netease playlist ID",
+    "netease_input_placeholder": "Playlist ID or Share Link",
+    "netease_input_hint": "Enter Netease playlist ID, or paste share link (e.g., 分享歌单: xxx https://163cn.tv/xxx)",
+    "netease_input_tip": "Supports direct playlist ID input or paste share link content from Netease Music APP",
+    "fetch_playlist": "Fetch Playlist",
+    "match_tracks": "Match Tracks",
+    "matched_count": "{count} matched",
+    "unmatched_count": "{count} unmatched",
+    "select_candidate": "Select Candidate",
+    "no_import": "Skip",
+    "create_playlist": "Create Playlist",
+    "import_success": "Import successful",
+    "import_failed": "Import failed",
+    "invalid_playlist_id": "Invalid playlist ID",
+    "playlist_not_found": "Playlist not found",
+    "no_tracks_to_import": "No tracks to import",
+    "create_playlist_tip": "Duplicate songs are removed after matching, so the number of imported songs may differ from the number of matched songs. When import and create playlist, manually sync playlist in Settings-Sync Library needed."
   },
   "sentence": {
     "greet_night": "Late night",
@@ -279,6 +301,7 @@
     "HTTP_422": "Request field error",
     "HTTP_423": "Resource locked",
     "HTTP_500": "Server error",
+    "HTTP_502": "Service unavailable",
     "HTTP_503": "Service unavailable",
     "HTTP_UNKNOWN": "Unknown Error",
     "biz": {
@@ -311,6 +334,14 @@
       "30508": "error when update playlist",
       "30509": "update successful but error when save playlist image",
       "30515": "only jpg and png files are allowed for playlist images",
+      "30520": "either playlist_id or share_text must be provided",
+      "30521": "netease api request failed",
+      "30522": "netease api request failed for network error",
+      "30523": "netease api request failed for unknown error",
+      "30524": "playlist not found on netease",
+      "30525": "netease api request failed for song data processing error",
+      "30526": "failed to extract playlist id from share text",
+      "30527": "error when create playlist",
       "30601": "invalid store name"
     }
   }
