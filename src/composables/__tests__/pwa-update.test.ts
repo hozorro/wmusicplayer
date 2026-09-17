@@ -2,7 +2,7 @@
 // composables/__tests__/pwa-update.test.ts
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createApp, defineComponent, h, nextTick, type App } from 'vue'
-import { createEmitter } from '@/shared/emitter'
+import { createEmitter } from '@/player/shared/emitter'
 import { PlayerEvent } from '@/player/events'
 import type { PlayerEventMap } from '@/player/events'
 import type { EngineState } from '@/player/types'

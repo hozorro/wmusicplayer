@@ -14,15 +14,16 @@ import { getSyncPull, getSyncSummary } from "@/apis/methods/sync"
 import { guardedRebuild, playbackSync } from "./playback-data"
 import type { syncDeleted } from "@/idb/shapes/raw"
 import { setIdbReady } from "./idb-state"
+import type { PlayerConfig } from "@/config/player-config"
+
+/** 指数退避计算：base * 2^attempt，封顶 max */
+function backoffDelay(attempt: number, base: number, max: number): number {
+  return Math.min(base * Math.pow(2, attempt), max)
+}
 
 
 export const SYNC_STORES = ['tracks', 'artists', 'albums', 'genres', 'folders', 'playlists'] as const
 export type SyncStore = (typeof SYNC_STORES)[number]
-
-/** 常数 */
-const SYNC_PAGE_SIZE = 500
-const SYNC_PAGE_ATTEMPTS = 3
-const SYNC_PAGE_BACKOFF = [1000, 3000, 9000]
 
 /** 端点快照：每页成功后落 meta，中断后从这里续传 */
 interface SyncProgress {
@@ -50,17 +51,31 @@ export const syncState = reactive({
 
 let syncing = false
 
+/** 配置注入点：由应用层初始化时设置 */
+let syncConfig: Pick<PlayerConfig, 'SYNC_PAGE_SIZE' | 'SYNC_PAGE_ATTEMPTS' | 'BACKOFF_BASE_MS' | 'BACKOFF_MAX_MS'> = {
+  SYNC_PAGE_SIZE: 500,
+  SYNC_PAGE_ATTEMPTS: 3,
+  BACKOFF_BASE_MS: 1000,
+  BACKOFF_MAX_MS: 10000,
+}
+
+/** 应用层调用：注入配置 */
+export function setSyncConfig(config: typeof syncConfig) {
+  syncConfig = config
+}
+
 function notifyRebuilt() {
   window.dispatchEvent(new Event('library-rebuilt'))
 }
 
 async function fetchPage(since: string | null, store: string, afterId: number | null) {
+  const { SYNC_PAGE_SIZE, SYNC_PAGE_ATTEMPTS, BACKOFF_BASE_MS, BACKOFF_MAX_MS } = syncConfig
   for (let i = 0; i < SYNC_PAGE_ATTEMPTS; i++) {
     try {
       return await getSyncPull(since, store, afterId, SYNC_PAGE_SIZE)
     } catch {
       if (i === SYNC_PAGE_ATTEMPTS - 1) throw new Error(`Sync page failed: ${store}`)
-      await sleep(SYNC_PAGE_BACKOFF[i])
+      await sleep(backoffDelay(i, BACKOFF_BASE_MS, BACKOFF_MAX_MS))
     }
   }
   throw new Error('unreachable')
@@ -80,7 +95,7 @@ function initBatchProgress(counts: Record<string, number>) {
   console.log('Sync batch progress:', counts)
   syncState.batches = Object.fromEntries(SYNC_STORES.map(s => {
     const total = counts[s] ?? 0
-    return [s, { total, batches: Math.ceil(total / SYNC_PAGE_SIZE), done: 0, received: 0 }]
+    return [s, { total, batches: Math.ceil(total / syncConfig.SYNC_PAGE_SIZE), done: 0, received: 0 }]
   }))
   syncState.totalBatches = Object.values(syncState.batches).reduce((sum, b) => sum + b.batches, 0)
   syncState.doneBatches = 0

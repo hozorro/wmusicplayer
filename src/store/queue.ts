@@ -1,5 +1,6 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
+import { useMusicStore } from './music'
 import { shuffled } from '@/utilies/general'
 import type { EngineState, PlayIntent, PlayMode, PlayTrack } from '../player/types'
 
@@ -16,6 +17,8 @@ export const useQueueStore = defineStore('player/queue', () => {
   // —— 实际态（不持久化；唯一写门setEngineState / setDuration) ——
   const engineState = ref<EngineState>('idle')
   const duration = ref(0)
+  
+  const musicStore = useMusicStore()
 
   // —— 派生投影：watch只订阅这些，不订阅原始集合 ——
   const currentIndex = computed(() => order.value[position.value] ?? -1)
@@ -24,21 +27,17 @@ export const useQueueStore = defineStore('player/queue', () => {
   const nextPosition = computed(() => {
     const len = order.value.length
     if (len === 0) return -1
-    switch (mode.value) {
-      case 'loop-one': return position.value
-      case 'loop-all': return (position.value + 1) % len
-      default: return (position.value + 1) < len ? position.value + 1 : -1  // sequential和shuffle到末尾停止
-    }
+    if (mode.value === 'loop-one') return position.value
+    if (musicStore.params.AUTOLOOP) return (position.value + 1) % len
+    return (position.value + 1) < len ? position.value + 1 : -1  // sequential和shuffle到末尾停止
   })
 
   const prevPosition = computed(() => {
     const len = order.value.length
     if (len === 0) return -1
-    switch (mode.value) {
-      case 'loop-one': return position.value
-      case 'loop-all': return (position.value - 1 + len) % len
-      default: return (position.value - 1) >= 0 ? position.value - 1 : -1  // sequential和shuffle到开头停止
-    }
+    if (mode.value === 'loop-one') return position.value
+    if (musicStore.params.AUTOLOOP) return (position.value - 1 + len) % len
+    return (position.value - 1) >= 0 ? position.value - 1 : -1  // sequential和shuffle到开头停止
   })
 
   /** ended的业务裁决 */
@@ -57,7 +56,7 @@ export const useQueueStore = defineStore('player/queue', () => {
     if (len === 0) return 'ended'
     const n = position.value + 1 < len 
       ? position.value + 1 
-      : mode.value === 'loop-all' ? 0 : -1
+      : musicStore.params.AUTOLOOP ? 0 : -1
     if (n === -1) return 'ended'
     position.value = n
     return 'advanced'

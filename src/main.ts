@@ -8,6 +8,7 @@ import i18n, { loadLocaleMessages} from '@/i18n'
 import { useMusicStore } from '@/store/music'
 import { initPlayer } from '@/player/facade/index.ts'
 import { initIdbState } from './services/idb-state.ts'
+import { initConfig } from './services/init-config'
 
 
 const app = createApp(App)
@@ -17,6 +18,7 @@ pinia.use(createPersistedState())
 
 app.use(router).use(pinia).use(i18n)
 
+initConfig()
 initPlayer()
 void initIdbState()
 

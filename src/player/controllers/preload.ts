@@ -1,15 +1,10 @@
 import { PlayerEvent } from "../events";
 import type { PlayerEventMap } from "../events";
-import type { Emitter } from "@/shared/emitter";
+import type { Emitter } from "@/player/shared/emitter";
 import type { QueueStore } from "@/store/queue";
 import type { StreamResolver } from "@/services/stream-resolver";
 import type { CacheService } from "@/services/cache";
-
-const URL_AHEAD = 3;             // URL 层：轻量，覆盖未来 3 首
-const BYTES_AHEAD = 2;           // 字节层：中量，覆盖未来 2 首，按配额收敛
-const REFRESH_TICK_MS = 30000;   // 期中重解析节拍
-const PRELOAD_DELAY_MS = 3000;   // 预热延迟：让当前曲首载链路独享带宽
-const LOADING_RETRY_MS = 2000;   // 当前曲仍在加载时的顺延节拍
+import type { PlayerConfig } from "@/config/player-config";
 
 /**
  * 预加载控制器：纵深防御 + 让路首载
@@ -17,13 +12,20 @@ const LOADING_RETRY_MS = 2000;   // 当前曲仍在加载时的顺延节拍
  * 时机约束：当前曲目加载完成后延迟触发——首载期间不发任何预热请求，
  * 避免整文件下载与 audio 元素的字节流争抢连接池/带宽
  * 一切失败静默——预加载是优化，正确性兜底永远在 inline fallback
+ * 
+ * @param config 配置注入，保持模块纯净可测试
  */
 export function createPreloadController(
   queue: QueueStore,
   bus: Emitter<PlayerEventMap>,
   resolver: StreamResolver,
   cache: CacheService,
+  config: Pick<PlayerConfig, 
+    'URL_AHEAD' | 'BYTES_AHEAD' | 'REFRESH_TICK_MS' | 'PRELOAD_DELAY_MS' | 'LOADING_RETRY_MS'
+  >,
 ) {
+  const { URL_AHEAD, BYTES_AHEAD, REFRESH_TICK_MS, PRELOAD_DELAY_MS, LOADING_RETRY_MS } = config
+
   let warmTimer: ReturnType<typeof setTimeout> | null = null
   let warming = false
 

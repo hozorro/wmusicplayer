@@ -6,19 +6,28 @@
  */
 import type { PendingStore } from "@/idb/pending";
 import type { PlaybackOpType } from "@/idb/pending";
+import type { PlayerConfig } from "@/config/player-config";
 
-const MAX_ATTEMPTS = 3;
-const BACKOFF = [1000, 3000, 9000]
+/** 指数退避计算：base * 2^attempt，封顶 max */
+function backoffDelay(attempt: number, base: number, max: number): number {
+  return Math.min(base * Math.pow(2, attempt), max)
+}
 
-export function createPlaybackSync(deps: {
-  pending: PendingStore
-  notify: (msg:string) => void
-}) {
+export function createPlaybackSync(
+  deps: {
+    pending: PendingStore
+    notify: (msg: string) => void
+  },
+  config: Pick<PlayerConfig, 'PLAYBACK_SYNC_MAX_ATTEMPTS' | 'BACKOFF_BASE_MS' | 'BACKOFF_MAX_MS'>,
+) {
+  const { PLAYBACK_SYNC_MAX_ATTEMPTS, BACKOFF_BASE_MS, BACKOFF_MAX_MS } = config
+
   const handlers = new Map<PlaybackOpType, (payload: any) => Promise<unknown>>()
   const registerHandler = (type: PlaybackOpType, fn: (payload: any) => Promise<unknown>) => {
     handlers.set(type, fn)
   }
-  /** 即时充实 3 次：全败 -> 落 pending + 提醒。返回是否同步成功 */
+
+  /** 即时充实 N 次：全败 -> 落 pending + 提醒。返回是否同步成功 */
   async function push(spec: {
     key: string; 
     opType: PlaybackOpType;
@@ -26,13 +35,13 @@ export function createPlaybackSync(deps: {
     label: string;
     remote: () => Promise<unknown>
   }): Promise<boolean> {
-    for (let i = 0; i < MAX_ATTEMPTS; i++) {
+    for (let i = 0; i < PLAYBACK_SYNC_MAX_ATTEMPTS; i++) {
       try { await spec.remote(); return true }
-      catch { await sleep(BACKOFF[i])}
+      catch { await sleep(backoffDelay(i, BACKOFF_BASE_MS, BACKOFF_MAX_MS)) }
     }
     await deps.pending.add({
       key: spec.key, opType: spec.opType, payload: spec.payload, label: spec.label,
-      attempts: MAX_ATTEMPTS, failedAt: Date.now()
+      attempts: PLAYBACK_SYNC_MAX_ATTEMPTS, failedAt: Date.now()
     })
     deps.notify(`Failed to sync ${spec.label}, added to pending queue`)
     return false

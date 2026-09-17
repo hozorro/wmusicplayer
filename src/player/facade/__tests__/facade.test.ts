@@ -5,6 +5,17 @@ import { createPinia, setActivePinia } from 'pinia'
 import { EngineEvent } from '@/player/events'
 import type { PlayTrack } from '../../types'
 
+// Mock localStorage for musicStore
+const localStorageMock = {
+  getItem: vi.fn(() => null),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn(),
+  length: 0,
+  key: vi.fn(() => null),
+}
+globalThis.localStorage = localStorageMock as Storage
+
 const runtimeMock = vi.hoisted(() => ({
   load: vi.fn().mockResolvedValue(undefined),
   swapAndPlay: vi.fn().mockResolvedValue(undefined),
@@ -15,9 +26,10 @@ const runtimeMock = vi.hoisted(() => ({
   setVolume: vi.fn(),
   on: vi.fn(), off: vi.fn(), dispose: vi.fn(),
 }))
-vi.mock('../../runtime', () => ({ createAudioRuntime: () => runtimeMock }))
+vi.mock('../../runtime', () => ({ createAudioRuntime: (_config: unknown) => runtimeMock }))
 
 import { createPlayerFacade, type PlayerFacade } from '..'
+import { useMusicStore } from '@/store/music'
 
 const T = (id: number): PlayTrack => ({ id, title: `t${id}`, artists: [{ id: 1, name: 'a' }] })
 
@@ -63,6 +75,8 @@ describe('facade 意图接线', () => {
   })
 
   it('next 到末尾：裁决 ended 并落 pause 意图', async () => {
+    const musicStore = useMusicStore()
+    musicStore.setParam('AUTOLOOP', false)
     facade.intents.playAll([T(1)])
     await flushed()
     facade.intents.next()

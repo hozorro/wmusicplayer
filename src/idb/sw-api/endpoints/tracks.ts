@@ -4,26 +4,38 @@ import { MISS, json, type ApiHandler } from "../contract"
 import { genreRange, favRange, toRawTrack, toRawArtist, toRawAlbum } from "../shapes";
 import { sample, weightedSample } from "@/utilies/general";
 import { normalize } from "@/idb/derive";
-import { SEARCH_TYPE_LIMIT } from "@/constants/library"
 import { reqAsPromise } from "@/idb/idb-lib";
+import type { PlayerConfig } from "@/config/player-config";
 
-/** 常数 */
-const RANDOM_DEFAULT_NUM = 50
-const SCATTER_M_DEFAULT = 3
-const SCATTER_N_DEFAULT = 50
-const SCATTER_M_CAP = 20
-const SCATTER_N_CAP = 200
+/** 配置注入点：由应用层初始化时设置 */
+let idbConfig: Pick<PlayerConfig,
+  'RANDOM_DEFAULT_NUM' | 'SCATTER_M_DEFAULT' | 'SCATTER_N_DEFAULT' |
+  'SCATTER_M_CAP' | 'SCATTER_N_CAP' | 'SEARCH_TYPE_LIMIT'
+> = {
+  RANDOM_DEFAULT_NUM: 50,
+  SCATTER_M_DEFAULT: 3,
+  SCATTER_N_DEFAULT: 50,
+  SCATTER_M_CAP: 20,
+  SCATTER_N_CAP: 200,
+  SEARCH_TYPE_LIMIT: 50,
+}
+
+/** 应用层调用：注入配置 */
+export function setIdbTracksConfig(config: typeof idbConfig) {
+  idbConfig = config
+}
+
 
 export const idbGetRandomTracks: ApiHandler = async ({ query }) => {
   const idb = await getLibraryIdb()
-  const num = Number(query.get("num") || RANDOM_DEFAULT_NUM)
+  const num = Number(query.get("num") || idbConfig.RANDOM_DEFAULT_NUM)
   const tracks = await idb.getRandom<IDBTrack>("tracks", num)
   return json(tracks.map(toRawTrack))
 }
 
 export const idbGetArtistRandomTracks: ApiHandler = async ({ query }) => {
   const idb = await getLibraryIdb()
-  const num = Number(query.get("num") || RANDOM_DEFAULT_NUM)
+  const num = Number(query.get("num") || idbConfig.RANDOM_DEFAULT_NUM)
   const artistId = Number(query.get("artist_id") || 0)
   if (!artistId) return MISS
   const tracks = await idb.getByIndex<IDBTrack>("tracks", "artist_ids", artistId)
@@ -32,7 +44,7 @@ export const idbGetArtistRandomTracks: ApiHandler = async ({ query }) => {
 
 export const idbGetGenreRandomTracks: ApiHandler = async ({ query }) => {
   const idb = await getLibraryIdb()
-  const num = Number(query.get("num") || RANDOM_DEFAULT_NUM)
+  const num = Number(query.get("num") || idbConfig.RANDOM_DEFAULT_NUM)
   const genreId = Number(query.get("genre_id") || 0)
   if (!genreId) return MISS
   const tracks = await idb.getRandomByIndex<IDBTrack>("tracks", "genre_titles", genreRange(genreId), num)
@@ -40,14 +52,14 @@ export const idbGetGenreRandomTracks: ApiHandler = async ({ query }) => {
 }
 
 export const idbFavoritedTracks: ApiHandler = async ({ query }) => {
-  const num = Number(query.get("num") || RANDOM_DEFAULT_NUM)
+  const num = Number(query.get("num") || idbConfig.RANDOM_DEFAULT_NUM)
   const idb = await getLibraryIdb()
   const tracks = await idb.getByIndex<IDBTrack>("tracks", "favorited_at", favRange)
   return json(tracks.slice(0, num).map(toRawTrack))
 }
 
 export const idbFavoritedTrackIds: ApiHandler = async ({ query }) => {
-  const num = Number(query.get("num") || RANDOM_DEFAULT_NUM)
+  const num = Number(query.get("num") || idbConfig.RANDOM_DEFAULT_NUM)
   const idb = await getLibraryIdb()
   const tracks = await idb.getByIndex<IDBTrack>("tracks", "favorited_at", favRange)
   return json(tracks.slice(0, num).map(t => t.id))
@@ -105,9 +117,9 @@ const alpha = (w: number) => (w - 1) / 4
  * 约束：每位 ≤ m，总量 ≤ n，跨歌手去重（多歌手曲目防重复入选）
  */
 export const idbGetRndArtistSctdTracks: ApiHandler = async ({ query }) => {
-  const m = Math.min(SCATTER_M_CAP, Math.max(1, Number(query.get("numpa") || SCATTER_M_DEFAULT)))
-  const nRaw = Number(query.get("num") || SCATTER_N_DEFAULT)
-  const n = Math.min(SCATTER_N_CAP, Math.max(m + 1, nRaw))  // 强制 n > m
+  const m = Math.min(idbConfig.SCATTER_M_CAP, Math.max(1, Number(query.get("numpa") || idbConfig.SCATTER_M_DEFAULT)))
+  const nRaw = Number(query.get("num") || idbConfig.SCATTER_N_DEFAULT)
+  const n = Math.min(idbConfig.SCATTER_N_CAP, Math.max(m + 1, nRaw))  // 强制 n > m
 
   const idb = await getLibraryIdb()
   const artists = await idb.getAll<IDBArtist>("artists")
@@ -144,7 +156,7 @@ export const idbGetRndArtistSctdTracks: ApiHandler = async ({ query }) => {
  */
 export const idbGetWgtRndArtistTracks: ApiHandler = async ({ query }) => {
   const a = alpha(clampWeight(Number(query.get("weight") || 5)))
-  const num = Number(query.get("num") || RANDOM_DEFAULT_NUM)
+  const num = Number(query.get("num") || idbConfig.RANDOM_DEFAULT_NUM)
   const idb = await getLibraryIdb()
   const artists = await idb.getAll<IDBArtist>("artists")
   if (!artists.length) return MISS
@@ -173,7 +185,7 @@ export const idbGetWgtRndArtistTracks: ApiHandler = async ({ query }) => {
  */
 export const idbGetWgtRndTracks: ApiHandler = async ({ query }) => {
   const a = alpha(clampWeight(Number(query.get("weight") || 5)))
-  const num = Number(query.get("num") || RANDOM_DEFAULT_NUM)
+  const num = Number(query.get("num") || idbConfig.RANDOM_DEFAULT_NUM)
   const idb = await getLibraryIdb()
   const tracks = await idb.getAll<IDBTrack>("tracks")
   if (!tracks.length) return MISS
@@ -186,7 +198,7 @@ export const idbGetWgtRndTracks: ApiHandler = async ({ query }) => {
  * 通过 hit_count 索引精确匹配 + 随机偏移采样，避免全量物化
  */
 export const idbGetRndUnhitTracks: ApiHandler = async ({ query }) => {
-  const num = Number(query.get("num") || RANDOM_DEFAULT_NUM)
+  const num = Number(query.get("num") || idbConfig.RANDOM_DEFAULT_NUM)
   const idb = await getLibraryIdb()
   const tracks = await idb.getRandomByIndex<IDBTrack>("tracks", "hit_count", IDBKeyRange.only(0), num)
   if (!tracks.length) return MISS
@@ -227,12 +239,12 @@ export const idbSearch: ApiHandler = async ({ query }) => {
     map: (r: T) => unknown,
   ) {
     // 前缀段：B 树范围取值（快路径）
-    let hits = await idb.getByIndex<T>(store, index, prefixRange, SEARCH_TYPE_LIMIT)
+    let hits = await idb.getByIndex<T>(store, index, prefixRange, idbConfig.SEARCH_TYPE_LIMIT)
     // 包含段：前缀段不足才全扫补足
-    if (hits.length < SEARCH_TYPE_LIMIT) {
+    if (hits.length < idbConfig.SEARCH_TYPE_LIMIT) {
       const all = await idb.getAll<T>(store)
       const fill = all.filter(r => !lower(r).startsWith(kw) && lower(r).includes(kw))
-      hits = [...hits, ...fill].slice(0, SEARCH_TYPE_LIMIT)
+      hits = [...hits, ...fill].slice(0, idbConfig.SEARCH_TYPE_LIMIT)
     }
     return hits.map(map)
   }

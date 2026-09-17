@@ -14,7 +14,7 @@ import { toPlayTrack } from '@/services/transform'
 import type { PlayTrack } from '@/player/types'
 import { formatTime } from '@/utilies/general'
 import { usePlayer } from '@/composables/playback'
-import { SEARCH_TYPE_LIMIT } from '@/constants/library'
+import { getConfig } from '@/config/config-provider'
 import { getCollectionTracks, searchLibrary } from '@/apis/methods/music'
 
 // import { searchLibrary } from '@/api/…'
@@ -22,6 +22,7 @@ import { getCollectionTracks, searchLibrary } from '@/apis/methods/music'
 const router = useRouter()
 const player = usePlayer()
 const { t } = useI18n()
+const config = getConfig()
 
 const input = ref<HTMLInputElement>()
 const q = ref('')
@@ -117,7 +118,7 @@ const tabs = computed(() => [
   { key: 'tracks' as const, label: t('player.track'), count: results.value.tracks.length },
   { key: 'artists' as const, label: t('player.artist'), count: results.value.artists.length },
   { key: 'albums' as const, label: t('player.album'), count: results.value.albums.length },
-].map(t => ({...t, capped: t.count >= SEARCH_TYPE_LIMIT })))
+].map(t => ({...t, capped: t.count >= config.SEARCH_TYPE_LIMIT })))
 </script>
 
 <template>
@@ -252,10 +253,10 @@ const tabs = computed(() => [
               <EntityMenuButton :source="{ kind: 'track', track: t }" />
             </div>
             <p
-              v-if="results[tab].length >= SEARCH_TYPE_LIMIT"
+              v-if="results[tab].length >= config.SEARCH_TYPE_LIMIT"
               class="py-4 text-center text-[11px] text-fg-muted"
             >
-              {{ t('player.search_hint', { limit: SEARCH_TYPE_LIMIT }) }}
+              {{ t('player.search_hint', { limit: config.SEARCH_TYPE_LIMIT }) }}
             </p>
           </TransitionGroup>
           <p v-if="!playTracks.length" class="py-16 text-center text-sm text-fg-muted">
@@ -278,10 +279,10 @@ const tabs = computed(() => [
               </template>
             </ArtistRow>
             <p
-              v-if="results[tab].length >= SEARCH_TYPE_LIMIT"
+              v-if="results[tab].length >= config.SEARCH_TYPE_LIMIT"
               class="py-4 text-center text-[11px] text-fg-muted"
             >
-              {{ t('player.search_hint', { limit: SEARCH_TYPE_LIMIT }) }}
+              {{ t('player.search_hint', { limit: config.SEARCH_TYPE_LIMIT }) }}
             </p>
           </TransitionGroup>
           <p v-if="!results.artists.length" class="py-16 text-center text-sm text-fg-muted">
@@ -326,10 +327,10 @@ const tabs = computed(() => [
               />
             </div>
             <p
-              v-if="results[tab].length >= SEARCH_TYPE_LIMIT"
+              v-if="results[tab].length >= config.SEARCH_TYPE_LIMIT"
               class="py-4 text-center text-[11px] text-fg-muted"
             >
-              {{ t('player.search_hint', { limit: SEARCH_TYPE_LIMIT }) }}
+              {{ t('player.search_hint', { limit: config.SEARCH_TYPE_LIMIT }) }}
             </p>
           </TransitionGroup>
           <p v-if="!results.albums.length" class="py-16 text-center text-sm text-fg-muted">

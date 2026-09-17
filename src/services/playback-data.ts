@@ -3,10 +3,14 @@ import { createPendingStore } from "@/idb/pending";
 import { createPlaybackSync } from "./playback-sync";
 import { createPlaybackWriter } from "./playback-writer";
 import { t } from "@/utilies/use-i18n";
+import { getConfig } from "@/config/config-provider";
 
 const pendingStore = createPendingStore();
 export { pendingStore }
-export const playbackSync = createPlaybackSync({ pending: pendingStore, notify: toast });
+export const playbackSync = createPlaybackSync(
+  { pending: pendingStore, notify: toast },
+  getConfig(),
+);
 export const playbackWriter = createPlaybackWriter(playbackSync);
 
 /** 定期同步守卫：drain → 残留确认 → 丢弃 → 重建（A65/A67） */

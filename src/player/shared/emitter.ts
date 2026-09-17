@@ -1,15 +1,15 @@
 /**
- * 订阅者处理函数；void载荷的事件可写作无参数函数
+ * 订阅者处理函数；void载荷的事件可写作无参数函�?
  */
 export type EventHandler<T> = (payload: T) => void
 
 /**
  * 类型化事件发生器
  * 
- * 语义约定：
- * - 同步发射：handler在emit调用栈内按注册顺序执行
- * - 异常隔离：单个handler抛错不影响其余订阅者
- * - 快照语义：emit开始时锁定本轮接收者，期间增删的订阅下一轮生效
+ * 语义约定�?
+ * - 同步发射：handler在emit调用栈内按注册顺序执�?
+ * - 异常隔离：单个handler抛错不影响其余订阅�?
+ * - 快照语义：emit开始时锁定本轮接收者，期间增删的订阅下一轮生�?
  * - 通知语义：emit无返回值，不期待应答——事件不是RPC
  */
 export function createEmitter<EventMap extends {[K in keyof EventMap]: unknown}>() {

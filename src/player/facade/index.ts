@@ -1,5 +1,5 @@
 import { effectScope, ref } from "vue";
-import { createEmitter } from "@/shared/emitter";
+import { createEmitter } from "@/player/shared/emitter";
 import { createAudioRuntime } from "../runtime";
 import { useQueueStore } from "@/store/queue";
 import { createPlayQueueController } from "../controllers/play-queue";
@@ -10,6 +10,7 @@ import { createStreamResolver } from "@/services/stream-resolver";
 import { createCacheService } from "@/services/cache";
 import { createPreloadController } from "../controllers/preload";
 import { createLyricController } from "../controllers/lyrics";
+import { getConfig } from "@/config/config-provider";
 import type { PlayerEventMap } from "../events";
 import type { PlayTrack, PlayerIntents } from "../types";
 import { getStreamingUrl, getLyric } from "@/apis/methods/music";
@@ -24,17 +25,18 @@ export function createPlayerFacade(deps: PlayerFacadeDeps) {
   const scope  = effectScope(true)  // app 级生命周期，脱离组件作用域
 
   const api = scope.run(() => {
+    const config = getConfig()
     const bus = createEmitter<PlayerEventMap>();
-    const runtime = createAudioRuntime();
+    const runtime = createAudioRuntime(config);
     const queue = useQueueStore();
     queue.sanitize()
     const playQueue = createPlayQueueController(queue, bus);
     const resolver = createStreamResolver(deps.fetchStreamUrl);
     const time = ref(0);
-    const cacheService = createCacheService();
-    const playback = createPlaybackController(runtime, queue, resolver, cacheService, bus, time);
-    const hitTracker = createHitTracker(queue, bus, time);
-    const preload = createPreloadController(queue, bus, resolver, cacheService);
+    const cacheService = createCacheService(config);
+    const playback = createPlaybackController(runtime, queue, resolver, cacheService, bus, time, config);
+    const hitTracker = createHitTracker(queue, bus, time, config);
+    const preload = createPreloadController(queue, bus, resolver, cacheService, config);
     const lyrics = createLyricController(bus, time, deps.fetchLyric);
     
     const intents: PlayerIntents = {
@@ -84,6 +86,7 @@ export function createPlayerFacade(deps: PlayerFacadeDeps) {
         if (mediaSession.supported) mediaSession.dispose()
         hitTracker.dispose()
         runtime.dispose()
+        cacheService.dispose()
         bus.clear()
       }
     }

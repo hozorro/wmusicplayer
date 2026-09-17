@@ -1,5 +1,5 @@
 // player/events/__tests__/contract.test-d.ts —— vue-tsc --noEmit 即可运行
-import { createEmitter } from '@/shared/emitter'
+import { createEmitter } from '@/player/shared/emitter'
 import { EngineEvent, type EngineEventMap } from '../engine'
 
 const bus = createEmitter<EngineEventMap>()

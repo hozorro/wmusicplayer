@@ -149,14 +149,12 @@ function onScrubEnd(e: PointerEvent) {
 // —— 播放模式循环 ——
 const MODE_NEXT: Record<PlayMode, PlayMode> = {
   sequential: 'shuffle',
-  'shuffle': 'loop-all',
-  'loop-all': 'loop-one',
+  'shuffle': 'loop-one',
   'loop-one': 'sequential'
 }
 const MODE_LABEL = {
   sequential: t('player.sequential'),
   shuffle: t('player.shuffle'),
-  'loop-all': t('player.loop_all'),
   'loop-one': t('player.loop_one')
 }
 
@@ -407,12 +405,6 @@ onUnmounted(() => window.removeEventListener('idb-rebuilt', onLibraryRebuilt))
             <svg v-if="playQueue.mode.value === 'sequential'" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
               <path d="M4 6h12M4 12h12M4 18h7" />
               <path d="M15 15l4 3-4 3v-6z" fill="currentColor" stroke="none" />
-            </svg>
-            <svg v-else-if="playQueue.mode.value === 'loop-all'" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M17 2l4 4-4 4" />
-              <path d="M3 11v-1a4 4 0 014-4h14" />
-              <path d="M7 22l-4-4 4-4" />
-              <path d="M21 13v1a4 4 0 01-4 4H3" />
             </svg>
             <svg v-else-if="playQueue.mode.value === 'loop-one'" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M17 2l4 4-4 4" />
