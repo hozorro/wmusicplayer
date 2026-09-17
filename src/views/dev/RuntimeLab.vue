@@ -8,8 +8,10 @@ import { ref, watch, onUnmounted } from 'vue'
 import { createAudioRuntime } from '@/player/runtime';
 import { EngineEvent } from '@/player/events'; 
 import { getRandomTracks, getStreamingUrl } from '@/apis/methods/music';
+import { getConfig } from '@/config/config-provider';
 
-const runtime = createAudioRuntime()
+const config = getConfig()
+const runtime = createAudioRuntime(config)
 const index = ref(0)
 const state = ref<string>('idle')
 const logs = ref<string[]>([])
