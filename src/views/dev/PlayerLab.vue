@@ -31,13 +31,11 @@ facade.bus.on(PlayerEvent.PlaybackError, (error) => push(`PlaybackError ${error.
 
 const MODE_LABEL = {
   sequential: '顺序播放',
-  'loop-all': '循环播放',
   'loop-one': '单曲循环',
   shuffle: '随机播放',
 } as const
 const NEXT_MODE = {
-  sequential: 'loop-all',
-  'loop-all': 'loop-one',
+  sequential: 'loop-one',
   'loop-one': 'shuffle',
   shuffle: 'sequential',
 } as const

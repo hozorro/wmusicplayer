@@ -1,11 +1,13 @@
 import { watch, type Ref } from 'vue'
 import { EngineEvent, PlayerEvent, type PlayerEventMap } from '../events'
-import type { Emitter } from '@/shared/emitter'
+import type { Emitter } from '@/player/shared/emitter'
 import type { AudioRuntime } from '../runtime'
 import type { StreamResolver } from '@/services/stream-resolver'
 import type { CacheService } from '@/services/cache'
 import type { QueueStore } from '@/store/queue'
 import type { PlayTrack } from '../types'
+import type { PlayerConfig } from '@/config/player-config'
+
 
 /**
  * 播放控制器 = 调和器 + 传输
@@ -23,8 +25,11 @@ export function createPlaybackController(
   resolver: StreamResolver,
   cache: CacheService,
   bus: Emitter<PlayerEventMap>,
-  time: Ref<number>
+  time: Ref<number>,
+  config: Pick<PlayerConfig, 'MAX_CONSECUTIVE_FAILURES'>
 ) {
+  const { MAX_CONSECUTIVE_FAILURES } = config
+  
   let loadedId: number | null = null
 
   /** 最近一次交付给 runtime 的源：本地键失败回退时的判据 */
@@ -32,9 +37,8 @@ export function createPlaybackController(
   /** 本地键已被证实失效的曲目：本次会话内不再尝试，直走网络 */
   const localFailed = new Set<number>()
 
-  /** 连续失败熔断：防 loop-all 无限跳环，防坏队列 burn-through 请求 */
+  /** 连续失败熔断：防 autoloop 无限跳环，防坏队列 burn-through 请求 */
   let consecutiveFailures = 0
-  const MAX_CONSECUTIVE_FAILURES = 3
 
   // —— 期望态 -> 实际态 ——
   // immediate：冷启动恢复持久化队列后，首曲以暂停态预载（元数据/时长就位，等待手势）

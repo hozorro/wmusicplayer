@@ -1,6 +1,6 @@
 import { watch, type Ref } from 'vue'
 import { PlayerEvent, type PlayerEventMap } from '../events'
-import type { Emitter } from '@/shared/emitter'
+import type { Emitter } from '@/player/shared/emitter'
 import type { QueueStore } from '@/store/queue'
 import type { PlayerIntents, PlayTrack } from '../types'
 

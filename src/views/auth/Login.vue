@@ -35,14 +35,14 @@ async function handleLogin() {
       <div class=" w-full mt-4">
         <div class=" grid grid-cols-[3rem_1fr] gap-2 items-center">
           <label for="username">{{ t('auth.username') }}</label>
-          <input type="text" class=" p-2 rounded-md outline-0 focus: border focus:border-cyan-400" id="username" v-model="username" :placeholder="t('auth.username_placeholder')">
+          <input type="text" class=" p-2 rounded-md outline-0 focus: border focus:border-accent" id="username" v-model="username" :placeholder="t('auth.username_placeholder')">
         </div>
         <div class=" grid grid-cols-[3rem_1fr] gap-2 mt-3 items-center">
           <label for="password">{{ t('auth.password') }}</label>
-          <input type="password" class=" p-2 rounded-md outline-0 focus: border focus:border-cyan-400" id="password" v-model="password" :placeholder="t('auth.password_placeholder')">
+          <input type="password" class=" p-2 rounded-md outline-0 focus: border focus:border-accent" id="password" v-model="password" :placeholder="t('auth.password_placeholder')">
         </div>
         <div class=" w-full mt-4">
-          <button class=" w-full h-8 rounded-md bg-cyan-500 text-white" @click="handleLogin">{{ `${t('auth.login')}${authStore.isLogining ? '...' : ''}` }}</button>
+          <button class=" w-full py-2 rounded-md bg-accent text-white" @click="handleLogin">{{ `${t('auth.login')}${authStore.isLogining ? '...' : ''}` }}</button>
         </div>
         <p v-if="authStore.loginErrors?.form" class=" mt-2 text-sm text-red-400">{{ authStore.loginErrors.form }} </p>
       </div>

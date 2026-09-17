@@ -3,20 +3,31 @@ import type { IDBArtist, IDBAlbum, IDBTrack } from "@/idb/shapes/idb";
 import { MISS, json, type ApiHandler } from "../contract"
 import { toRawArtist, toRawAlbum, toRawTrack, favRange } from "../shapes";
 import { sample } from "@/utilies/general";
+import type { PlayerConfig } from "@/config/player-config";
 
-/** 常数 */
-const TOP_COUNT = 6
-const RANDOM_COUNT = 4
-const TOP_TRACKS_COUNT = 20
+/** 配置注入点：由应用层初始化时设置 */
+let idbConfig: Pick<PlayerConfig,
+  'TOP_ARTISTS_COUNT' | 'RANDOM_ARTISTS_COUNT' | 'TOP_TRACKS_COUNT'
+> = {
+  TOP_ARTISTS_COUNT: 6,
+  RANDOM_ARTISTS_COUNT: 4,
+  TOP_TRACKS_COUNT: 20,
+}
+
+/** 应用层调用：注入配置 */
+export function setIdbArtistsConfig(config: typeof idbConfig) {
+  idbConfig = config
+}
 
 export const idbGetTenArtists: ApiHandler = async () => {
   const idb = await getLibraryIdb()
   const artists = await idb.getAll<IDBArtist>('artists')
   if (!artists.length) return MISS
   const ranked = [...artists].sort((a, b) => (b.hit_count ?? 0) - (a.hit_count ?? 0))
-  const top = ranked.slice(0, TOP_COUNT)
-  const random = sample(ranked.slice(TOP_COUNT), RANDOM_COUNT)
-  return json([...top, ...random].map(toRawArtist))
+  const top = ranked.slice(0, idbConfig.TOP_ARTISTS_COUNT)
+  const random = sample(ranked.slice(idbConfig.TOP_ARTISTS_COUNT), idbConfig.RANDOM_ARTISTS_COUNT)
+  console.log([...random, ...top])
+  return json([...random, ...top].map(toRawArtist))
 }
 
 export const idbGetArtistChars: ApiHandler = async () => {
@@ -52,10 +63,10 @@ export const idbGetArtist: ApiHandler = async ({ params }) => {
   const played = artistTracks
     .filter(t => (t.hit_count ?? 0) > 0)
     .sort((a, b) => (b.hit_count ?? 0) - (a.hit_count ?? 0))
-  const topTracks = played.slice(0, TOP_TRACKS_COUNT)
-  if (topTracks.length < TOP_TRACKS_COUNT) {
+  const topTracks = played.slice(0, idbConfig.TOP_TRACKS_COUNT)
+  if (topTracks.length < idbConfig.TOP_TRACKS_COUNT) {
     const unplayed = artistTracks.filter(t => (t.hit_count ?? 0) === 0)
-    topTracks.push(...sample(unplayed, TOP_TRACKS_COUNT - topTracks.length))
+    topTracks.push(...sample(unplayed, idbConfig.TOP_TRACKS_COUNT - topTracks.length))
   }
   return json({
     ...toRawArtist(artist),

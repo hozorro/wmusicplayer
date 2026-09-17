@@ -3,9 +3,9 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
-
 const props = defineProps<{
   modelValue?: string
+  /** 裁剪框宽高比（宽 / 高），默认 1:1 */
   aspectRatio?: number
 }>()
 
@@ -31,18 +31,35 @@ const touchStartDistance = ref(0)
 const touchStartScale = ref(1)
 
 const containerSize = ref({ width: 0, height: 0 })
-const imageSize = ref({ width: 0, height: 0 })
 
-const cropSize = computed(() => {
-  const size = Math.min(containerSize.value.width, containerSize.value.height) * 0.8
-  return size
-})
+/** 裁剪框占容器短边的比例 */
+const CROP_RATIO = 0.8
+/** 导出图片的最大边长，避免极端缩放时产出超大画布 */
+const MAX_OUTPUT = 4096
+
+/**
+ * 根据容器尺寸计算裁剪框。
+ * 关键：显示用的裁剪框和导出用的裁剪区域必须来自同一个函数，
+ * 否则两处一旦不一致，裁出来的内容就会和看到的框对不上。
+ */
+function computeCropBox(cw: number, ch: number) {
+  if (!cw || !ch) return { width: 0, height: 0, left: 0, top: 0 }
+  const base = Math.min(cw, ch) * CROP_RATIO
+  const ar = props.aspectRatio && props.aspectRatio > 0 ? props.aspectRatio : 1
+  const width = ar >= 1 ? base : base * ar
+  const height = ar >= 1 ? base / ar : base
+  return { width, height, left: (cw - width) / 2, top: (ch - height) / 2 }
+}
+
+const cropBox = computed(() =>
+  computeCropBox(containerSize.value.width, containerSize.value.height)
+)
 
 const cropStyle = computed(() => ({
-  width: `${cropSize.value}px`,
-  height: `${cropSize.value}px`,
-  left: `${(containerSize.value.width - cropSize.value) / 2}px`,
-  top: `${(containerSize.value.height - cropSize.value) / 2}px`
+  width: `${cropBox.value.width}px`,
+  height: `${cropBox.value.height}px`,
+  left: `${cropBox.value.left}px`,
+  top: `${cropBox.value.top}px`
 }))
 
 const imageStyle = computed(() => ({
@@ -78,39 +95,73 @@ function resetTransform() {
   translateY.value = 0
 }
 
-function onImageLoad() {
-  if (!imageRef.value || !containerRef.value) return
+function measureContainer() {
+  if (!containerRef.value) return
   const rect = containerRef.value.getBoundingClientRect()
   containerSize.value = { width: rect.width, height: rect.height }
-  imageSize.value = {
-    width: imageRef.value.naturalWidth,
-    height: imageRef.value.naturalHeight
-  }
-  // 确保图片可见后再计算适配
+}
+
+/** 图片在 scale = 1 时的布局尺寸（offsetWidth/Height 不受 transform 影响） */
+function baseSize() {
+  const el = imageRef.value
+  if (!el) return null
+  const width = el.offsetWidth || el.naturalWidth
+  const height = el.offsetHeight || el.naturalHeight
+  if (!width || !height) return null
+  return { width, height }
+}
+
+/** 让图片刚好铺满裁剪框所需的最小缩放（cover） */
+function coverScale() {
+  const base = baseSize()
+  const { width: cropW, height: cropH } = cropBox.value
+  if (!base || !cropW || !cropH) return 1
+  return Math.max(cropW / base.width, cropH / base.height)
+}
+
+/** 限制位移，保证裁剪框始终被图片覆盖，不会裁出空白 */
+function clampTranslate() {
+  const base = baseSize()
+  const { width: cropW, height: cropH } = cropBox.value
+  if (!base || !cropW || !cropH) return
+  const renderedW = base.width * scale.value
+  const renderedH = base.height * scale.value
+  const maxX = Math.max(0, (renderedW - cropW) / 2)
+  const maxY = Math.max(0, (renderedH - cropH) / 2)
+  translateX.value = Math.min(maxX, Math.max(-maxX, translateX.value))
+  translateY.value = Math.min(maxY, Math.max(-maxY, translateY.value))
+}
+
+function applyScale(next: number) {
+  scale.value = Math.min(maxScale.value, Math.max(minScale.value, next))
+  clampTranslate()
+}
+
+function onImageLoad() {
+  if (!imageRef.value || !containerRef.value) return
+  measureContainer()
+  // 确保布局完成后再计算适配
   requestAnimationFrame(() => {
+    measureContainer()
     fitImage()
   })
 }
 
+/** 初始适配：缩放到「刚好铺满裁剪框」并居中 */
 function fitImage() {
-  if (!containerRef.value || !imageRef.value) return
-  const { width: cw, height: ch } = containerSize.value
-  const { width: iw, height: ih } = imageSize.value
-  if (iw === 0 || ih === 0) return
-  const scaleX = cw / iw
-  const scaleY = ch / ih
-  const fitScale = Math.min(scaleX, scaleY)
-  minScale.value = fitScale * 0.5
-  scale.value = fitScale
+  if (!baseSize()) return
+  minScale.value = coverScale()
+  maxScale.value = Math.max(5, minScale.value * 4)
+  scale.value = minScale.value
   translateX.value = 0
   translateY.value = 0
+  clampTranslate()
 }
 
 function onWheel(e: WheelEvent) {
   e.preventDefault()
-  const delta = e.deltaY > 0 ? -0.1 : 0.1
-  const newScale = Math.max(minScale.value, Math.min(maxScale.value, scale.value + delta))
-  scale.value = newScale
+  // 用乘法步进，小缩放下不会一下跳一大截
+  applyScale(e.deltaY > 0 ? scale.value / 1.1 : scale.value * 1.1)
 }
 
 function onMouseDown(e: MouseEvent) {
@@ -122,6 +173,7 @@ function onMouseMove(e: MouseEvent) {
   if (!isDragging.value) return
   translateX.value = e.clientX - dragStart.value.x
   translateY.value = e.clientY - dragStart.value.y
+  clampTranslate()
 }
 
 function onMouseUp() {
@@ -152,11 +204,10 @@ function onTouchMove(e: TouchEvent) {
   if (e.touches.length === 1 && isDragging.value) {
     translateX.value = e.touches[0].clientX - dragStart.value.x
     translateY.value = e.touches[0].clientY - dragStart.value.y
-  } else if (e.touches.length === 2) {
+    clampTranslate()
+  } else if (e.touches.length === 2 && touchStartDistance.value) {
     const distance = getTouchDistance(e.touches)
-    const scaleDelta = distance / touchStartDistance.value
-    const newScale = Math.max(minScale.value, Math.min(maxScale.value, touchStartScale.value * scaleDelta))
-    scale.value = newScale
+    applyScale(touchStartScale.value * (distance / touchStartDistance.value))
   }
 }
 
@@ -165,47 +216,65 @@ function onTouchEnd() {
 }
 
 async function cropImage(): Promise<File | null> {
-  if (!imageRef.value || !imageFile.value) return null
+  const img = imageRef.value
+  const container = containerRef.value
+  if (!img || !container) return null
+
+  // 直接量取真实渲染矩形：它已经包含了 scale / translate / 居中偏移的全部效果，
+  // 不需要再手工复算 transform，从根子上避免坐标推导出错。
+  const imgRect = img.getBoundingClientRect()
+  const contRect = container.getBoundingClientRect()
+  if (!imgRect.width || !imgRect.height || !img.naturalWidth || !img.naturalHeight) return null
+
+  // 裁剪框用「当前」容器尺寸重算，避免容器尺寸变化后与显示不一致
+  const { width: cropW, height: cropH, left: cropLeft, top: cropTop } =
+    computeCropBox(contRect.width, contRect.height)
+
+  // 屏幕像素 -> 原图像素 的换算比例
+  const ratioX = img.naturalWidth / imgRect.width
+  const ratioY = img.naturalHeight / imgRect.height
+
+  const sx = (contRect.left + cropLeft - imgRect.left) * ratioX
+  const sy = (contRect.top + cropTop - imgRect.top) * ratioY
+  const sw = cropW * ratioX
+  const sh = cropH * ratioY
+
+  // 按原图分辨率导出（不再降采样到裁剪框的 CSS 尺寸）
+  const outW = Math.max(1, Math.round(sw))
+  const outH = Math.max(1, Math.round(sh))
+  const k = Math.min(1, MAX_OUTPUT / Math.max(outW, outH))
 
   const canvas = document.createElement('canvas')
+  canvas.width = Math.max(1, Math.round(outW * k))
+  canvas.height = Math.max(1, Math.round(outH * k))
+
   const ctx = canvas.getContext('2d')
   if (!ctx) return null
+  ctx.imageSmoothingEnabled = true
+  ctx.imageSmoothingQuality = 'high'
 
-  const { width: cw, height: ch } = containerSize.value
-  const crop = cropSize.value
+  const sourceType = imageFile.value?.type || 'image/png'
+  // jpeg 不支持透明，先铺白底，避免图片外的区域变成黑块
+  if (sourceType === 'image/jpeg') {
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+  }
 
-  const scaleRatio = scale.value
-  const centerX = cw / 2
-  const centerY = ch / 2
+  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height)
 
-  const offsetX = (centerX - translateX.value) / scaleRatio
-  const offsetY = (centerY - translateY.value) / scaleRatio
-
-  const cropX = offsetX - crop / 2 / scaleRatio
-  const cropY = offsetY - crop / 2 / scaleRatio
-  const cropW = crop / scaleRatio
-  const cropH = crop / scaleRatio
-
-  canvas.width = crop
-  canvas.height = crop
-
-  ctx.drawImage(
-    imageRef.value,
-    cropX, cropY, cropW, cropH,
-    0, 0, crop, crop
-  )
-
+  const name = imageFile.value?.name || 'cropped.png'
   return new Promise((resolve) => {
-    canvas.toBlob((blob) => {
-      if (!blob) {
-        resolve(null)
-        return
-      }
-      const file = new File([blob], imageFile.value!.name, {
-        type: imageFile.value!.type || 'image/png'
-      })
-      resolve(file)
-    }, imageFile.value!.type || 'image/png')
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          resolve(null)
+          return
+        }
+        resolve(new File([blob], name, { type: sourceType }))
+      },
+      sourceType,
+      sourceType === 'image/jpeg' ? 0.92 : undefined
+    )
   })
 }
 
@@ -216,10 +285,18 @@ async function handleCrop() {
   }
 }
 
+let resizeObserver: ResizeObserver | undefined
+
 onMounted(() => {
-  if (containerRef.value) {
-    const rect = containerRef.value.getBoundingClientRect()
-    containerSize.value = { width: rect.width, height: rect.height }
+  measureContainer()
+  if (containerRef.value && typeof ResizeObserver !== 'undefined') {
+    resizeObserver = new ResizeObserver(() => {
+      measureContainer()
+      // 容器变大后图片可能盖不住裁剪框，补一次最小缩放
+      if (scale.value < coverScale()) applyScale(coverScale())
+      else clampTranslate()
+    })
+    resizeObserver.observe(containerRef.value)
   }
   document.addEventListener('mousemove', onMouseMove)
   document.addEventListener('mouseup', onMouseUp)
@@ -228,6 +305,7 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener('mousemove', onMouseMove)
   document.removeEventListener('mouseup', onMouseUp)
+  resizeObserver?.disconnect()
   if (imageUrl.value?.startsWith('blob:')) {
     URL.revokeObjectURL(imageUrl.value)
   }
@@ -263,14 +341,14 @@ defineExpose({
       />
       <div
         v-if="imageUrl"
-        class="absolute border-2 border-accent shadow-[0_0_0_9999px_rgba(0,0,0,0.5)]"
+        class="pointer-events-none absolute border-2 border-accent shadow-[0_0_0_9999px_rgba(0,0,0,0.5)]"
         :style="cropStyle"
       >
         <div class="absolute inset-0 border border-white/30" />
       </div>
       <div
         v-if="imageUrl"
-        class="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-primary/80 px-3 py-1 text-xs text-fg-secondary"
+        class="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-primary/80 px-3 py-1 text-xs text-fg-secondary"
       >
         {{ t('playlist.crop_tip') }}
       </div>

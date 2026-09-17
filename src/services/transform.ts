@@ -19,8 +19,9 @@ export function coverUrl(
   hash?: string,
   kind?: 'face' | 'portrait'
 ): string {
+  if (!hash) return `/imgs/${entity}.jpg`
   if (entity === 'artist')
-    return hash ? `/media/artists/${id}_${kind}.jpg?v=${hash}` : ''
+    return hash ? `/media/artists/${id}_${kind || 'face'}.jpg?v=${hash}` : ''
   else
     return hash ? `/media/${entity}s/${id}.jpg?v=${hash}` : ''
 }

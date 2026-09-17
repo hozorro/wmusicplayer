@@ -1,5 +1,7 @@
+import type { PlayerConfig } from '@/config/player-config'
+import { onConfigChange } from '@/config/config-provider'
+
 const CACHE_NAME = 'media-v1'   // 独立缓存桶，与 SW 静态资源缓存隔离
-const MAX_CACHED_TRACKS = 10    // 插入序 LRU 上限，防配额击穿
 const LOCAL_PREFIX = '/api/stream/local/'
 
 /**
@@ -12,8 +14,16 @@ export const localStreamUrl = (trackId: number) => `${LOCAL_PREFIX}${trackId}`
  * 媒体字节缓存，track_id 稳定键版
  * 旧版以签名 URL 为键，token 一换键即失效，重启后必然 miss；
  * 现统一存储于 /api/stream/local/{trackId}，服务交给 SW 的 Range 感知路由
+ * 
+ * @param initialConfig 配置注入，保持模块纯净可测试
  */
-export function createCacheService() {
+export function createCacheService(
+  initialConfig: Pick<PlayerConfig, 'MAX_CACHED_TRACKS'>,
+) {
+  let config = { ...initialConfig }
+
+  const offConfig = onConfigChange((newConfig) => { config = { MAX_CACHED_TRACKS: newConfig.MAX_CACHED_TRACKS } })
+
   // 非安全上下文 / 老浏览器：全体降级为空操作（形状与正常面一致）
   if (typeof caches === 'undefined') {
     const noop = async () => {}
@@ -24,6 +34,7 @@ export function createCacheService() {
       store: noop as (trackId: number, url: string) => Promise<void>,
       forget: noop as (trackId: number) => Promise<void>,
       clear: noop,
+      dispose: () => {},
     }
   }
 
@@ -77,7 +88,7 @@ export function createCacheService() {
   async function prune() {
     const cache = await caches.open(CACHE_NAME)
     const keys = await cache.keys()
-    for (let i = 0; i < keys.length - MAX_CACHED_TRACKS; i++) {
+    for (let i = 0; i < keys.length - config.MAX_CACHED_TRACKS; i++) {
       await cache.delete(keys[i])
       const id = parseLocalId(keys[i].url)
       if (id !== null) present.delete(id)
@@ -89,12 +100,16 @@ export function createCacheService() {
     await caches.delete(CACHE_NAME)
   }
 
+  function dispose(): void {
+    offConfig()
+  }
+
   // 曲库重建后音频文件可能已替换，本地字节缓存整体作废
   if (typeof window !== 'undefined') {
     window.addEventListener('idb-rebuilt', () => { void clear() })
   }
 
-  return { ready, has, localUrl: localStreamUrl, store, forget, clear }
+  return { ready, has, localUrl: localStreamUrl, store, forget, clear, dispose }
 }
 
 export type CacheService = ReturnType<typeof createCacheService>

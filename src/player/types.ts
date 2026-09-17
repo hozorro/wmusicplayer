@@ -17,7 +17,7 @@ export interface PlayTrack {
 }
 
 /** 顺序 / 乱序 / 单曲循环 */
-export type PlayMode = 'sequential' | 'shuffle' | 'loop-one' | 'loop-all'
+export type PlayMode = 'sequential' | 'shuffle' | 'loop-one'
 
 /** 期望态，用户意图。与实际态分离——双态模型是调和器的基础 */
 export type PlayIntent = 'play' | 'pause'

@@ -1,6 +1,6 @@
 import { ref, shallowRef, watch, type Ref, type ShallowRef } from 'vue'
 import { PlayerEvent, type PlayerEventMap } from '../events'
-import type { Emitter } from '@/shared/emitter'
+import type { Emitter } from '@/player/shared/emitter'
 import type { PlayTrack } from '../types'
 import { findLine, parseLrc, type LyricLine } from '../lyric'
 

@@ -1,12 +1,10 @@
-import { createEmitter } from "@/shared/emitter";
-import { createSerialQueue } from "@/shared/serial-queue";
+import { createEmitter } from "@/player/shared/emitter";
+import { createSerialQueue } from "@/player/shared/serial-queue";
 import { createEventBinder } from "./event-binder";
 import { nativeHandlers } from "./native-handlers";
 import type { EngineContext } from "./context";
 import type { EngineEventMap } from "../events";
-
-/** 加载超时：loadeddata永不触发时拒绝，防止单点挂起死锁整条队列 */
-const LOAD_TIMEOUT_MS = 20000
+import type { PlayerConfig } from "@/config/player-config";
 
 /**
  * 音频运行时：单audio元素 + 串行操作队列 + 原生事件翻译层
@@ -14,8 +12,14 @@ const LOAD_TIMEOUT_MS = 20000
  * 两条铁律：
  * 1. 元素由 JS 创建，不进组件树，生命周期 = app生命周期（iOS手势继承支点）
  * 2. 一切触碰 src/播放状态的操作入队串行；音量等无状态副作用可直达
+ * 
+ * @param config 配置注入，保持模块纯净可测试
  */
-export function createAudioRuntime() {
+export function createAudioRuntime(
+  config: Pick<PlayerConfig, 'LOAD_TIMEOUT_MS'>,
+) {
+  const { LOAD_TIMEOUT_MS } = config
+
   const el = document.createElement("audio");
   el.preload = "auto";
 
@@ -28,7 +32,7 @@ export function createAudioRuntime() {
 
   /**
    * 仅载入，不播放。用于 intent=pause 的载入场景
-   * ⚠️播放中换曲禁止使用本方法——await loaddata 会制造“未请求播放”间隙
+   * ⚠️播放中换曲禁止使用本方法——await loaddata 会制造"未请求播放"间隙
    * iOS standalone模式下，锁屏期间该间隙即进程终止窗口
    */
   function load(src: string): Promise<void> {
@@ -68,11 +72,11 @@ export function createAudioRuntime() {
    * 换曲并播放：原子操作，src 与 play() 之间零间隙
    * 
    * iOS standalone的进程存活绑定于音频会话活跃度：
-   * - ended 后若元素处于“未请求播放”状态等待缓冲，锁屏树苗内即被系统终止
+   * - ended 后若元素处于"未请求播放"状态等待缓冲，锁屏树苗内即被系统终止
    * - play() 内部自行等待缓冲，期间元素处于playbackRequested，会话保持活跃
    * 
-   * 使用边界：所有“播放中换曲”（ended / next / prev / jump）一律走这里
-   * load() 仅用于“载入但不播”的场景（冷启动恢复且 intent=pause）
+   * 使用边界：所有"播放中换曲"（ended / next / prev / jump）一律走这里
+   * load() 仅用于"载入但不播"的场景（冷启动恢复且 intent=pause）
    */
   function swapAndPlay(src: string): Promise<void> {
     return queue.enqueue(() => {

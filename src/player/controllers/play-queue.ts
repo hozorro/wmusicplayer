@@ -1,7 +1,7 @@
 import { shuffled } from "@/utilies/general";
 import { PlayerEvent } from "../events";
 import type { PlayerEventMap, QueueChangeType } from "../events";
-import type { Emitter } from "@/shared/emitter";
+import type { Emitter } from "@/player/shared/emitter";
 import type { PlayMode, PlayTrack } from "../types";
 import type { QueueStore } from "../../store/queue";
 

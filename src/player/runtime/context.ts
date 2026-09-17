@@ -1,4 +1,4 @@
-import type { Emitter } from '@/shared/emitter'
+import type { Emitter } from '@/player/shared/emitter'
 import type { EngineEventMap } from '../events'
 
 /**

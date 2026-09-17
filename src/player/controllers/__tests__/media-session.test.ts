@@ -2,12 +2,23 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick, ref } from 'vue'
 import { createPinia, setActivePinia } from 'pinia'
-import { createEmitter } from '@/shared/emitter'
+import { createEmitter } from '@/player/shared/emitter'
 import { createMediaSessionController } from '../media-session'
 import { useQueueStore } from '@/store/queue'
 import { PlayerEvent } from '../../events'
 import type { PlayerEventMap } from '../../events'
 import type { PlayerIntents } from '../../types'
+
+// Mock localStorage for musicStore
+const localStorageMock = {
+  getItem: vi.fn(() => null),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn(),
+  length: 0,
+  key: vi.fn(() => null),
+}
+globalThis.localStorage = localStorageMock as Storage
 
 const msMock = vi.hoisted(() => ({
   metadata: null as unknown,

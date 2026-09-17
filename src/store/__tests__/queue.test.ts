@@ -1,8 +1,20 @@
 // player/stores/__tests__/queue.test.ts
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { useQueueStore } from '../queue'
+import { useMusicStore } from '../music'
 import type { PlayTrack } from '../../player/types'
+
+// Mock localStorage for musicStore
+const localStorageMock = {
+  getItem: vi.fn(() => null),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn(),
+  length: 0,
+  key: vi.fn(() => null),
+}
+globalThis.localStorage = localStorageMock as Storage
 
 const T = (id: number): PlayTrack => ({ id, title: `t${id}`, artists: [{ id: 1, name: 't' }] })
 
@@ -11,21 +23,45 @@ function seed(store: ReturnType<typeof useQueueStore>, ids: number[]) {
   store.rebuildOrder(ids.length > 0 ? 0 : -1)
 }
 
-beforeEach(() => setActivePinia(createPinia()))
+beforeEach(() => {
+  setActivePinia(createPinia())
+  // 重置 AUTOLOOP 为默认值 true
+  const musicStore = useMusicStore()
+  musicStore.params.AUTOLOOP = true
+})
 
 describe('advance 策略算术', () => {
-  it('sequential 到末尾裁决 ended', () => {
+  it('sequential + AUTOLOOP=false 到末尾裁决 ended', () => {
+    const musicStore = useMusicStore()
+    musicStore.params.AUTOLOOP = false
     const q = useQueueStore(); seed(q, [111, 222])
     expect(q.advance()).toBe('advanced')
     expect(q.currentTrack?.id).toBe(222)
     expect(q.advance()).toBe('ended')
   })
 
-  it('loop-all 末尾回卷', () => {
-    const q = useQueueStore(); seed(q, [111, 222]); q.setMode('loop-all')
+  it('sequential + AUTOLOOP=true 末尾回卷', () => {
+    const q = useQueueStore(); seed(q, [111, 222])
     q.advance()
     expect(q.advance()).toBe('advanced')
     expect(q.currentTrack?.id).toBe(111)
+  })
+
+  it('shuffle + AUTOLOOP=true 末尾回卷', () => {
+    const q = useQueueStore(); seed(q, [111, 222, 333]); q.setMode('shuffle')
+    q.setPosition(q.order.length - 1)  // 移到 order 空间末尾
+    const lastTrackId = q.currentTrack?.id
+    expect(q.advance()).toBe('advanced')
+    expect(q.position).toBe(0)  // 回卷到开头
+    expect(q.currentTrack?.id).not.toBe(lastTrackId)
+  })
+
+  it('shuffle + AUTOLOOP=false 到末尾裁决 ended', () => {
+    const musicStore = useMusicStore()
+    musicStore.params.AUTOLOOP = false
+    const q = useQueueStore(); seed(q, [111, 222, 333]); q.setMode('shuffle')
+    q.setPosition(q.order.length - 1)
+    expect(q.advance()).toBe('ended')
   })
 
   it('loop-one 原地重复，游标不动', () => {
@@ -37,6 +73,44 @@ describe('advance 策略算术', () => {
   it('空队列裁决 ended', () => {
     const q = useQueueStore()
     expect(q.advance()).toBe('ended')
+  })
+})
+
+describe('skipNext 策略', () => {
+  it('sequential + AUTOLOOP=false 到末尾返回 ended', () => {
+    const musicStore = useMusicStore()
+    musicStore.params.AUTOLOOP = false
+    const q = useQueueStore(); seed(q, [111, 222])
+    q.skipNext()
+    expect(q.skipNext()).toBe('ended')
+  })
+
+  it('sequential + AUTOLOOP=true 末尾回卷到开头', () => {
+    const q = useQueueStore(); seed(q, [111, 222])
+    q.skipNext()
+    expect(q.skipNext()).toBe('advanced')
+    expect(q.currentTrack?.id).toBe(111)
+  })
+
+  it('loop-one 模式下 skipNext 也正常推进（忽略 loop-one）', () => {
+    const q = useQueueStore(); seed(q, [111, 222]); q.setMode('loop-one')
+    expect(q.skipNext()).toBe('advanced')
+    expect(q.currentTrack?.id).toBe(222)
+  })
+})
+
+describe('retreat 策略', () => {
+  it('sequential + AUTOLOOP=false 到开头返回 unchanged', () => {
+    const musicStore = useMusicStore()
+    musicStore.params.AUTOLOOP = false
+    const q = useQueueStore(); seed(q, [111, 222])
+    expect(q.retreat()).toBe('unchanged')
+  })
+
+  it('sequential + AUTOLOOP=true 开头回卷到末尾', () => {
+    const q = useQueueStore(); seed(q, [111, 222])
+    expect(q.retreat()).toBe('retreated')
+    expect(q.currentTrack?.id).toBe(222)
   })
 })
 

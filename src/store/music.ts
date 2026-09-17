@@ -1,6 +1,8 @@
 import { computed, ref, watch } from "vue";
 import { defineStore } from "pinia";
 import { loadLocaleMessages } from "@/i18n";
+import { updateConfig } from "@/config/config-provider";
+import { DEFAULT_CONFIG, CONFIG_KEY_MAP, type PlayerConfig } from "@/config/player-config";
 
 const VALID_THEMES = ["light", "dark", "system"];
 
@@ -52,21 +54,34 @@ export const useMusicStore = defineStore("music", () => {
     artistPageTab.value = tab
   }
   
-  /* Player params */
-  const params = ref<PlayerOptions>({
-    stat_percent: 30,
-    switch_time: 500,
-    max_fail_count: 10,
-    isLoop: true,
-    isAutoPlayNext: true,
-    timeUpdateInterval: 500,
-    transferBatchSize: 500,
-  })
-  function getParam<K extends keyof PlayerOptions>(key:K):PlayerOptions[K]{
+  /* Player params - 持久化到 localStorage，同时同步到全局配置 */
+  const params = ref<PlayerConfig>({ ...DEFAULT_CONFIG })
+  
+  // 迁移旧版本持久化数据（key 从 snake_case 改为 UPPER_SNAKE_CASE）
+  migrateLegacyParams()
+  function migrateLegacyParams() {
+    const persisted = JSON.parse(localStorage.getItem('music') || '{}')?.params
+    if (!persisted) return
+    for (const [oldKey, newKey] of Object.entries(CONFIG_KEY_MAP)) {
+      if (oldKey in persisted) {
+        ;(params.value as Record<string, unknown>)[newKey] = persisted[oldKey]
+      }
+    }
+  }
+  
+  // 初始化时同步到全局配置
+  syncToGlobalConfig()
+  function syncToGlobalConfig() {
+    updateConfig({ ...params.value })
+  }
+  
+  function getParam<K extends keyof PlayerConfig>(key:K):PlayerConfig[K]{
     return params.value[key]
   }
-  function setParam<K extends keyof PlayerOptions>(key:K, value:PlayerOptions[K]):void{
+  function setParam<K extends keyof PlayerConfig>(key:K, value:PlayerConfig[K]):void{
     params.value[key] = value
+    // 实时同步到全局配置
+    updateConfig({ [key]: value } as Partial<PlayerConfig>)
   }
   
   return { 
@@ -88,3 +103,5 @@ export const useMusicStore = defineStore("music", () => {
     pick:['locale', 'theme', 'params']
   }
 })
+
+export type MusicStore = ReturnType<typeof useMusicStore>

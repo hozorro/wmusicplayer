@@ -1,7 +1,7 @@
 // player/controllers/__tests__/lyrics.test.ts
 import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest'
 import { nextTick, ref, watch, type Ref } from 'vue'
-import { createEmitter } from '@/shared/emitter'
+import { createEmitter } from '@/player/shared/emitter'
 import { createLyricController } from '../lyrics'
 import { PlayerEvent } from '../../events'
 import type { PlayerEventMap } from '../../events'

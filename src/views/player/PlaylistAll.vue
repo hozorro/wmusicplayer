@@ -125,7 +125,7 @@ async function handleSubmit() {
   >
     <section 
       v-if="openCreate" 
-      class=" absolute inset-x-0 bottom-0 h-[calc(100%-(--spacing(12)))] pb-[env(safe-area-inset-bottom)] rounded-t-2xl bg-card shadow-2xl shadow-black/80 ring-1 ring-white/10"
+      class=" absolute inset-x-0 bottom-0 h-[calc(100%-(--spacing(30)))] pb-[env(safe-area-inset-bottom)] rounded-t-2xl bg-card shadow-2xl shadow-black/80 ring-1 ring-white/10"
     >
       <div class=" flex justify-center pt-3"><div class=" h-1 w-10 rounded-full bg-secondary" /></div>
       <div class=" flex justify-between px-4 pt-2 pb-4">

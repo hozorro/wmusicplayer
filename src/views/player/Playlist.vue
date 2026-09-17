@@ -122,15 +122,15 @@ async function handleSubmit() {
 <template>
   <div class=" min-h-dvh">
     <!-- 固定顶栏 -->
-    <div class=" fixed inset-x-0 top-0 z-30 backdrop-blur-sm pb-4 pt-[calc(env(safe-area-inset-top)+10px)]">
-      <div class=" mx-auto flex max-w-2xl items-center gap-3 px-4">
+    <div class=" fixed inset-x-0 top-0 z-30 backdrop-blur-sm pb-4">
+      <div class=" mx-auto flex max-w-2xl items-center gap-2 pl-2 pr-4 pt-[calc(env(safe-area-inset-top)+10px)]">
         <button
-          class="shrink-0 rounded-full bg-primary/30 p-2 text-fg-primary transition hover:bg-primary/50 active:scale-90"
+          class="rounded-full p-1 text-fg-primary transition hover:bg-white/8 hover:text-fg-primary active:scale-90"
           :aria-label="t('common.back')" @click="router.back()"
         >
           <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
         </button>
-        <h2 :style="collapse > 0.3 ? compactStyle : {}" class="min-w-0 flex-1 truncate text-base font-bold text-fg-primary">
+        <h2 :style="collapse > 0.3 ? compactStyle : {}" class="min-w-0 flex-1 truncate text-lg font-bold text-fg-primary">
           {{ collapse > 0.3 ? playlist?.title ?? '...' : t('player.playlist') }}
         </h2>
         <button
@@ -281,7 +281,7 @@ async function handleSubmit() {
   >
     <section 
       v-if="editOpened" 
-      class=" absolute inset-x-0 bottom-0 h-[calc(100%-(--spacing(12)))] pb-[env(safe-area-inset-bottom)] rounded-t-2xl bg-primary shadow-2xl shadow-primary/60 ring-1 ring-fg-primary/10"
+      class=" absolute inset-x-0 bottom-0 h-[calc(100%-(--spacing(30)))] pb-[env(safe-area-inset-bottom)] rounded-t-2xl bg-primary shadow-2xl shadow-primary/60 ring-1 ring-fg-primary/10"
     >
       <div class=" flex justify-center pt-3"><div class=" h-1 w-10 rounded-full bg-secondary/80" /></div>
       <div class=" flex justify-between px-4 pt-2 pb-4">

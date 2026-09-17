@@ -5,8 +5,19 @@ import { useQueueStore } from '@/store/queue'
 import { createPlayQueueController } from '../play-queue'
 import { PlayerEvent } from '../../events'
 import type { PlayerEventMap } from '../../events'
-import type { Emitter } from '@/shared/emitter'
+import type { Emitter } from '@/player/shared/emitter'
 import type { PlayTrack } from '../../types'
+
+// Mock localStorage for musicStore
+const localStorageMock = {
+  getItem: vi.fn(() => null),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn(),
+  length: 0,
+  key: vi.fn(() => null),
+}
+globalThis.localStorage = localStorageMock as Storage
 
 const T = (id: number): PlayTrack => ({ id, title: `${id}`, artists: [{ id: 1, name: 't' }] })
 

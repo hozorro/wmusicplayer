@@ -236,7 +236,7 @@ function formatDuration(ms: number): string {
           <textarea
             v-model.trim="inputText"
             rows="3"
-            class="w-full rounded-lg bg-secondary/50 px-3.5 py-2.5 text-[16px] text-fg-primary outline-none ring-1 ring-fg-primary/10 transition placeholder:text-fg-secondary focus:ring-2 focus:ring-accent/60 resize-none"
+            class="w-full rounded-lg bg-secondary/50 px-3.5 py-2.5 text-[16px] text-fg-primary outline-none ring-1 ring-fg-primary/10 transition placeholder:text-fg-secondary/30 focus:ring-2 focus:ring-accent/60 resize-none"
             :placeholder="t('playlist.netease_input_hint')"
             @keyup.ctrl.enter="fetchPlaylist"
           />
