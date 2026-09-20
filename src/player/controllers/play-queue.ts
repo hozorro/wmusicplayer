@@ -19,7 +19,7 @@ export function createPlayQueueController(queue: QueueStore, bus: Emitter<Player
   /**
    * 内容变更统一落点：
    * - sequential： order恒等，播放顺序 = 展示顺序（move直接生效）
-   * - shuffle： 按id保住既有播放序列，新区莫洗入末尾
+   * - shuffle： 按id保住既有播放序列，新曲目洗入末尾
    * - 当前曲目被删：游标原位滑入（下一首原地接管），不归零
    */
   function commit(
