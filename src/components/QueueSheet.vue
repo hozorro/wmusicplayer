@@ -28,7 +28,7 @@ watch(open, async o => {
   // 显式计算 scrollTop 把滚动限定在列表内；
   // 不可用 scrollIntoView：它会递归滚动所有可滚动祖先（含 overflow-hidden 容器）
   const list = listEl.value
-  const itemEl = list?.querySelector<HTMLElement>(`[data-index="${playQueue.currentIndex.value}"]`)
+  const itemEl = list?.querySelector<HTMLElement>(`[data-index="${playQueue.curTrackId.value}"]`)
   if (!list || !itemEl) return
   const listRect = list.getBoundingClientRect()
   const itemRect = itemEl.getBoundingClientRect()
@@ -38,7 +38,7 @@ watch(open, async o => {
 })
 
 function selectAt(i: number) {
-  player.playAt(i)        // 面板保持打开，供连续管理；高亮随 currentIndex 自动跟随
+  player.playAt(i)        // 面板保持打开，供连续管理；高亮随 current index 自动跟随
 }
 
 function remove(i: number) {
@@ -114,12 +114,12 @@ function onDragEnd() {
         <header class=" flex items-center justify-between px-5 pb-2 pt-1">
           <div class=" flex items-baseline gap-2.5">
             <h2 class=" text-lg font-bold text-fg-primary">{{ t('player.queue') }}</h2>
-            <span class=" text-xs tabular-nums text-fg-muted"> {{ playQueue.tracks.value.length }} 首</span>
+            <span class=" text-xs tabular-nums text-fg-muted"> {{ playQueue.queueState.value.tracks.length }} 首</span>
           </div>
           <div class=" flex items-center gap-1">
             <button
               class=" rounded-full px-3 py-1.5 text-xs font-medium text-fg-muted transition hover:bg-fg-primary/5 hover:text-fg-primary active:scale-95 disabled:pointer-events-none disabled:opacity-40"
-              :disabled="playQueue.tracks.value.length === 0"
+              :disabled="playQueue.queueState.value.tracks.length === 0"
               @click="playQueue.clear()"
             >
               {{ t('common.clear') }}
@@ -139,7 +139,7 @@ function onDragEnd() {
         <!-- 列表 -->
         <div ref="listEl" class=" min-h-0 flex-1 overflow-y-auto px-2 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <!-- 空态 -->
-          <div v-if="playQueue.tracks.value.length === 0" class=" flex flex-col items-center gap-3 py-16">
+          <div v-if="playQueue.queueState.value.tracks.length === 0" class=" flex flex-col items-center gap-3 py-16">
             <svg viewBox="0 0 24 24" class="h-10 w-10 text-fg-secondary" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
               <path d="M4 6h12M4 11h12M4 16h7" /><path d="M19 18V6l-4.5 1" /><circle cx="17" cy="18" r="2.3" fill="currentColor" stroke="none" />
             </svg>
@@ -154,16 +154,16 @@ function onDragEnd() {
             move-class="transition-transform duration-300 ease-out"
           >
             <div
-              v-for="(track, i) in playQueue.tracks.value"
+              v-for="(track, i) in playQueue.queueState.value.tracks"
               :key="track.id"
-              :data-index="i"
+              :data-index="track.id"
               class=" rounded-xl transition-colors"
-              :class="i === playQueue.currentIndex.value ? 'bg-accent/10' : 'hover:bg-fg-primary/5'"
+              :class="track.id === playQueue.curTrackId.value ? 'bg-accent/10' : 'hover:bg-fg-primary/5'"
             >
               <div class=" flex items-center gap-2.5 px-3 py-2.5">
                 <!-- 当前曲目：频谱条；其余：序号 -->
                 <div class=" flex w-6 shrink-0 items-center justify-center">
-                  <div v-if="i === playQueue.currentIndex.value" class=" flex h-3.5 items-end gap-[3px]">
+                  <div v-if="track.id === playQueue.curTrackId.value" class=" flex h-3.5 items-end gap-[3px]">
                     <span
                       class=" w-[3px] rounded-sm bg-accent animate-bounce [animation-delay:-0.32s] [animation-duration:0.8s]"
                       :class="player.isPlaying.value ? '' : '[animation-play-state:paused]'"
@@ -187,7 +187,7 @@ function onDragEnd() {
                 <button class=" min-w-0 flex-1 py-0.5 text-left" @click="selectAt(i)">
                   <p
                     class=" truncate text-sm"
-                    :class="i === playQueue.currentIndex.value
+                    :class="track.id === playQueue.curTrackId.value
                       ? 'font-semibold text-accent'
                       : 'font-medium text-fg-primary'"
                   >

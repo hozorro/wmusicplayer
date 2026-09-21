@@ -14,7 +14,7 @@ defineProps<{
 }>()
 
 const player = usePlayer()
-const isCurrent = (t: Track) => t.id === player.currentTrack.value?.id
+const isCurrent = (t: Track) => t.id === player.curTrack.value?.id
 </script>
 
 <template>

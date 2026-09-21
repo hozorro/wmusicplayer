@@ -32,8 +32,8 @@ const trackActions: MenuAction[] = [
     run: (s, ctx) => { ctx.playQueue.add((s as TrackSrc).track) } },
   { key: 'add-playlist', get label() { return t('player.add_to_playlist') }, icon: 'playlist', keepsOpen: true,
     run: (_s, ctx) => ctx.openPanel('playlist-picker') },
-  { key: 'view-album', get label() { return t('player.to_album') }, icon: 'album', placeholder: true,
-    run: () => {} },
+  { key: 'view-album', get label() { return t('player.to_album') }, icon: 'album', 
+    run: (s, ctx) => {ctx.player.goToAlbum((s as TrackSrc).track)} },
 ]
 
 const queueTrackActions: MenuAction[] = [
@@ -43,22 +43,21 @@ const queueTrackActions: MenuAction[] = [
     run: (s, ctx) => { ctx.playQueue.insertNext((s as QueueSrc).track) } },
   { key: 'add-playlist', get label() { return t('player.add_to_playlist') }, icon: 'playlist', keepsOpen: true,
     run: (_s, ctx) => ctx.openPanel('playlist-picker') },
-  { key: 'view-album', get label() { return t('player.to_album') }, icon: 'album', placeholder: true,
-    run: () => {} },
+  { key: 'view-album', get label() { return t('player.to_album') }, icon: 'album', 
+    run: (s, ctx) => {ctx.player.goToAlbum((s as QueueSrc).track)} },
   { key: 'remove', get label() { return t('player.remove') }, icon: 'remove', danger: true,
     run: (s, ctx) => ctx.playQueue.removeAt((s as QueueSrc).index) },
 ]
 
 const playlistActions: MenuAction[] = [
-  ...trackActions.filter(a => !['add-playlist', 'view-album'].includes(a.key)),
+  ...trackActions.filter(a => a.key !== 'add-playlist'),
   { key: 'remove-from-playlist', get label() { return t('playlist.remove') }, icon: 'remove', danger: true,
-    run: s => (s as Extract<MenuSource, { kind: 'playlist-track' }>).onRemove() },
-  { key: 'view-album', get label() { return t('player.to_album') }, icon: 'album', placeholder: true, run: () => {}}
+    run: s => (s as Extract<MenuSource, { kind: 'playlist-track' }>).onRemove() }
 ]
 
 /** 五类合集共享同一动作表：差异只在 resolveTracks 的接线方 */
 const collectionActions: MenuAction[] = [
-  { key: 'play-all', get label() { return t('player.play_all') }, icon: 'play', resolves: true,
+  { key: 'play-all', get label() { return t('player.playall') }, icon: 'play', resolves: true,
     run: async (s, ctx) => ctx.player.playAll(await ctx.resolveTracks(s)) },
   { key: 'play-next-all', get label() { return t('player.add_next') }, icon: 'play-next', resolves: true,
     run: async (s, ctx) => ctx.player.playNextAll(await ctx.resolveTracks(s)) },

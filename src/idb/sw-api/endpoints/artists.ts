@@ -41,11 +41,16 @@ export const idbGetArtists: ApiHandler = async ({ params }) => {
   const char = params.char
   if (!char) return MISS
   const idb = await getLibraryIdb()
+  let result: IDBArtist[]
   if (char === '_') {
     const all = await idb.getAll<IDBArtist>('artists')
+    result = all.filter(a => !/^[A-Z]$/.test(a.pinyin_initial))
     return json(all.filter(a => !/^[A-Z]$/.test(a.pinyin_initial)).map(toRawArtist))
+  } else {
+    result = await idb.getByIndex<IDBArtist>('artists', 'pinyin_initial', char)
   }
-  return json((await idb.getByIndex<IDBArtist>('artists', 'pinyin_initial', char)).map(toRawArtist))
+  result.sort((a, b) => a.name_lower.localeCompare(b.name_lower))
+  return json(result.map(toRawArtist))
 }
 
 export const idbGetArtist: ApiHandler = async ({ params }) => {

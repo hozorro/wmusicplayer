@@ -8,7 +8,7 @@ const props = defineProps<{ track: PlayTrack }>()
 defineEmits<{ play: [] }>()
 
 const player = usePlayer()
-const isCurrent = computed(() => player.currentTrack.value?.id === props.track.id)
+const isCurrent = computed(() => player.curTrack.value?.id === props.track.id)
 </script>
 
 <template>

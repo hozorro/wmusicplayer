@@ -20,7 +20,7 @@ const props = defineProps<RowProps>()
 
 const player = usePlayer()
 
-const isCurrent = (t: PlayTrack) => t.id === player.currentTrack.value?.id
+const isCurrent = (t: PlayTrack) => t.id === player.curTrack.value?.id
 const playTrack = (t: PlayTrack) => player.playTrack(t)
 </script>
 

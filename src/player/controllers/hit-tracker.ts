@@ -52,7 +52,7 @@ export function createHitTracker(
   })
 
   function registerHit() {
-    const t = queue.currentTrack
+    const t = queue.curTrack
     if (!t) return
     bumpTrackHit(t.id)
     for (const aid of (t.artists?.map(a => a.id) ?? [])) bumpArtistHit(aid)
