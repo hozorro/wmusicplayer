@@ -48,7 +48,7 @@ export function createPreloadController(
 
   /** 当前曲字节落盘：下次启动本地直读，实现近零 buffering */
   async function persistCurrent() {
-    const t = queue.currentTrack
+    const t = queue.curTrack
     if (t === null || cache.has(t.id)) return
     try {
       await resolver.prepare(t.id)
@@ -90,7 +90,7 @@ export function createPreloadController(
   // 期中重解析：长曲目（>8min）跨越 TTL 边界时，靠这个节拍保持 URL 常青
   // prepare 幂等自动过滤未过期条目，节拍只在过期后真正触发 fetch
   const timer = setInterval(() => {
-    if (queue.currentTrack === null) return
+    if (queue.curTrack === null) return
     if (queue.engineState === 'loading') return   // 首载期间让路
     warmUrls()
   }, REFRESH_TICK_MS)

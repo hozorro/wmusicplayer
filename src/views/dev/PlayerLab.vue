@@ -57,7 +57,7 @@ async function startTest() {
 <template>
   <main class=" max-w-120 mx-auto p-6">
     <header class=" flex items-center gap-3">
-      <strong>{{ player.currentTrack.value?.title || '未在播放' }}</strong>
+      <strong>{{ player.curTrack.value?.title || '未在播放' }}</strong>
       <span class=" text-xs px-2 py-0.5 border border-cyan-500 rounded-4xl">
         {{ player.isBuffering.value ? '缓冲中' : player.isPlaying.value ? '播放中' : player.engineState.value }}
       </span>

@@ -11,13 +11,13 @@ import type { PlayerConfig } from '@/config/player-config'
 
 /**
  * 播放控制器 = 调和器 + 传输
- * 把 audio 元素持续同步向期望态（currentTrack / intent），实际态写回 store
+ * 把 audio 元素持续同步向期望态（curTrack / intent），实际态写回 store
  * 
  * 硬约束：
  * - watch flush: 'sync'：ended -> advance ->换src -> play 同一个任务内完成
  * - 播放中换曲走 swapAndPlay 原子操作，零间隙
  * - 关键路径同步读 resolver，异步 fetch 仅用于 miss 兜底
- * - 异步间隙安全由两件事兜底：currentTrack 身份守卫 + runtime 串行队列
+ * - 异步间隙安全由两件事兜底：curTrack 身份守卫 + runtime 串行队列
  */
 export function createPlaybackController(
   runtime: AudioRuntime,
@@ -42,7 +42,7 @@ export function createPlaybackController(
 
   // —— 期望态 -> 实际态 ——
   // immediate：冷启动恢复持久化队列后，首曲以暂停态预载（元数据/时长就位，等待手势）
-  watch(() => queue.currentTrack, t => { void syncTrack(t) }, { flush: 'sync', immediate: true})
+  watch(() => queue.curTrack, t => { void syncTrack(t) }, { flush: 'sync', immediate: true})
   watch(() => queue.intent, i => { syncIntent(i) }, { flush: 'sync' })
   // —— 状态迁移投影： StateChanged 唯一发射点 ——
   watch(() => queue.engineState, (n, p) => {
@@ -63,7 +63,7 @@ export function createPlaybackController(
   runtime.on(EngineEvent.TimeUpdate, t => { time.value = t })
   runtime.on(EngineEvent.Seeked, t => { time.value = t }) // 暂停态 seek 的 UI 回填
   runtime.on(EngineEvent.Error, e => {
-    const t = queue.currentTrack
+    const t = queue.curTrack
     if (!t) return
     // 本地键失效（配额清退等边缘）：forget + 一次性改走网络，避免直接跳曲
     if (lastLoad?.id === t.id && lastLoad.local && fallbackLocal(t)) return
@@ -90,7 +90,7 @@ export function createPlaybackController(
       failTrack(t, null)
       return
     }
-    if (queue.currentTrack?.id !== t.id) return // 异步间隙内曲目已变
+    if (queue.curTrack?.id !== t.id) return // 异步间隙内曲目已变
 
     loadedId = t.id //提前置位：加载期间到达的 play 意图经 syncIntent 排队生效
     lastLoad = { id: t.id, local }
@@ -101,11 +101,11 @@ export function createPlaybackController(
       try {
         await runtime.load(url)
       } catch (err) {
-        if (local && queue.currentTrack?.id === t.id && fallbackLocal(t)) return
+        if (local && queue.curTrack?.id === t.id && fallbackLocal(t)) return
         failTrack(t, err instanceof Error ? err : null)
         return
       }
-      if (queue.currentTrack?.id !== t.id) return
+      if (queue.curTrack?.id !== t.id) return
       // 预载完成：paused 预载不产生任何状态迁移事件，实际态在此主动收敛。
       // 仅当 intent 仍为 pause 时写入——若加载期间用户已触发播放，
       // 让 native play 事件回写真值，避免 paused→playing 的投影闪烁
@@ -153,7 +153,7 @@ export function createPlaybackController(
 
   //** 曲目失败：跳下一首或停止。PlaybackError 唯一发射点 */
   function failTrack(t: PlayTrack, error: MediaError | Error | null) {
-    if (queue.currentTrack?.id !== t.id) return // 已被跳过（native error 与 load 拒绝可能双发）
+    if (queue.curTrack?.id !== t.id) return // 已被跳过（native error 与 load 拒绝可能双发）
     consecutiveFailures++
     if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
       queue.intent = 'pause'

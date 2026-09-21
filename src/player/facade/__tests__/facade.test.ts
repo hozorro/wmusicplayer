@@ -53,7 +53,7 @@ describe('facade 意图接线', () => {
     await flushed()
     expect(fetchStreamUrl).toHaveBeenCalledWith(1)          // id 是 number
     expect(runtimeMock.swapAndPlay).toHaveBeenCalledWith('/api/stream/1')
-    expect(facade.queue.currentTrack?.id).toBe(1)
+    expect(facade.queue.curTrack?.id).toBe(1)
   })
 
   it('addAndPlay：消费 addMany 返回位置，队列与播放一次完成', async () => {
@@ -61,8 +61,8 @@ describe('facade 意图接线', () => {
     await flushed()
     facade.intents.addAndPlay([T(3)])
     await vi.waitFor(() => expect(runtimeMock.swapAndPlay).toHaveBeenLastCalledWith('/api/stream/3'))
-    expect(facade.queue.currentTrack?.id).toBe(3)
-    expect(facade.queue.tracks).toHaveLength(3)
+    expect(facade.queue.curTrack?.id).toBe(3)
+    expect(facade.queue.queueState.tracks).toHaveLength(3)
   })
 
   it('playNext 是纯队列操作：不改变当前曲目，不触发换曲', async () => {
@@ -70,7 +70,7 @@ describe('facade 意图接线', () => {
     await flushed()
     vi.clearAllMocks()
     facade.intents.playNext(T(9))
-    expect(facade.queue.currentTrack?.id).toBe(1)
+    expect(facade.queue.curTrack?.id).toBe(1)
     expect(runtimeMock.swapAndPlay).not.toHaveBeenCalled()
   })
 
@@ -92,12 +92,12 @@ describe('facade 意图接线', () => {
     expect(runtimeMock.seek).toHaveBeenCalledWith(0)         // 超 3s：重播
     facade.time.value = 1
     facade.intents.prev()
-    expect(facade.queue.currentTrack?.id).toBe(1)            // ≤3s：回退
+    expect(facade.queue.curTrack?.id).toBe(1)            // ≤3s：回退
   })
 
   it('冷启动空队列：stop 收敛，无异常', () => {
     expect(runtimeMock.stop).toHaveBeenCalled()
-    expect(facade.queue.currentTrack).toBeNull()
+    expect(facade.queue.curTrack).toBeNull()
   })
 
   it('连续失败熔断：达阈值裁决 stopped，不再跳过', async () => {
@@ -107,7 +107,7 @@ describe('facade 意图接线', () => {
     onError(null)   // 失败 1 → 跳至 t2
     onError(null)   // 失败 2 → 跳至 t3
     onError(null)   // 失败 3 → 熔断，停在 t3
-    expect(facade.queue.currentTrack?.id).toBe(3)
+    expect(facade.queue.curTrack?.id).toBe(3)
     expect(facade.queue.intent).toBe('pause')
     expect(facade.queue.engineState).toBe('error')
   })

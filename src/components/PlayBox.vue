@@ -40,7 +40,7 @@ watch(hidden, h => { if (h) expanded.value = false})
 watch(expanded, e => { document.body.classList.toggle('overflow-hidden', e)})
 
 // —— 曲目派生 ——
-const track = computed(() => player.currentTrack.value)
+const track = computed(() => player.curTrack.value)
 const artistsText = computed(() => track.value?.artists?.map(a => a.name).join(', ') ?? '')
 
 // —— 三模块切换（0 封面 / 1 歌词 / 2 听歌记忆） ——

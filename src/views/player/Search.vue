@@ -35,7 +35,7 @@ let searchSeq = 0
 onMounted(() => input.value?.focus())
 
 const playTracks = computed(() => results.value.tracks.map(t => toPlayTrack(t)))
-const isCurrent = (id: number) => player.currentTrack.value?.id === id
+const isCurrent = (id: number) => player.curTrack.value?.id === id
 
 // ── 防抖 + 竞态守卫 ──
 watch(q, async () => {

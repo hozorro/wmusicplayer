@@ -60,8 +60,9 @@ beforeEach(() => {
 afterEach(() => vi.useRealTimers())
 
 function seed(ids: number[]) {
-  queue.tracks = ids.map(T)
-  queue.rebuildOrder(0)
+  const tracks = ids.map(T)
+  const { order, position } = queue.rebuildOrder(tracks, 0)
+  queue.updateQueueState({ tracks, order, position })
 }
 
 describe('让路首载的延迟预热', () => {
