@@ -26,7 +26,6 @@ export const idbGetTenArtists: ApiHandler = async () => {
   const ranked = [...artists].sort((a, b) => (b.hit_count ?? 0) - (a.hit_count ?? 0))
   const top = ranked.slice(0, idbConfig.TOP_ARTISTS_COUNT)
   const random = sample(ranked.slice(idbConfig.TOP_ARTISTS_COUNT), idbConfig.RANDOM_ARTISTS_COUNT)
-  console.log([...random, ...top])
   return json([...random, ...top].map(toRawArtist))
 }
 

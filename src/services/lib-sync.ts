@@ -92,14 +92,12 @@ async function applyDeleted(deleted: syncDeleted): Promise<void> {
 }
 
 function initBatchProgress(counts: Record<string, number>) {
-  console.log('Sync batch progress:', counts)
   syncState.batches = Object.fromEntries(SYNC_STORES.map(s => {
     const total = counts[s] ?? 0
     return [s, { total, batches: Math.ceil(total / syncConfig.SYNC_PAGE_SIZE), done: 0, received: 0 }]
   }))
   syncState.totalBatches = Object.values(syncState.batches).reduce((sum, b) => sum + b.batches, 0)
   syncState.doneBatches = 0
-  console.log('Sync batch progress initialized')
 }
 
 function onBatch(store: string, received: number) {

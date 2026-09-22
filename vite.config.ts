@@ -54,7 +54,6 @@ export default defineConfig(({ mode }) => {
         integration: {
           configureCustomSWViteBuild(inlineConfig) {
             // 确保每次构建 sw.js 内容不同，触发浏览器更新检测
-            console.log('[PWA] Injecting __SW_VERSION__:', version)
             // 使用 @rollup/plugin-replace 在 Rollup 构建时替换 __SW_VERSION__
             inlineConfig.build = inlineConfig.build ?? {}
             inlineConfig.build.rollupOptions = inlineConfig.build.rollupOptions ?? {}

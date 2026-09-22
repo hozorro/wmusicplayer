@@ -36,7 +36,6 @@ export function createPlayQueueController(queue: QueueStore, bus: Emitter<Player
     queue.updateQueueState({ tracks: newTracks, order: newOrder })
     
     bus.emit(PlayerEvent.QueueChanged, 'add')
-    console.log(queue.queueState)
     return queue.queueState.tracks.length - 1
   }
 
@@ -70,7 +69,6 @@ export function createPlayQueueController(queue: QueueStore, bus: Emitter<Player
     }
     queue.updateQueueState({ tracks: newTracks, order: newOrder })
     
-    console.log(queue.queueState)
     bus.emit(PlayerEvent.QueueChanged, 'add')
     return { first: queue.queueState.tracks.length - fresh.length, added: fresh }
   }
@@ -124,7 +122,6 @@ export function createPlayQueueController(queue: QueueStore, bus: Emitter<Player
       newPosition = rePosition
     }
     queue.updateQueueState({ tracks: newTracks, order: newOrder, position: newPosition })
-    console.log(queue.queueState)
     bus.emit(PlayerEvent.QueueChanged, existing !== -1 ? 'move' : 'insert')
     return insertAt
   }
@@ -171,7 +168,6 @@ export function createPlayQueueController(queue: QueueStore, bus: Emitter<Player
     const fresh = toInsert.filter(t => !existingIds.has(t.id))
     
     queue.updateQueueState({ tracks: newTracks, order: newOrder, position: newPosition })
-    console.log(queue.queueState)
     bus.emit(PlayerEvent.QueueChanged, 'add')
     return { first: insertAt, added: fresh }
   }
@@ -194,7 +190,6 @@ export function createPlayQueueController(queue: QueueStore, bus: Emitter<Player
     // position 原位滑入，如果当前播放曲目被移除，则滑入下一个曲目，如果当前曲目是最后一首且被移除，则滑入最新的最后一首
     newPosition = position >= newOrder.length ? newOrder.length - 1 : position
     queue.updateQueueState({ tracks: newTracks, order: newOrder, position: newPosition })
-    console.log(queue.queueState)
     bus.emit(PlayerEvent.QueueChanged, 'remove')
   }
 
@@ -224,7 +219,6 @@ export function createPlayQueueController(queue: QueueStore, bus: Emitter<Player
     }
     queue.updateQueueState({ tracks: next, order: newOrder, position: newPosition })
 
-    console.log(queue.queueState)
     bus.emit(PlayerEvent.QueueChanged, 'move')
   }
 
@@ -234,7 +228,6 @@ export function createPlayQueueController(queue: QueueStore, bus: Emitter<Player
     const {order,position} = queue.rebuildOrder(clean, clean.length > 0 ? 0 : -1)
     queue.updateQueueState({ tracks: clean, order, position })
 
-    console.log(queue.queueState)
     bus.emit(PlayerEvent.QueueChanged, 'replace')
   }
 

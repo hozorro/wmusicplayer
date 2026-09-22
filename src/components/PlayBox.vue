@@ -22,7 +22,7 @@ import { formatTime } from '@/utilies/general'
 import { parseHits } from '@/utilies/time-text'
 import QueueSheet from './QueueSheet.vue'
 import TrackInfoSheet from './TrackInfoSheet.vue'
-import { getFavoriteTrackIds, getTrackHits } from '@/apis/methods/music.ts'
+import { getFavoriteTrackIds, getFavoriteTracks, getTrackHits } from '@/apis/methods/music.ts'
 import { toggleTrackFav } from '@/idb/app-api/fav.ts'
 
 const player = usePlayer()
@@ -168,7 +168,7 @@ async function toggleFavorite() {
   if (!res) return
   const next = new Set(favIds.value)
   res.fav ? next.add(t.id) : next.delete(t.id)
-  invalidateCache(getFavoriteTrackIds())
+  invalidateCache([getFavoriteTrackIds(), getFavoriteTracks()])
   favIds.value = next
 }
 

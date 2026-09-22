@@ -18,7 +18,7 @@ const isCurrent = (t: Track) => t.id === player.curTrack.value?.id
 </script>
 
 <template>
-  <div class=" px-2">
+  <div class=" px-2 space-y-1.5">
     <div
       v-for="(t, i) in tracks"
       :key="t.id"
