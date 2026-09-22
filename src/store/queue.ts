@@ -174,7 +174,7 @@ export const useQueueStore = defineStore('player/queue', () => {
   }
 }, {
   // pinia-plugin-persistedstate
-  persist: { pick: ['mode']}
+  persist: { pick: ['queueState', 'mode']}
 })
 
 export type QueueStore = ReturnType<typeof useQueueStore>
