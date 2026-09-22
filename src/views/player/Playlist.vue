@@ -52,6 +52,7 @@ const tracks = computed(() =>
 function removeTrack(id: number) {
   removePlaylistTrack(playlist.value!.id, id)
   invalidateCache(getPlaylist(playlist.value!.id))
+  getData()
 }
 
 function moveTrack(id: number, direction: -1 | 1) {
@@ -60,6 +61,7 @@ function moveTrack(id: number, direction: -1 | 1) {
   const targetIdx = idx + direction
   movePlaylistTrack(playlist.value!.id, id, targetIdx)
   invalidateCache(getPlaylist(playlist.value!.id))
+  getData()
 }
 
 // TrackList 菜单注入： playlist-track 类型携带移除回调

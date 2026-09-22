@@ -3,10 +3,10 @@
 import { activeToasts, type ToastKind } from '@/services/toast'
 
 const mapBg: Record<ToastKind, string> = {
-  success: 'bg-green-500/95',
-  error: 'bg-red-500/95',
-  warning: 'bg-yellow-500/95',
-  info: 'bg-blue-500/95'
+  success: 'bg-green-500/85',
+  error: 'bg-red-500/85',
+  warning: 'bg-yellow-500/85',
+  info: 'bg-blue-500/85'
 }
 </script>
 

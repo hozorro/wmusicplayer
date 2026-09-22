@@ -112,12 +112,9 @@ export const useQueueStore = defineStore('player/queue', () => {
   /** track空间跳转——facade意图层入口，自动翻译到order空间 */
   function jumpTo(trackIndex: number) {
     const {tracks, order} = queueState.value
-    console.log(trackIndex)
     const trackId = tracks[trackIndex]?.id
-    console.log(trackId)
     const p = order.indexOf(trackId)
     if (p !== -1) setPosition(p)
-    console.log(queueState.value.position)
   }
 
   function setMode(m: PlayMode) {
@@ -177,7 +174,7 @@ export const useQueueStore = defineStore('player/queue', () => {
   }
 }, {
   // pinia-plugin-persistedstate
-  persist: { pick: ['mode']}
+  persist: { pick: ['queueState', 'mode']}
 })
 
 export type QueueStore = ReturnType<typeof useQueueStore>
