@@ -7,7 +7,7 @@ export const idbGetPlaylists: ApiHandler = async () => {
   const idb = await getLibraryIdb()
   const rows = await idb.getAll<IDBPlaylist>("playlists")
   return json(rows
-    .sort((a, b) => b.created_at.localeCompare(a.created_at))
+    .sort((a, b) => (b.hit_count ?? 0) - (a.hit_count ?? 0))
     .map(p => ({ id: p.id, title: p.title, cover_art_hash: p.cover_art_hash, track_count: p.tracks.length }))
   )
 }

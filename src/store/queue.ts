@@ -152,9 +152,10 @@ export const useQueueStore = defineStore('player/queue', () => {
   function sanitize() {
     const {tracks, order, position} = queueState.value
     const n = tracks.length
+    const ids = tracks.map(t => t.id)
     const valid = order.length === n
       && new Set(order).size === n
-      && order.every(i => i >= 0 && i < n)
+      && order.every(i => ids.includes(i))
     if (!valid) {
       const {order: reOrder, position: rePosition} = rebuildOrder(queueState.value.tracks, position < n ? position : -1)
       updateQueueState({ order: reOrder, position: rePosition })

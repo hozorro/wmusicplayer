@@ -398,7 +398,7 @@ onUnmounted(() => window.removeEventListener('idb-rebuilt', onLibraryRebuilt))
           <!-- 播放模式 -->
           <button
             class=" rounded-full p-2.5 transition hover:bg-black/5 active:scale-90 dark:hover:bg-white/5"
-            :class="playQueue.mode.value === 'sequential' ? 'text-fg-muted' : 'text-accent'"
+            :class="playQueue.mode.value === 'sequential' ? 'text-fg-secondary' : 'text-accent'"
             :aria-label="MODE_LABEL[playQueue.mode.value]"
             @click="playQueue.setMode(MODE_NEXT[playQueue.mode.value])"
           >
@@ -424,7 +424,7 @@ onUnmounted(() => window.removeEventListener('idb-rebuilt', onLibraryRebuilt))
 
           <!-- 上一首 -->
           <button
-            class=" rounded-full p-2 text-secondary transition hover:bg-primary/5 active:scale-90 disabled:pointer-events-none disabled:opacity-40"
+            class=" rounded-full p-2 text-fg-secondary transition hover:bg-primary/5 active:scale-90 disabled:pointer-events-none disabled:opacity-40"
             :disabled="!track"
             :aria-label="t('player.previous')"
             @click="player.prev();"
@@ -455,7 +455,7 @@ onUnmounted(() => window.removeEventListener('idb-rebuilt', onLibraryRebuilt))
 
           <!-- 下一首 -->
           <button
-            class=" rounded-full p-2 text-secondary transition hover:bg-primary/5 active:scale-90 disabled:pointer-events-none disabled:opacity-40"
+            class=" rounded-full p-2 text-fg-secondary transition hover:bg-primary/5 active:scale-90 disabled:pointer-events-none disabled:opacity-40"
             :disabled="!track"
             :aria-label="t('player.next')"
             @click="player.next();"
@@ -467,7 +467,7 @@ onUnmounted(() => window.removeEventListener('idb-rebuilt', onLibraryRebuilt))
 
           <!-- 播放清单 -->
           <button
-            class=" rounded-full p-2.5 text-fg-muted transition hover:bg-primary/5 hover:text-fg-secondary active:scale-90"
+            class=" rounded-full p-2.5 text-fg-secondary transition hover:bg-primary/5 hover:text-fg-secondary active:scale-90"
             :aria-label="t('player.queue')"
             @click="showQueue = true"
           >

@@ -53,6 +53,7 @@ export const getTenArtists = () => {
         cover: coverUrl('artist', artist.id, artist.face_art_hash, 'face'),
       }))
     },
+    cacheFor: 1000 * 60 * 60 * 4, // 4 hours
     hitSource: ['updateArtistHit']
   })
 }
