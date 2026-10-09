@@ -126,6 +126,8 @@ function onDragEnd() {
               <div class=" text-right">YEAR:</div><div>{{ trackInfo?.year }}</div>
               <div class=" text-right">BITRATE:</div><div>{{ trackInfo?.bitrate }}</div>
               <div class=" text-right">BR_MODE:</div><div>{{ trackInfo?.bitrate_mode || 'Unknown' }}</div>
+              <div class=" text-right">CREATED:</div>
+              <div class=" col-span-3 whitespace-pre-wrap">{{ trackInfo?.created_at }}</div>
               <div class=" text-right">ACOUSTID:</div>
               <div class=" col-span-3 whitespace-pre-wrap">{{ trackInfo?.acoustid_id }}</div>
               <div class=" text-right">MB_TRACKID:</div>
