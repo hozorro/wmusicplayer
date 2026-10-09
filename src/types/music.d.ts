@@ -113,6 +113,7 @@ declare interface TrackMoreInfo {
   acoustid_id?: string;
   mb_trackid?: string;
   path: string;
+  created_at: string;
 }
 // #endregion
 
