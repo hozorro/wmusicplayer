@@ -21,7 +21,7 @@ const menuList = computed(() => {// must be computed, or the menu will not updat
   const menuItems = [ 
     { title: t('settings.play.item'), to: '/setting/play', icon: 'icon-[solar--tuning-square-2-outline]' },
     { title: t('settings.sync.item'), to: '/setting/sync', icon: 'icon-[solar--database-outline]' },
-    { title: t('settings.help'), to: '/setting/help', icon: 'icon-[solar--notebook-bookmark-outline]' },
+    { title: t('settings.help.item'), to: '/setting/help', icon: 'icon-[solar--notebook-bookmark-outline]' },
     { title: t('settings.about.item'), to: '/setting/about', icon: 'icon-[solar--cassette-outline]' },
   ]
   const devItems = [
@@ -71,8 +71,8 @@ async function changeLocale(locale: SupportedLocale) {
         <div class=" flex-1">{{ t('settings.local_cache_status') }}: {{ idbReady ? t('settings.ready') : t('settings.not_ready') }}</div>
       </div>
     </div>
-    <div class=" mt-4 p-2">
-      <div class=" flex justify-between w-full py-2 border-b border-border">
+    <div class=" mt-4 p-2 divide-y divide-border">
+      <div class=" flex justify-between w-full py-2">
         <div>
           <span class=" icon-[solar--pallete-2-outline] text-xl align-middle mr-2"></span>
           <span>{{ t('settings.theme') }}</span>
@@ -81,13 +81,13 @@ async function changeLocale(locale: SupportedLocale) {
           <button class=" px-2 py-1 text-sm rounded-md bg-secondary" @click="toggleTheme">{{ theme }}</button>
         </div>
       </div>
-      <div class=" flex justify-between w-full py-2 border-b border-border">
+      <div class=" flex justify-between w-full py-2">
         <div>
           <span class=" icon-[solar--sort-by-alphabet-outline] text-xl align-middle mr-2"></span>
           <span>{{ t('settings.language') }}</span>
         </div>
         <div>
-          <select v-model="currentLocale" @change="changeLocale(currentLocale)" class=" rounded-md bg-secondary">
+          <select v-model="currentLocale" @change="changeLocale(currentLocale)" class=" rounded-md bg-secondary px-2 py-1">
             <option v-for="(item, index) in langsMap" :key="index" :value="item.value">{{ item.label }}</option>
           </select>
         </div>
@@ -96,7 +96,7 @@ async function changeLocale(locale: SupportedLocale) {
         :title="item.title" 
         :to-url="item.to" 
         :icon="item.icon"
-        class=" border-b border-border last:border-0"
+        class=" py-1"
       />
     </div>
   </div>
