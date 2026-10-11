@@ -7,18 +7,24 @@ const router = useRouter();
 </script>
 
 <template>
-  <div class=" px-2 pt-[calc(env(safe-area-inset-top)+10px)]">
-    <div class=" flex justify-between">
-      <button
-        class="shrink-0 rounded-full p-2 text-fg-secondary ring-1 ring-primary/10 backdrop-blur-sm transition hover:bg-fg-primary/85 active:scale-90"
-        :aria-label="t('common.back')"
-        @click="router.back()"
-      >
-        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
-      </button>
-      <div class=" flex-1 text-lg font-semibold text-right">{{ t('settings.about.item') }}</div>
+  <div class=" min-h-dvh">
+    <!-- 粘性导航 -->
+    <div class=" sticky top-0 z-30 border-b border-fg-primary/5 backdrop-blur-md">
+      <div class=" mx-auto flex max-w-2xl items-center gap-2 pl-2 pr-4 py-2.5 pt-[calc(env(safe-area-inset-top)+10px)]">
+        <button
+          class=" rounded-full p-2 text-fg-muted transition hover:bg-fg-primary/8 hover:text-fg-primary active:scale-90"
+          :aria-label="t('common.back')"
+          @click="router.back()"
+        >
+          <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 6l-6 6 6 6" />
+          </svg>
+        </button>
+        <h1 class=" text-lg font-bold text-fg-primary">{{ t('settings.about.item') }}</h1>
+      </div>
     </div>
-    <div class=" mt-4 p-2">
+
+    <main class=" mx-auto max-w-2xl px-4 pb-32 pt-6">
       <p class=" p-2">
         <span class=" font-bold text-cyan-700">WMusicPlayer</span> {{ t('settings.about.introduction') }}
       </p>
@@ -38,6 +44,6 @@ const router = useRouter();
       <p class=" p-2">
         <span class=" font-bold text-cyan-700">WMusicPlayer</span> {{ t('settings.about.author', { author: 'enauvy'}) }}
       </p>
-    </div>
+    </main>
   </div>
 </template>

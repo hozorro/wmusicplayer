@@ -268,7 +268,20 @@ declare module 'vue-i18n' {
     }
     language: string
     theme: string
-    help: string
+    help: {
+      item: string
+      install: string
+      install_content: string
+      first_run: string
+      first_run_content_1: string
+      first_run_content_2: string
+      local_db: string
+      local_db_content_1: string
+      local_db_content_2: string
+      local_db_content_3: string
+      update: string
+      update_content: string
+    }
     test: string
     about: {
       item: string
