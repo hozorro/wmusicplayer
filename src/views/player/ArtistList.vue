@@ -77,7 +77,7 @@ function charClass(c: CharInfo):string {
             :class="charClass(c)"
             @click="switchArtists(c.charName)"
           >
-            {{ c.charName }}
+            {{ c.charName === '_' ? '#' : c.charName }}
           </button>
         </div>
         <!-- 字母块骨架 -->
