@@ -5,6 +5,7 @@ import type { QueueStore } from "@/store/queue";
 import type { StreamResolver } from "@/services/stream-resolver";
 import type { CacheService } from "@/services/cache";
 import type { PlayerConfig } from "@/config/player-config";
+import dayjs from "dayjs";
 
 /**
  * 预加载控制器：纵深防御 + 让路首载
@@ -32,6 +33,7 @@ export function createPreloadController(
   function warmUrls() {
     for (const t of queue.peekNext(URL_AHEAD)) {
       resolver.prepare(t.id).catch(() => {})
+      queue.pushToRequestQueue(dayjs().format('HH:mm:ss'), `Warmed Url: ${t.id}`)
     }
   }
 
@@ -41,7 +43,10 @@ export function createPreloadController(
       try {
         await resolver.prepare(t.id)    // 幂等：已有效直接穿过
         const url = resolver.get(t.id)
-        if (url !== null) await cache.store(t.id, url)
+        if (url !== null) {
+          await cache.store(t.id, url)
+          queue.pushToRequestQueue(dayjs().format('HH:mm:ss'), `Warmed Bytes: ${t.id}`)
+        }
       } catch { /* 静默 */ }
     }
   }
@@ -53,7 +58,10 @@ export function createPreloadController(
     try {
       await resolver.prepare(t.id)
       const url = resolver.get(t.id)
-      if (url !== null) await cache.store(t.id, url)
+      if (url !== null) {
+        await cache.store(t.id, url)
+        queue.pushToRequestQueue(dayjs().format('HH:mm:ss'), `Persisted Current: ${t.id}`)
+      }
     } catch { /* 静默 */ }
   }
 

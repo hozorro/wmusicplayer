@@ -320,6 +320,13 @@
       "update": "앱 업데이트",
       "update_content": "웹사이트에 새 버전이 있을 경우 업데이트를 알려주며, 업데이트를 클릭하면 즉시 적용됩니다."
     },
+    "devtools": {
+      "item": "개발 도구",
+      "request_queue": "요청 큐",
+      "play_order": "재생 순서",
+      "empty": "데이터 없음",
+      "current": "현재"
+    },
     "test": "실험 기능",
     "about": {
       "item": "앱 정보",

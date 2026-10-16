@@ -167,11 +167,19 @@ export const useQueueStore = defineStore('player/queue', () => {
     duration.value = 0
   }
 
+  // =============== 请求记录队列 ===============
+  const requestQueue = ref<{reqTime: string, reqInfo: string}[]>([])
+  function pushToRequestQueue(reqTime: string, reqInfo: string) {
+    if (requestQueue.value.length > 50) requestQueue.value.shift()
+    requestQueue.value.push({reqTime, reqInfo})
+  }
+
   return {
     queueState, mode, intent, engineState, duration,
     curTrackId, curTrack, nextPosition, prevPosition,
     updateQueueState, advance, skipNext, retreat, setPosition, jumpTo, setMode, rebuildOrder, peekNext,
-    setEngineState, setDuration, sanitize
+    setEngineState, setDuration, sanitize, 
+    requestQueue, pushToRequestQueue
   }
 }, {
   // pinia-plugin-persistedstate

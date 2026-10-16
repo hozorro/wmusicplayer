@@ -19,7 +19,7 @@ export function coverUrl(
   hash?: string,
   kind?: 'face' | 'portrait'
 ): string {
-  if (!hash) return `/imgs/${entity}.jpg`
+  if (!hash && kind !== 'portrait') return `/imgs/${entity}.jpg`
   if (entity === 'artist')
     return hash ? `/media/artists/${id}_${kind || 'face'}.jpg?v=${hash}` : ''
   else
