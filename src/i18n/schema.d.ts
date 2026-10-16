@@ -282,6 +282,13 @@ declare module 'vue-i18n' {
       update: string
       update_content: string
     }
+    devtools: {
+      item: string
+      request_queue: string
+      play_order: string
+      empty: string
+      current: string
+    }
     test: string
     about: {
       item: string

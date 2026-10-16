@@ -320,6 +320,13 @@
       "update": "App更新",
       "update_content": "当网站有新版本时，会提示更新，点击更新会即时生效。"
     },
+    "devtools": {
+      "item": "开发工具",
+      "request_queue": "请求队列",
+      "play_order": "播放顺序",
+      "empty": "暂无数据",
+      "current": "当前"
+    },
     "test": "试验功能",
     "about": {
       "item": "关于",

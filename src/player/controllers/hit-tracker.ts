@@ -5,6 +5,8 @@ import type { QueueStore } from '@/store/queue'
 import { bumpArtistHit, bumpTrackHit } from '@/idb/app-api'
 import type { PlayerConfig } from '@/config/player-config'
 import { onConfigChange } from '@/config/config-provider'
+import dayjs from 'dayjs'
+
 
 /**
  * 播放统计控制器：消费 time 旁路，跨越阈值即计次
@@ -55,7 +57,11 @@ export function createHitTracker(
     const t = queue.curTrack
     if (!t) return
     bumpTrackHit(t.id)
-    for (const aid of (t.artists?.map(a => a.id) ?? [])) bumpArtistHit(aid)
+    queue.pushToRequestQueue(dayjs().format('HH:mm:ss'), `Hit Track: ${t.id}`)
+    for (const aid of (t.artists?.map(a => a.id) ?? [])) {
+      bumpArtistHit(aid)
+      queue.pushToRequestQueue(dayjs().format('HH:mm:ss'), `Hit Artist: ${aid}`)
+    }
   }
 
   function dispose() {

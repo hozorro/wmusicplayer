@@ -61,7 +61,8 @@ const routes: RouteRecordRaw[] = [
           { path: "play", name: "setting-play", component: () => import("@/views/setting/Play.vue") },
           { path: "sync", name: "setting-sync", component: () => import("@/views/setting/Sync.vue") },
           { path: "help", name: "setting-help", component: () => import("@/views/setting/Help.vue") },
-          { path: "about", name: "setting-about", component: () => import("@/views/setting/About.vue") }
+          { path: "about", name: "setting-about", component: () => import("@/views/setting/About.vue") },
+          { path: "devtools", name: "setting-devtools", component: () => import("@/views/setting/DevTools.vue") }
         ]
       }
     ]

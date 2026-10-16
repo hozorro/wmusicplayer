@@ -23,6 +23,7 @@ const menuList = computed(() => {// must be computed, or the menu will not updat
     { title: t('settings.sync.item'), to: '/setting/sync', icon: 'icon-[solar--database-outline]' },
     { title: t('settings.help.item'), to: '/setting/help', icon: 'icon-[solar--notebook-bookmark-outline]' },
     { title: t('settings.about.item'), to: '/setting/about', icon: 'icon-[solar--cassette-outline]' },
+    { title: t('settings.devtools.item'), to: '/setting/devtools', icon: 'icon-[solar--code-square-outline]' },
   ]
   const devItems = [
     { title: 'dev-runtime', to: '/dev/runtime', icon: 'icon-[solar--test-tube-linear]' },

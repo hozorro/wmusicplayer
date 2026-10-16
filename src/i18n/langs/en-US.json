@@ -320,6 +320,13 @@
       "update": "App Update",
       "update_content": "When a new version of the app is available, a prompt will appear. Clicking update will take effect immediately."
     },
+    "devtools": {
+      "item": "Dev Tools",
+      "request_queue": "Request Queue",
+      "play_order": "Play Order",
+      "empty": "No data",
+      "current": "Current"
+    },
     "test": "Experimental",
     "about": {
       "item": "About",

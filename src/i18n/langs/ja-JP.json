@@ -320,6 +320,13 @@
       "update": "更新",
       "update_content": "サイトに新バージョンが有効な場合、更新が表示されます。更新をクリックすると即時に有効になります。"
     },
+    "devtools": {
+      "item": "開発ツール",
+      "request_queue": "リクエストキュー",
+      "play_order": "再生順序",
+      "empty": "データなし",
+      "current": "現在"
+    },
     "test": "実験機能",
     "about": {
       "item": "このアプリについて",
