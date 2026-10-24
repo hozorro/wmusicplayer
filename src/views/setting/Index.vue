@@ -21,9 +21,9 @@ const menuList = computed(() => {// must be computed, or the menu will not updat
   const menuItems = [ 
     { title: t('settings.play.item'), to: '/setting/play', icon: 'icon-[solar--tuning-square-2-outline]' },
     { title: t('settings.sync.item'), to: '/setting/sync', icon: 'icon-[solar--database-outline]' },
+    { title: t('settings.devtools.item'), to: '/setting/devtools', icon: 'icon-[solar--code-square-outline]' },
     { title: t('settings.help.item'), to: '/setting/help', icon: 'icon-[solar--notebook-bookmark-outline]' },
     { title: t('settings.about.item'), to: '/setting/about', icon: 'icon-[solar--cassette-outline]' },
-    { title: t('settings.devtools.item'), to: '/setting/devtools', icon: 'icon-[solar--code-square-outline]' },
   ]
   const devItems = [
     { title: 'dev-runtime', to: '/dev/runtime', icon: 'icon-[solar--test-tube-linear]' },
@@ -97,7 +97,7 @@ async function changeLocale(locale: SupportedLocale) {
         :title="item.title" 
         :to-url="item.to" 
         :icon="item.icon"
-        class=" py-1"
+        class=" py-2 h-[60px]"
       />
     </div>
   </div>

@@ -168,10 +168,10 @@ export const useQueueStore = defineStore('player/queue', () => {
   }
 
   // =============== 请求记录队列 ===============
-  const requestQueue = ref<{reqTime: string, reqInfo: string}[]>([])
-  function pushToRequestQueue(reqTime: string, reqInfo: string) {
+  const requestQueue = ref<{reqTime: string, reqType: string, reqInfo: string}[]>([])
+  function pushToRequestQueue(reqTime: string, reqType: string, reqInfo: string) {
     if (requestQueue.value.length > 50) requestQueue.value.shift()
-    requestQueue.value.push({reqTime, reqInfo})
+    requestQueue.value.push({reqTime, reqType, reqInfo})
   }
 
   return {

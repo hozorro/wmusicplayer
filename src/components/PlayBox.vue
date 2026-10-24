@@ -20,6 +20,7 @@ import AmbientBackground from './AmbientBackground.vue'
 import type { PlayMode } from '@/player/types'
 import { formatTime } from '@/utilies/general'
 import { parseHits } from '@/utilies/time-text'
+import { findWordIndex } from '@/player/lyric'
 import QueueSheet from './QueueSheet.vue'
 import TrackInfoSheet from './TrackInfoSheet.vue'
 import { getFavoriteTrackIds, getFavoriteTracks, getTrackHits } from '@/apis/methods/music.ts'
@@ -61,6 +62,15 @@ function onTouchEnd(e: TouchEvent) {
 
 // —— 歌词滚动 ——
 const lyricScroller = ref<HTMLElement>()
+
+// 当前行逐字高亮索引（仅当前行有 words 时有意义）
+const currentWordIndex = computed(() => {
+  const idx = lyrics.currentLine.value
+  if (idx < 0) return -1
+  const line = lyrics.lines.value[idx]
+  if (!line?.words?.length) return -1
+  return findWordIndex(line.words, lyrics.currentTime.value)
+})
 function scrollLyricToCurrent(behavior: ScrollBehavior) {
   const idx = lyrics.currentLine.value
   if (idx < 0) return
@@ -268,7 +278,17 @@ onUnmounted(() => window.removeEventListener('idb-rebuilt', onLibraryRebuilt))
                     class="py-1.5 text-center transition-all duration-300"
                     :class="i === lyrics.currentLine.value ? ' text-xl font-bold text-fg-primary' : ' text-[15px] leading-5 text-fg-muted'"
                   >
-                    {{ line.text || '...' }}
+                    <template v-if="i === lyrics.currentLine.value && line.words?.length">
+                      <span
+                        v-for="(w, wi) in line.words"
+                        :key="wi"
+                        class="inline-block transition-all duration-150"
+                        :class="wi <= currentWordIndex ? 'text-fg-primary' : 'text-fg-muted/50'"
+                      >{{ w.text }}</span>
+                    </template>
+                    <template v-else>
+                      {{ line.text || '...' }}
+                    </template>
                   </p>
                 </template>
                 <div v-else-if="lyrics.status.value === 'loading'" class=" flex h-full items-center justify-center gap-3 text-sm text-fg-muted">

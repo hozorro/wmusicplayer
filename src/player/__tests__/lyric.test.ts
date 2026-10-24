@@ -1,6 +1,6 @@
 // player/__tests__/lrc.test.ts
 import { describe, expect, it } from 'vitest'
-import { findLine, parseLrc } from '../lyric'
+import { findLine, findWordIndex, parseLrc } from '../lyric'
 
 describe('parseLrc', () => {
   it('基础时间戳 + 百分秒/毫秒精度 + CRLF', () => {
@@ -33,5 +33,45 @@ describe('findLine', () => {
     [9.9, -1], [10, 0], [19.9, 0], [25, 1], [99, 2],
   ])('t=%s → %s', (t, expected) => {
     expect(findLine(lines, t)).toBe(expected)
+  })
+})
+describe('parseLrc 逐字歌词', () => {
+  it('解析逐字时间标签', () => {
+    const lines = parseLrc('[00:11.780]<00:11.780>曲<00:12.958>：<00:14.136>何<00:15.314>俊<00:16.492>明')
+    expect(lines).toHaveLength(1)
+    expect(lines[0].text).toBe('曲：何俊明')
+    expect(lines[0].words).toBeDefined()
+    expect(lines[0].words!.length).toBe(5)
+    expect(lines[0].words![0]).toEqual({ time: 11.78, text: '曲' })
+    expect(lines[0].words![1]).toEqual({ time: 12.958, text: '：' })
+    expect(lines[0].words![4]).toEqual({ time: 16.492, text: '明' })
+  })
+
+  it('逐字行 text 不含 <> 标签', () => {
+    const lines = parseLrc('[00:10.00]<00:10.00>你<00:11.00>好')
+    expect(lines[0].text).toBe('你好')
+  })
+
+  it('普通行无 words 字段', () => {
+    const lines = parseLrc('[00:10.00]普通行')
+    expect(lines[0].words).toBeUndefined()
+  })
+
+  it('逐字标签应用 offset', () => {
+    const lines = parseLrc('[offset:500]\n[00:10.00]<00:10.00>字')
+    expect(lines[0].words![0].time).toBe(9.5)
+  })
+})
+
+describe('findWordIndex', () => {
+  const words = [
+    { time: 10, text: 'a' },
+    { time: 11, text: 'b' },
+    { time: 12, text: 'c' },
+  ]
+  it.each([
+    [9.9, -1], [10, 0], [10.5, 0], [11, 1], [11.9, 1], [99, 2],
+  ])('t=%s → %s', (t, expected) => {
+    expect(findWordIndex(words, t)).toBe(expected)
   })
 })

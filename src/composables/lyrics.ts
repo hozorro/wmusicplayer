@@ -14,6 +14,7 @@ export function useLyrics() {
   return {
     lines: lyrics.lines,
     currentLine: lyrics.currentLine,
+    currentTime: lyrics.currentTime,
     status: lyrics.status
   }
 }
