@@ -16,7 +16,7 @@ const tabs = computed(() => [
   { key: 'order' as TabKey, label: t('settings.devtools.play_order') },
 ]);
 
-const requestList = computed(() => queueStore.requestQueue);
+const requestList = computed(() => queueStore.requestQueue.sort((a, b) => b.reqTime.localeCompare(a.reqTime)));
 
 const orderList = computed(() => {
   const { order, position, tracks } = queueStore.queueState;
@@ -69,12 +69,19 @@ const orderList = computed(() => {
         <div v-if="requestList.length === 0" class=" py-8 text-center text-sm text-fg-muted">
           {{ t('settings.devtools.empty') }}
         </div>
-        <ul v-else class=" divide-y divide-border text-sm">
-          <li v-for="(req, i) in requestList" :key="i" class=" flex gap-3 py-2">
-            <span class=" shrink-0 font-mono text-fg-muted">{{ req.reqTime }}</span>
-            <span class=" flex-1 break-all text-fg-primary">{{ req.reqInfo }}</span>
-          </li>
-        </ul>
+          <TransitionGroup
+            v-else
+            tag="ul"
+            class=" divide-y divide-border text-sm"
+            enter-active-class="transition duration-250 ease-out" enter-from-class="opacity-0 -translate-y-2"
+            leave-active-class="transition duration-200 ease-in" leave-to-class="opacity-0 -translate-y-2"
+          >
+            <li v-for="req in requestList" :key="req.reqTime" class=" flex gap-3 py-2">
+              <span class=" shrink-0 font-mono text-fg-muted">{{ req.reqTime }}</span>
+              <span class=" px-1 shrink-0 font-mono text-fg/80 bg-warning/80 rounded">{{ req.reqType }}</span>
+              <span class=" flex-1 break-all text-fg-primary">{{ req.reqInfo }}</span>
+            </li>
+          </TransitionGroup>
       </div>
 
       <!-- 播放顺序 -->
@@ -87,7 +94,7 @@ const orderList = computed(() => {
             v-for="item in orderList"
             :key="item.index"
             class=" flex items-center gap-3 py-2"
-            :class="item.isCurrent ? 'text-primary font-semibold' : 'text-fg-primary'"
+            :class="item.isCurrent ? 'text-accent font-semibold' : 'text-fg-primary'"
           >
             <span class=" w-8 shrink-0 text-right font-mono text-fg-muted">{{ item.index }}</span>
             <span class=" w-16 shrink-0 font-mono text-fg-muted">#{{ item.id }}</span>

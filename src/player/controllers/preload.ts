@@ -32,8 +32,11 @@ export function createPreloadController(
 
   function warmUrls() {
     for (const t of queue.peekNext(URL_AHEAD)) {
-      resolver.prepare(t.id).catch(() => {})
-      queue.pushToRequestQueue(dayjs().format('HH:mm:ss'), `Warmed Url: ${t.id}`)
+      resolver.prepare(t.id).then((res) => {
+        queue.pushToRequestQueue(dayjs().format('HH:mm:ss'), 'Warm Url', `[${res}] ${t.title} (#${t.id})`)
+      }).catch(() => {
+        queue.pushToRequestQueue(dayjs().format('HH:mm:ss'), 'Warm Url', `[failed] ${t.title} (#${t.id})`)
+      })
     }
   }
 
@@ -45,7 +48,7 @@ export function createPreloadController(
         const url = resolver.get(t.id)
         if (url !== null) {
           await cache.store(t.id, url)
-          queue.pushToRequestQueue(dayjs().format('HH:mm:ss'), `Warmed Bytes: ${t.id}`)
+          queue.pushToRequestQueue(dayjs().format('HH:mm:ss'), 'Warm Bytes', `${t.title} (#${t.id})`)
         }
       } catch { /* 静默 */ }
     }
@@ -60,7 +63,7 @@ export function createPreloadController(
       const url = resolver.get(t.id)
       if (url !== null) {
         await cache.store(t.id, url)
-        queue.pushToRequestQueue(dayjs().format('HH:mm:ss'), `Persisted Current: ${t.id}`)
+        queue.pushToRequestQueue(dayjs().format('HH:mm:ss'), 'Persist Current', `${t.title} (#${t.id})`)
       }
     } catch { /* 静默 */ }
   }

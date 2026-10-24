@@ -54,7 +54,7 @@ export function createLyricController(
     offTime()
   }
 
-  return { lines, currentLine, status, dispose }
+  return { lines, currentLine, status, currentTime: time, dispose }
 }
 
 export type LyricController = ReturnType<typeof createLyricController>
