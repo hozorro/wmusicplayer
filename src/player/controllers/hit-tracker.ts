@@ -57,10 +57,10 @@ export function createHitTracker(
     const t = queue.curTrack
     if (!t) return
     bumpTrackHit(t.id)
-    queue.pushToRequestQueue(dayjs().format('HH:mm:ss'), 'Hit Track', `${t.title}(${t.id})`)
+    queue.pushToRequestQueue(dayjs().format('HH:mm:ss'), 'Hit Track', `${t.title} (#${t.id})`)
     for (const a of t.artists ?? []) {
       bumpArtistHit(a.id)
-      queue.pushToRequestQueue(dayjs().format('HH:mm:ss'), 'Hit Artist', `${a.name}(${a.id})`)
+      queue.pushToRequestQueue(dayjs().format('HH:mm:ss'), 'Hit Artist', `${a.name} (#${a.id})`)
     }
   }
 

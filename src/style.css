@@ -12,6 +12,14 @@
 
 @theme {
   --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  /* 单行跑马灯：内容复制两份，位移 -50% 正好回到第二份起点，做到无缝循环 */
+  --animate-marquee: marquee 30s linear infinite;
+
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
 }
 
 /* 1. Light theme */

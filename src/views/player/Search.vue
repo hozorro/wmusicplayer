@@ -15,7 +15,8 @@ import type { PlayTrack } from '@/player/types'
 import { formatTime } from '@/utilies/general'
 import { usePlayer } from '@/composables/playback'
 import { getConfig } from '@/config/config-provider'
-import { getCollectionTracks, searchLibrary } from '@/apis/methods/music'
+import { getCollectionTracks, searchLibrary, searchLyric } from '@/apis/methods/music'
+import { snippetParts } from '@/utilies/lyric-snippet'
 
 // import { searchLibrary } from '@/api/…'
 
@@ -24,13 +25,23 @@ const player = usePlayer()
 const { t } = useI18n()
 const config = getConfig()
 
+type TabKey = 'tracks' | 'artists' | 'albums' | 'lyrics'
+
 const input = ref<HTMLInputElement>()
 const q = ref('')
-const tab = ref<'tracks' | 'artists' | 'albums'>('tracks')
+const tab = ref<TabKey>('tracks')
 const results = ref<SearchResults>({ tracks: [], artists: [], albums: [] })
 const searching = ref(false)
 const searched = ref(false)
 let searchSeq = 0
+
+// —— 歌词搜索：独立于本地曲库，懒加载（点击歌词 tab 才发请求）——
+const lyricItems = ref<LyricSearchItem[]>([])
+const lyricTotal = ref(0)
+const lyricSearching = ref(false)
+const lyricLoaded = ref(false)
+const lyricQuery = ref('')        // 当前结果对应的关键词，用于判断是否需要重查
+let lyricSeq = 0
 
 onMounted(() => input.value?.focus())
 
@@ -46,9 +57,12 @@ watch(q, async () => {
     results.value = { tracks: [], artists: [], albums: [] }
     searched.value = false
     searching.value = false
+    resetLyricSearch()
     return
   }
   runSearch(query)
+  // 已停在歌词 tab 时关键词变了，必须跟着重查，否则显示的是上一个词的结果
+  if (tab.value === 'lyrics') runLyricSearch(query)
 })
 
 async function runSearch(query: string) {
@@ -60,8 +74,9 @@ async function runSearch(query: string) {
     results.value = r
     searched.value = true
     // 当前 tab 为空时，偏向首个非空 tab（优先级：tracks > artists > albums）
+    // 歌词是懒加载的独立数据源，不参与偏向，否则会绕过“点击才请求”的约定
     const TAB_PRIORITY = ['tracks', 'artists', 'albums'] as const
-    if (!r[tab.value].length) {
+    if (tab.value !== 'lyrics' && !r[tab.value].length) {
       const nonEmpty = TAB_PRIORITY.find(t => r[t].length)
       tab.value = nonEmpty || 'tracks'
     }
@@ -99,6 +114,66 @@ async function resolveAlbumTracks(id: number): Promise<PlayTrack[]> {
   return detail.map(t => toPlayTrack(t))
 }
 
+// ── 歌词搜索：懒加载 + 独立竞态守卫 ──
+async function runLyricSearch(query: string) {
+  const keyword = query.trim()
+  if (!keyword) return
+  const seq = ++lyricSeq
+  lyricSearching.value = true
+  try {
+    const r = await searchLyric(keyword).send()
+    if (seq !== lyricSeq) return
+    lyricItems.value = r.items
+    lyricTotal.value = r.total
+    lyricQuery.value = keyword
+    lyricLoaded.value = true
+  } catch {
+    if (seq === lyricSeq) lyricLoaded.value = false
+  } finally {
+    if (seq === lyricSeq) lyricSearching.value = false
+  }
+}
+
+function resetLyricSearch() {
+  lyricSeq++
+  lyricItems.value = []
+  lyricTotal.value = 0
+  lyricLoaded.value = false
+  lyricQuery.value = ''
+  lyricSearching.value = false
+}
+
+/** 切 tab：首次点歌词、或关键词已变时才真正发请求 */
+function selectTab(key: TabKey) {
+  tab.value = key
+  if (key !== 'lyrics') return
+  const keyword = q.value.trim()
+  if (!keyword) return
+  if (lyricLoaded.value && lyricQuery.value === keyword) return
+  runLyricSearch(keyword)
+}
+
+/** 歌词结果 -> 可播放曲目（后端已给足字段，无需再查库） */
+function lyricItemToTrack(item: LyricSearchItem): Track {
+  return {
+    id: item.track_id,
+    title: item.title,
+    duration: item.duration,
+    album: item.album ? { id: item.album_id ?? 0, title: item.album } : undefined,
+    artists: item.artists.map(name => ({ id: 0, name })),
+    cover_art_hash: item.cover_art_hash ?? undefined,
+  }
+}
+
+const lyricRows = computed(() => lyricItems.value.map(item => ({
+  item,
+  track: toPlayTrack(lyricItemToTrack(item)),
+})))
+
+function playLyricRow(index: number) {
+  player.playAll(lyricRows.value.map(row => row.track), index)
+}
+
 // ── 最近搜索：localStorage 自持 ──
 const RECENT_KEY = 'recent-searches'
 const recents = ref<string[]>([])
@@ -114,11 +189,26 @@ function clearRecents() {
   localStorage.removeItem(RECENT_KEY)
 }
 
-const tabs = computed(() => [
-  { key: 'tracks' as const, label: t('player.track'), count: results.value.tracks.length },
-  { key: 'artists' as const, label: t('player.artist'), count: results.value.artists.length },
-  { key: 'albums' as const, label: t('player.album'), count: results.value.albums.length },
-].map(t => ({...t, capped: t.count >= config.SEARCH_TYPE_LIMIT })))
+const tabs = computed(() => {
+  const entityTabs = [
+    { key: 'tracks' as const, label: t('player.track'), count: results.value.tracks.length },
+    { key: 'artists' as const, label: t('player.artist'), count: results.value.artists.length },
+    { key: 'albums' as const, label: t('player.album'), count: results.value.albums.length },
+  ].map(tab => ({
+    ...tab,
+    showCount: true,
+    capped: tab.count >= config.SEARCH_TYPE_LIMIT,
+  }))
+  // 歌词结果懒加载：未点击前不显示计数，避免被误解为 0 条
+  return [...entityTabs, {
+    key: 'lyrics' as const,
+    label: t('player.lyric'),
+    count: lyricTotal.value,
+    showCount: lyricLoaded.value,
+    // 歌词接口返回真实总数，不受本地 idb 截断限制，不需要 "+"
+    capped: false,
+  }]
+})
 </script>
 
 <template>
@@ -169,14 +259,14 @@ const tabs = computed(() => [
       >
         <div v-if="searched" class="mx-auto flex max-w-2xl gap-2 px-4 pb-2.5">
           <button
-            v-for="t in tabs" :key="t.key"
+            v-for="entry in tabs" :key="entry.key"
             class="rounded-full px-3.5 py-1.5 text-xs font-semibold transition active:scale-95"
-            :class="tab === t.key
+            :class="tab === entry.key
               ? 'bg-accent text-primary shadow-md shadow-accent/20'
               : 'bg-fg-primary/5 text-fg-muted ring-1 ring-fg-primary/10 hover:text-fg-secondary'"
-            @click="tab = t.key"
+            @click="selectTab(entry.key)"
           >
-            {{ t.label }} · {{ t.capped ? `${t.count}+` : t.count }}
+            {{ entry.label }}<template v-if="entry.showCount"> · {{ entry.capped ? `${entry.count}+` : entry.count }}</template>
           </button>
         </div>
       </Transition>
@@ -291,7 +381,7 @@ const tabs = computed(() => [
         </div>
 
         <!-- 专辑 tab -->
-        <div v-else>
+        <div v-else-if="tab === 'albums'">
           <TransitionGroup
             enter-active-class="transition duration-300 ease-out"
             enter-from-class="opacity-0 translate-y-1"
@@ -336,6 +426,64 @@ const tabs = computed(() => [
           <p v-if="!results.albums.length" class="py-16 text-center text-sm text-fg-muted">
             {{ t('player.search_no_album') }}
           </p>
+        </div>
+
+        <!-- 歌词 tab：懒加载，首次点击才请求后端 -->
+        <div v-else>
+          <div v-if="lyricSearching" class="flex items-center justify-center gap-2 py-16 text-sm text-fg-muted">
+            <span class="h-4 w-4 animate-spin rounded-full border-2 border-fg-secondary border-t-accent" />
+            {{ t('player.lyric_searching') }}
+          </div>
+          <template v-else>
+            <TransitionGroup
+              enter-active-class="transition duration-300 ease-out"
+              enter-from-class="opacity-0 translate-y-1"
+            >
+              <div
+                v-for="(row, i) in lyricRows" :key="row.item.lyric_id"
+                class="flex items-start gap-1.5 rounded-xl px-3 py-2.5 transition hover:bg-fg-primary/5"
+                :class="isCurrent(row.track.id) ? 'bg-accent text-primary' : ''"
+              >
+                <button class="flex min-w-0 flex-1 items-start gap-3 text-left" @click="playLyricRow(i)">
+                  <div class="relative h-10 w-10 shrink-0 overflow-hidden rounded-md bg-secondary ring-1 ring-white/5">
+                    <img v-if="row.track.cover" :src="row.track.cover" alt="" class="h-full w-full object-cover" />
+                    <svg v-else viewBox="0 0 24 24" class="m-auto mt-2.5 h-5 w-5 text-fg-muted" fill="currentColor">
+                      <path d="M9 18V6l10-2v11.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                      <circle cx="6.5" cy="18" r="2.5" /><circle cx="16.5" cy="15.5" r="2.5" />
+                    </svg>
+                    <span v-if="isCurrent(row.track.id)" class="absolute bottom-0.5 left-0.5 rounded bg-primary/55 p-1">
+                      <NowPlayingIndicator :playing="player.isPlaying.value" class="origin-bottom-left scale-[0.55]" />
+                    </span>
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <p class="truncate text-sm" :class="isCurrent(row.track.id) ? 'font-semibold text-accent' : 'font-medium text-fg-primary'">
+                      {{ row.track.title }}
+                    </p>
+                    <p class="mt-0.5 truncate text-[11px] text-fg-muted">
+                      {{ row.item.artists.join(' / ') }}<template v-if="row.item.album"> · {{ row.item.album }}</template>
+                    </p>
+                    <p
+                      v-for="(snip, si) in row.item.snippets" :key="si"
+                      class="mt-1 line-clamp-1 text-xs leading-relaxed text-fg-secondary"
+                    >
+                      <template v-for="(part, _pi) in snippetParts(snip)" :key="_pi">
+                        <span :class="part.hit && !isCurrent(row.track.id) ? 'font-semibold text-accent' : ''">{{ part.text }}</span>
+                      </template>
+                    </p>
+                  </div>
+                </button>
+              </div>
+              <p
+                v-if="lyricTotal > lyricItems.length"
+                class="py-4 text-center text-[11px] text-fg-muted"
+              >
+                {{ t('player.search_hint', { limit: config.SEARCH_TYPE_LIMIT }) }}
+              </p>
+            </TransitionGroup>
+            <p v-if="lyricLoaded && !lyricItems.length" class="py-16 text-center text-sm text-fg-muted">
+              {{ t('player.search_no_lyric') }}
+            </p>
+          </template>
         </div>
       </template>
     </main>

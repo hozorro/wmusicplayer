@@ -73,7 +73,7 @@ async function changeLocale(locale: SupportedLocale) {
       </div>
     </div>
     <div class=" mt-4 p-2 divide-y divide-border">
-      <div class=" flex justify-between w-full py-2">
+      <div class=" flex justify-between items-center w-full py-2 h-15">
         <div>
           <span class=" icon-[solar--pallete-2-outline] text-xl align-middle mr-2"></span>
           <span>{{ t('settings.theme') }}</span>
@@ -82,7 +82,7 @@ async function changeLocale(locale: SupportedLocale) {
           <button class=" px-2 py-1 text-sm rounded-md bg-secondary" @click="toggleTheme">{{ theme }}</button>
         </div>
       </div>
-      <div class=" flex justify-between w-full py-2">
+      <div class=" flex justify-between items-center w-full py-2 h-15">
         <div>
           <span class=" icon-[solar--sort-by-alphabet-outline] text-xl align-middle mr-2"></span>
           <span>{{ t('settings.language') }}</span>
@@ -97,7 +97,7 @@ async function changeLocale(locale: SupportedLocale) {
         :title="item.title" 
         :to-url="item.to" 
         :icon="item.icon"
-        class=" py-2 h-[60px]"
+        class=" h-15"
       />
     </div>
   </div>

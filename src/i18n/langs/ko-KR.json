@@ -64,6 +64,7 @@
     "playing": "재생 중",
     "loading": "불러오는 중…",
     "lyric_not_found": "가사 없음",
+    "lyric_searching": "가사 검색 중...",
     "no_detail": "상세 정보 없음",
     "cover": "커버",
     "detail": "상세",
@@ -115,6 +116,7 @@
     "search_no_track": "검색된 곡 없음",
     "search_no_artist": "검색된 아티스트 없음",
     "search_no_album": "검색된 앨범 없음",
+    "search_no_lyric": "관련 가사를 찾을 수 없습니다",
     "unknown_artist": "알 수 없는 아티스트"
   },
   "playlist": {
@@ -166,6 +168,7 @@
     "greet_morning": "좋은 아침",
     "greet_afternoon": "안녕하세요",
     "greet_evening": "저녁 인사",
+    "daily_line": "오늘의 한마디",
     "month_1": "한겨울",
     "month_2": "이른 봄",
     "month_3": "봄",

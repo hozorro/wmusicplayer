@@ -64,6 +64,7 @@
     "playing": "正在播放",
     "loading": "加载中...",
     "lyric_not_found": "暂无歌词",
+    "lyric_searching": "歌词搜索中...",
     "no_detail": "暂无详情",
     "cover": "封面",
     "detail": "详情",
@@ -115,6 +116,7 @@
     "search_no_track": "未找到相关歌曲",
     "search_no_artist": "未找到相关歌手",
     "search_no_album": "未找到相关专辑",
+    "search_no_lyric": "未找到相关歌词",
     "unknown_artist": "未知歌手"
   },
   "playlist": {
@@ -166,6 +168,7 @@
     "greet_morning": "早上好",
     "greet_afternoon": "下午好",
     "greet_evening": "晚上好",
+    "daily_line": "每日一句",
     "month_1": "凛冬",
     "month_2": "早春",
     "month_3": "春天",

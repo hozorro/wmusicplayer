@@ -64,6 +64,7 @@
     "playing": "Now Playing",
     "loading": "Loading...",
     "lyric_not_found": "No Lyrics",
+    "lyric_searching": "Searching lyrics...",
     "no_detail": "No Details",
     "cover": "Cover",
     "detail": "Details",
@@ -115,6 +116,7 @@
     "search_no_track": "No tracks found",
     "search_no_artist": "No artists found",
     "search_no_album": "No albums found",
+    "search_no_lyric": "No lyrics found",
     "unknown_artist": "Unknown Artist"
   },
   "playlist": {
@@ -166,6 +168,7 @@
     "greet_morning": "Good morning",
     "greet_afternoon": "Good afternoon",
     "greet_evening": "Good evening",
+    "daily_line": "Daily line",
     "month_1": "Midwinter",
     "month_2": "Early Spring",
     "month_3": "Spring",
