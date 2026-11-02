@@ -69,6 +69,7 @@ declare module 'vue-i18n' {
     playing: string
     loading: string
     lyric_not_found: string
+    lyric_searching: string
     no_detail: string
     cover: string
     detail: string
@@ -120,6 +121,7 @@ declare module 'vue-i18n' {
     search_no_track: string
     search_no_artist: string
     search_no_album: string
+    search_no_lyric: string
     unknown_artist: string
   }
   playlist: {
@@ -171,6 +173,7 @@ declare module 'vue-i18n' {
     greet_morning: string
     greet_afternoon: string
     greet_evening: string
+    daily_line: string
     month_1: string
     month_2: string
     month_3: string
@@ -237,22 +240,65 @@ declare module 'vue-i18n' {
     not_ready: string
     play: {
       item: string
-      ratio: string
-      ratio_tip: string
-      switch_delay: string
-      switch_delay_tip: string
-      reties: string
-      times: string
-      reties_tip: string
-      autoloop: string
-      autoloop_tip: string
-      autonext: string
-      autonext_tip: string
-      refresh_time: string
-      refresh_time_tip: string
-      sync_batch_size: string
-      sync_batch_size_unit: string
-      sync_batch_size_tip: string
+      instant_params: string
+      preload_params: string
+      sync_params: string
+      idb_params: string
+      restart_required: string
+      params: {
+        autoloop: string
+        autoloop_tip: string
+        max_consecutive_failures: string
+        max_consecutive_failures_tip: string
+        stat_percent: string
+        stat_percent_tip: string
+        hit_max_seconds: string
+        hit_max_seconds_tip: string
+        restart_window: string
+        restart_window_tip: string
+        max_cached_tracks: string
+        max_cached_tracks_tip: string
+        url_ahead: string
+        url_ahead_tip: string
+        bytes_ahead: string
+        bytes_ahead_tip: string
+        refresh_tick_ms: string
+        refresh_tick_ms_tip: string
+        preload_delay_ms: string
+        preload_delay_ms_tip: string
+        loading_retry_ms: string
+        loading_retry_ms_tip: string
+        load_timeout_ms: string
+        load_timeout_ms_tip: string
+        sync_page_size: string
+        sync_page_size_tip: string
+        sync_page_attempts: string
+        sync_page_attempts_tip: string
+        playback_sync_max_attempts: string
+        playback_sync_max_attempts_tip: string
+        backoff_base_ms: string
+        backoff_base_ms_tip: string
+        backoff_max_ms: string
+        backoff_max_ms_tip: string
+        random_default_num: string
+        random_default_num_tip: string
+        scatter_m_default: string
+        scatter_m_default_tip: string
+        scatter_n_default: string
+        scatter_n_default_tip: string
+        scatter_m_cap: string
+        scatter_m_cap_tip: string
+        scatter_n_cap: string
+        scatter_n_cap_tip: string
+        top_artists_count: string
+        top_artists_count_tip: string
+        random_artists_count: string
+        random_artists_count_tip: string
+        top_tracks_count: string
+        top_tracks_count_tip: string
+        search_type_limit: string
+        search_type_limit_tip: string
+      }
     }
     sync: {
       has_new: string
@@ -367,6 +413,7 @@ declare module 'vue-i18n' {
       30525: string
       30526: string
       30527: string
+      30536: string
       30601: string
     }
   }

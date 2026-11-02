@@ -48,6 +48,37 @@ export const useMusicStore = defineStore("music", () => {
     watch(isDark, applyThemeToDom, { immediate: true })
   }
 
+  /* Daily lyric —— 每日一句：按本地日期缓存，跨天或首次进入时才请求 */
+  const dailyLyric = ref<DailyLyric | null>(null)
+  const dailyLyricDate = ref('')          // YYYY-MM-DD，请求成功当天才写入
+  const dailyLyricLoading = ref(false)    // 运行态，不持久化
+
+  function todayKey(): string {
+    const d = new Date()
+    const month = `${d.getMonth() + 1}`.padStart(2, '0')
+    const day = `${d.getDate()}`.padStart(2, '0')
+    return `${d.getFullYear()}-${month}-${day}`
+  }
+
+  async function ensureDailyLyric(): Promise<void> {
+    if (dailyLyricLoading.value) return
+    // 日期只在请求成功后才写入，所以日期一致就代表“今天已经问过后端了”
+    if (dailyLyricDate.value === todayKey()) return
+    dailyLyricLoading.value = true
+    try {
+      // 动态引入：store 顶层依赖 api 层会连带拉起 router（createWebHistory），
+      // node 环境的单测会直接 "window is not defined"
+      const { getDailyLyric } = await import("@/apis/methods/music")
+      dailyLyric.value = await getDailyLyric().send()
+      // 后端无数据时也会记为已请求，避免当天反复打接口
+      dailyLyricDate.value = todayKey()
+    } catch {
+      // 装饰性内容：失败不写日期也不打扰用户，下次进入再试
+    } finally {
+      dailyLyricLoading.value = false
+    }
+  }
+
   /* App status */
   const artistPageTab = ref<'tracks' | 'albums'>('tracks')
   function setArtistPageTab(tab: 'tracks' | 'albums') {
@@ -91,6 +122,10 @@ export const useMusicStore = defineStore("music", () => {
     setTheme,
     toggleTheme,
     initTheme,
+    dailyLyric,
+    dailyLyricDate,
+    dailyLyricLoading,
+    ensureDailyLyric,
     artistPageTab,
     setArtistPageTab,
     params,
@@ -100,7 +135,7 @@ export const useMusicStore = defineStore("music", () => {
   }
 }, {
   persist: {
-    pick:['locale', 'theme', 'params']
+    pick:['locale', 'theme', 'params', 'dailyLyric', 'dailyLyricDate']
   }
 })
 

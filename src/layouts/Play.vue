@@ -1,8 +1,26 @@
 <script setup lang="ts">
+import { onMounted, onUnmounted } from 'vue';
 import PlayBox from '@/components/PlayBox.vue';
 import EntityMenuHost from '@/components/EntityMenuHost.vue';
 import ToastHost from '@/components/ToastHost.vue';
 import PwaUpdateBanner from '@/components/PwaUpdateBanner.vue';
+import { useMusicStore } from '@/store/music';
+
+const musicStore = useMusicStore()
+
+/** 每日一句按本地日期缓存：启动时取一次，PWA 常驻跨天则由回前台补一次 */
+function ensureDailyLine() {
+  if (document.visibilityState === 'visible') musicStore.ensureDailyLyric()
+}
+
+onMounted(() => {
+  musicStore.ensureDailyLyric()
+  document.addEventListener('visibilitychange', ensureDailyLine)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('visibilitychange', ensureDailyLine)
+})
 </script>
 
 <template>

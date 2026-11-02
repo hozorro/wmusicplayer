@@ -54,7 +54,6 @@ export const getTenArtists = () => {
       }))
     },
     cacheFor: 1000 * 60 * 60 * 4, // 4 hours
-    hitSource: ['updateArtistHit']
   })
 }
 export const getArtistChars = () => { 
@@ -234,8 +233,18 @@ export const getLyric = (id: number) => {
   return generalAlova.Get<string>('/music/track/lyric/' + id, {name: 'getLyric'})
 }
 
-export const delLyric = (id: number) => { 
-  return generalAlova.Delete<string>('/music/track/lyric/' + id, {name: 'delLyric'})
+// daily best line, cached by the caller (one per local day), so alova must not cache it
+export const getDailyLyric = () => {
+  return generalAlova.Get<DailyLyric | null>('/music/lyric/daily', {name: 'getDailyLyric', cacheFor: 0})
+}
+
+// lyric full text search, always hits the backend (lyrics are not in idb)
+export const searchLyric = (kw: string, limit = 20, offset = 0) => {
+  return generalAlova.Get<LyricSearchResult>('/music/search/lyric', {
+    name: 'searchLyric',
+    cacheFor: 0,
+    params: { kw, limit, offset },
+  })
 }
 
 // #endregion

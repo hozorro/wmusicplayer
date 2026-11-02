@@ -16,15 +16,27 @@ import { readableTextColor, shade } from '@/utilies/palette';
 import { toPlayTrack } from '@/services/transform';
 import { paramlessModes, type RandomMode } from '@/services/random-model';
 import ModeIcon from '@/components/ModeIcon.vue';
+import MarqueeText from '@/components/MarqueeText.vue';
 import type { PlayTrack } from '@/player/types';
 import favTracksCover from '@/assets/imgs/favorite.jpg';
 import favArtistsCover from '@/assets/imgs/fav_artists.jpg';
 import { usePlayer } from '@/composables/playback';
 import { getTopPlaylists, getTenArtists, getModedRandomTracks, 
         getRandomGenres, getLatestTracks, getHotTracks } from '@/apis/methods/music';
+import { storeToRefs } from 'pinia';
+import { useMusicStore } from '@/store/music';
 
 const router = useRouter();
 const { t } = useI18n();
+
+// —— 每日一句：数据由 store 按本地日期缓存，首页只负责展示 ——
+const musicStore = useMusicStore()
+const { dailyLyric } = storeToRefs(musicStore)
+
+function goDailyAlbum() {
+  const albumId = dailyLyric.value?.album_id
+  if (albumId) router.push(`/album/${albumId}`)
+}
 
 // —— 问候：随时刻流转 ——
 const greeting = computed(() => {
@@ -140,10 +152,27 @@ async function playRandom(m: RandomMode) {
     </div>
     
     <main class=" mx-auto max-w-xl bg-dark/80 -mt-16 pt-16">
-      <!-- 问候 -->
-      <div class=" px-4">
-        <h1 class=" text-[26px] font-black tracking-tight text-fg-primary">{{ greeting }}</h1>
-        <p class=" mt-1 text-xs text-fg-secondary">{{ todayLine }}</p>
+      <!-- 问候 + 每日一句 -->
+      <div class=" flex items-start justify-between gap-3 px-4">
+        <div class=" min-w-0 flex-none">
+          <h1 class=" text-[26px] font-black tracking-tight text-fg-primary">{{ greeting }}</h1>
+          <p class=" mt-1 text-xs text-fg-secondary">{{ todayLine }}</p>
+        </div>
+
+        <!-- 每日一句：半透明圆角块，歌词在上、歌手·歌名在下，点击进入专辑 -->
+        <button
+          v-if="dailyLyric"
+          type="button"
+          class=" min-w-0 flex-1 px-3 py-2 text-right transition active:scale-[0.98]"
+          :class="dailyLyric.album_id ? 'cursor-pointer' : 'cursor-default'"
+          :aria-label="t('sentence.daily_line')"
+          @click="goDailyAlbum"
+        >
+          <MarqueeText :text="dailyLyric.best" class=" text-sm font-medium leading-snug text-fg-primary/80" />
+          <p class=" mt-1 truncate text-[10.5px] text-fg-muted">
+            —— {{ dailyLyric.artists.join(' / ') }}<template v-if="dailyLyric.title"> · {{ dailyLyric.title }}</template>
+          </p>
+        </button>
       </div>
 
       <!-- 歌单：favTracks 伪条目居首 -->

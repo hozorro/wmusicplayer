@@ -157,6 +157,44 @@ declare interface LyricLine {
   text: string;
 }
 
+// #region Lyric (daily line / lyric search, served by the backend lyric index)
+declare interface DailyLyric {
+  lyric_id: number;
+  track_id: number;
+  album_id: number | null;
+  best: string;
+  title: string;
+  artists: string[];
+  album: string | null;
+  cover_art_hash?: string | null;
+  duration: number;
+  path: string;
+}
+
+/** highlights: [start, end) offsets inside `text` */
+declare interface LyricSnippet {
+  text: string;
+  highlights: [number, number][];
+}
+
+declare interface LyricSearchItem {
+  lyric_id: number;
+  track_id: number;
+  title: string;
+  artists: string[];
+  album: string | null;
+  album_id: number | null;
+  cover_art_hash?: string | null;
+  duration: number;
+  snippets: LyricSnippet[];
+}
+
+declare interface LyricSearchResult {
+  total: number;
+  items: LyricSearchItem[];
+}
+// #endregion
+
 declare interface SearchResults {
   albums: Album[];
   artists: Artist[];

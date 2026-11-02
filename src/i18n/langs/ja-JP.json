@@ -64,6 +64,7 @@
     "playing": "再生中",
     "loading": "読み込み中…",
     "lyric_not_found": "歌詞なし",
+    "lyric_searching": "歌詞を検索中...",
     "no_detail": "詳細なし",
     "cover": "ジャケット",
     "detail": "詳細",
@@ -115,6 +116,7 @@
     "search_no_track": "該当曲なし",
     "search_no_artist": "該当アーティストなし",
     "search_no_album": "該当アルバムなし",
+    "search_no_lyric": "該当する歌詞が見つかりません",
     "unknown_artist": "不明なアーティスト"
   },
   "playlist": {
@@ -166,6 +168,7 @@
     "greet_morning": "おはよう",
     "greet_afternoon": "こんにちは",
     "greet_evening": "こんばんは",
+    "daily_line": "今日の一言",
     "month_1": "厳冬",
     "month_2": "早春",
     "month_3": "春",
