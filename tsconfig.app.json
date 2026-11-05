@@ -11,9 +11,8 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
     "isolatedModules": true,
-    "baseUrl": "./",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     },
     "types": ["node", "@intlify/unplugin-vue-i18n/messages", "vitest/globals"]
   },
