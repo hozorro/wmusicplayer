@@ -53,7 +53,8 @@ watch(() => [props.text, props.speed, props.gap], () => nextTick(measure))
 <template>
   <div
     ref="host"
-    class="w-full overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]"
+    class="w-full overflow-hidden"
+    :class="{'[mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]': scrolling}"
   >
     <div
       class="flex whitespace-nowrap will-change-transform"

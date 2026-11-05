@@ -365,20 +365,37 @@ declare module 'vue-i18n' {
     HTTP_401: string
     HTTP_403: string
     HTTP_404: string
+    HTTP_405: string
     HTTP_409: string
     HTTP_413: string
     HTTP_415: string
     HTTP_416: string
     HTTP_422: string
     HTTP_423: string
+    HTTP_429: string
     HTTP_500: string
     HTTP_502: string
     HTTP_503: string
+    HTTP_504: string
     HTTP_UNKNOWN: string
     biz: {
       10001: string
+      10400: string
+      10401: string
+      10403: string
+      10404: string
+      10405: string
+      10409: string
+      10413: string
+      10415: string
+      10416: string
       10422: string
+      10423: string
+      10429: string
       10500: string
+      10502: string
+      10503: string
+      10504: string
       20001: string
       20002: string
       20003: string
@@ -395,6 +412,8 @@ declare module 'vue-i18n' {
       30303: string
       30304: string
       30305: string
+      30307: string
+      30308: string
       30501: string
       30502: string
       30503: string
@@ -404,6 +423,7 @@ declare module 'vue-i18n' {
       30507: string
       30508: string
       30509: string
+      30510: string
       30515: string
       30520: string
       30521: string
@@ -413,7 +433,7 @@ declare module 'vue-i18n' {
       30525: string
       30526: string
       30527: string
-      30536: string
+      30528: string
       30601: string
     }
   }
