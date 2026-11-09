@@ -47,7 +47,10 @@ export default defineConfig(({ mode }) => {
         },
         injectManifest: {
           // globDirectory: 'dist',
-          globPatterns: ['**/*.{js,css,html,ico,png,svg,ttf,woff,woff2}'],
+          // jpg/jpeg/webp：public/imgs/*.jpg 季节背景 + import 进来的默认封面
+          // webmanifest：安装清单
+          // 这些没有文件名 hash 的文件由 Workbox 的 __WB_REVISION__(内容 md5) 负责失效
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg,webp,webmanifest,ttf,woff,woff2}'],
           maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         },
         // 通过 integration.configureCustomSWViteBuild 直接修改 SW 构建的 inlineConfig
