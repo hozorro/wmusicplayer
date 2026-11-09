@@ -4,6 +4,11 @@ on:
     branches:
       - main
 
+# 防止两次部署并发时互相踩 .deploy-manifest / .deploy-manifest-old
+concurrency:
+  group: deploy-player
+  cancel-in-progress: false
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -28,9 +33,25 @@ jobs:
           echo "VITE_CLIENT_TYPE=player" >> .env
 
       - name: Build project
-        run: yarn build
+        run: |
+          yarn build
+          # 清单 = 本次构建的全部文件（相对 dist/），供服务端按"发布代际"回收历史资源
+          (cd dist && find . -type f -printf '%P\n' | sort) > dist/.deploy-manifest
+          printf '.deploy-manifest\n' >> dist/.deploy-manifest
+          sort -u -o dist/.deploy-manifest dist/.deploy-manifest
 
-      - name: Clean target files on server
+      - name: Setup SSH key
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_PORT: ${{ secrets.SERVER_PORT }}
+          SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
+        run: |
+          mkdir -p "$HOME/.ssh"
+          printf '%s\n' "$SSH_KEY" > "$HOME/.ssh/deploy_key"
+          chmod 600 "$HOME/.ssh/deploy_key"
+          ssh-keyscan -p "$SERVER_PORT" "$SERVER_HOST" >> "$HOME/.ssh/known_hosts"
+
+      - name: Preflight on server
         uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -38,15 +59,64 @@ jobs:
           port: ${{ secrets.SERVER_PORT }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            find /var/www/wmusic/player/ -mindepth 1 -delete || true
+            command -v rsync >/dev/null || { echo "rsync is required on the server"; exit 1; }
+            mkdir -p /var/www/wmusic/player
 
       - name: Sync files to server
-        uses: appleboy/scp-action@v1
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_PORT: ${{ secrets.SERVER_PORT }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+        run: |
+          # -c：按内容校验和判断变化，7.94MB 季节图不变就不传
+          # 不带 --delete：删除完全交给下一步的两个清单，历史哈希资源得以保留
+          rsync -rc --stats \
+            -e "ssh -p $SERVER_PORT -i $HOME/.ssh/deploy_key -o StrictHostKeyChecking=yes" \
+            dist/ "$SERVER_USER@$SERVER_HOST:/var/www/wmusic/player/"
+
+      - name: Prune to current + previous build, then rotate manifest
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           port: ${{ secrets.SERVER_PORT }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          source: "dist/"
-          target: /var/www/wmusic/player/
-          strip_components: 1
+          script: |
+            set -e
+            export LC_ALL=C
+            ROOT=/var/www/wmusic/player
+            cd "$ROOT"
+
+            # 首次迁移：-old 不存在时只做快照，本轮不删任何文件
+            if [ ! -f .deploy-manifest-old ]; then
+              find . -type f -printf '%P\n' | grep -v '^\.deploy-manifest' | sort > .deploy-manifest-old
+              echo "first run: snapshot only, nothing deleted"
+              exit 0
+            fi
+
+            # 安全阀：清单必须有效，否则绝不删除
+            [ -s .deploy-manifest ] || { echo "empty .deploy-manifest, abort"; exit 1; }
+            grep -qx 'index.html' .deploy-manifest || { echo "invalid manifest, abort"; exit 1; }
+            grep -qx 'sw.js'       .deploy-manifest || { echo "invalid manifest, abort"; exit 1; }
+
+            TMP=$(mktemp -d)
+            {
+              cat .deploy-manifest .deploy-manifest-old
+              # 清单文件自身 + 服务器自有文件白名单（如 .well-known、.htaccess 等按需补充）
+              printf '.deploy-manifest\n.deploy-manifest-old\n'
+            } | grep -v '^$' | sort -u > "$TMP/keep"
+
+            find . -type f -printf '%P\n' | sort > "$TMP/have"
+            comm -23 "$TMP/have" "$TMP/keep" > "$TMP/remove"
+
+            if [ -s "$TMP/remove" ]; then
+              echo "removing $(wc -l < "$TMP/remove") stale files"
+              while IFS= read -r f; do rm -f -- "$f"; done < "$TMP/remove"
+            fi
+            # 清掉遗留空目录，不碰 ROOT 本身
+            find . -mindepth 1 -type d -empty -delete || true
+            rm -rf "$TMP"
+
+            # 轮换：本次构建成为下一轮的"上一版"
+            # 放在清理之后，rsync 失败时服务器上两份清单都不会被改动，重跑即可
+            cp -f .deploy-manifest .deploy-manifest-old

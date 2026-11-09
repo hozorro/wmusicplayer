@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
-import { precacheAndRoute } from 'workbox-precaching';
-import { registerRoute } from 'workbox-routing';
+import { precacheAndRoute, createHandlerBoundToURL } from 'workbox-precaching';
+import { NavigationRoute, registerRoute } from 'workbox-routing';
 import { CacheFirst } from 'workbox-strategies';
 import { ExpirationPlugin } from 'workbox-expiration';
 import { mediaStreamCacheHandler } from './stream';
@@ -19,6 +19,25 @@ declare let self: ServiceWorkerGlobalScope & { __WB_MANIFEST: unknown[]; __SW_VE
 self.__SW_VERSION__ = SW_VERSION;
 
 precacheAndRoute(self.__WB_MANIFEST);
+
+/**
+ * SPA 深链离线回落
+ * / 与 /index.html 会被上面的 precache 路由直接命中；/playlist/3 之类不在预缓存清单中，
+ * 离线打开会 404。在线时透传网络，保证 nginx 的 no-cache 能返回最新 HTML；
+ * 只有离线或网络失败才回落到预缓存的 App Shell。
+ */
+const appShell = createHandlerBoundToURL('index.html')
+const navigationHandler = async (options: Parameters<typeof appShell>[0]): Promise<Response> => {
+  if (!self.navigator.onLine) return appShell(options)
+  try {
+    return await fetch(options.request)
+  } catch {
+    return appShell(options)
+  }
+}
+registerRoute(new NavigationRoute(navigationHandler, {
+  denylist: [/^\/api\//, /^\/media\//, /^\/music\//, /^\/admin(\/|$)/],
+}))
 
 // 收到主线程的 skipWaiting 指令时立即激活
 self.addEventListener('message', event => {
@@ -61,7 +80,9 @@ registerRoute(
 
 // 其余 GET /api/*：IDB 路由表；MISS / 异常自动回落网络
 registerRoute(
-  ({ url, request}) => url.pathname.startsWith('/api') && request.method === 'GET', 
+  ({ url, request}) => url.pathname.startsWith('/api') 
+    && !url.pathname.startsWith('/api/admin') // 当admin与player部署在同一域名下且时，防止player接管admin接口
+    && request.method === 'GET', 
   ({ request }) => routeApi(request)
 )
 
