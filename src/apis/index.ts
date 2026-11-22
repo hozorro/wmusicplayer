@@ -3,11 +3,10 @@ import { createAlova } from "alova";
 import type { AxiosError } from "axios";
 import { createClientTokenAuthentication } from "alova/client";
 import VueHook from "alova/vue";
-import { refreshToken } from "./methods/music";
-import { toast } from "@/services/toast";
+import { refreshSession } from "./auth-session";
 import { isTokenExpired, TokenStorage } from "@/utilies/auth";
 import { generateTraceId } from "@/utilies/general";
-import { t } from '@/utilies/use-i18n'
+import { ApiError } from "@/errors/apiError";
 import { normalizeError } from "@/errors/normalizeError";
 import { handleGlobalApiError } from "@/errors/handlers";
 
@@ -33,26 +32,19 @@ const alvoaStorageAdapter = () => {
 const { onAuthRequired, onResponseRefreshToken } = createClientTokenAuthentication<typeof VueHook, typeof axiosRequestAdapter>({
   assignToken: (method) => {
     const token = TokenStorage.getAccessToken()
-    method.config.headers.Authorization = `Bearer ${token}`
+    if (token) method.config.headers.Authorization = `Bearer ${token}`
   },
   refreshToken: {
     isExpired: () => {
+      // 无 refresh token 时不再尝试刷新；登录页冷启动的预载请求最多得到一次静默 401
+      if (!TokenStorage.getRefreshToken()) return false
       const token = TokenStorage.getAccessToken()
-      if (!token) return true
-      return isTokenExpired(token)
+      return !token || isTokenExpired(token)
     },
+    // 单一刷新入口：失败不抛错，让原请求继续（网络错误由全局错误处理提示，
+    // 凭证失效由 refreshSession 统一清空登录态），避免 beforeRequest 抛错绕过 onError
     handler: async () => {
-      try {
-        const do_refresh_token = TokenStorage.getRefreshToken()
-        if (!do_refresh_token) throw new Error('refresh_token not found')
-        const { access_token, refresh_token } = await refreshToken(do_refresh_token)
-        TokenStorage.setAccessToken(access_token)
-        TokenStorage.setRefreshToken(refresh_token)
-      } catch (error) {
-        TokenStorage.clear()
-        location.href = '/login'
-        throw error
-      }
+      await refreshSession()
     },
   },
   async login(response) {
@@ -79,12 +71,17 @@ export const generalAlova = createAlova({
     method.meta = { ...method.meta, traceId }
   }),
   responded: onResponseRefreshToken({
-    onSuccess: async (response) => {
+    onSuccess: async (response: any, method?: any) => {
       const resData = await response.data
-      console.log(resData)
-      if(resData.code !== 200){
-        toast(`${t('errors.data_error')}[${resData.code}]: ${resData.msg}`, "error")
-        return
+      if (resData.code !== 200) {
+        // 业务码非 200 必须抛错，否则刷新流程会拿到 undefined 并误判为凭证失效
+        const error = new ApiError({
+          code: resData.code,
+          httpStatus: resData.httpStatus,
+          display: method?.meta?.errorDisplay ?? 'toast',
+        })
+        handleGlobalApiError(error, method)
+        throw error
       }
       return resData.data
     },

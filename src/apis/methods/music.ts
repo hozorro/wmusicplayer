@@ -24,7 +24,9 @@ export const getCurrentUser = () => {
   return generalAlova.Get("/auth/me")
 }
 export const logout = () => { 
-  return generalAlova.Post("/auth/logout")
+  const method = generalAlova.Post("/auth/logout")
+  method.meta = { authRole: 'logout' }
+  return method
 }
 
 // #region Album

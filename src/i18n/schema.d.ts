@@ -37,6 +37,11 @@ declare module 'vue-i18n' {
     password_placeholder: string
     password: string
     login: string
+    headline: string
+    subtitle: string
+    show_password: string
+    hide_password: string
+    logging_in: string
   }
   player: {
     track: string
@@ -238,6 +243,10 @@ declare module 'vue-i18n' {
     local_cache_status: string
     ready: string
     not_ready: string
+    logout: string
+    logout_confirm_title: string
+    logout_confirm_message: string
+    logout_confirm_action: string
     play: {
       item: string
       instant_params: string
@@ -405,6 +414,7 @@ declare module 'vue-i18n' {
       20007: string
       20008: string
       20009: string
+      20010: string
       30104: string
       30204: string
       30301: string
