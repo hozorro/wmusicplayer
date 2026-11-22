@@ -13,6 +13,23 @@
 @theme {
   --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
+  /* Stitch「PulseMusic Login - Dark Mode」品牌色板：登录页固定深色，不随 App 主题切换 */
+  --color-pulse-surface: #101419;
+  --color-pulse-surface-low: #181c21;
+  --color-pulse-surface-container: #1c2025;
+  --color-pulse-surface-high: #262a30;
+  --color-pulse-on-surface: #e0e2ea;
+  --color-pulse-on-surface-variant: #bec8ca;
+  --color-pulse-outline: #889394;
+  --color-pulse-primary: #82d3de;
+  --color-pulse-primary-container: #006d77;
+  --color-pulse-on-primary-container: #9becf7;
+  --color-pulse-secondary: #90d3cb;
+  --color-pulse-secondary-container: #025550;
+  --color-pulse-tertiary: #00dfc1;
+  --color-pulse-tertiary-container: #006f5f;
+  --color-pulse-error: #ffb4ab;
+
   /* 单行跑马灯：内容复制两份，位移 -50% 正好回到第二份起点，做到无缝循环 */
   --animate-marquee: marquee 30s linear infinite;
 

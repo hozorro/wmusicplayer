@@ -31,7 +31,12 @@
     "username_placeholder": "请输入用户名",
     "password_placeholder": "请输入密码",
     "password": "密码",
-    "login": "登录"
+    "login": "登录",
+    "headline": "再次感受律动",
+    "subtitle": "登录以同步你的曲库、歌单、收藏与播放记录。",
+    "show_password": "显示密码",
+    "hide_password": "隐藏密码",
+    "logging_in": "登录中…"
   },
   "player": {
     "track": "歌曲",
@@ -233,6 +238,10 @@
     "local_cache_status": "本地缓存状态",
     "ready": "就绪",
     "not_ready": "未就绪，待同步本地数据",
+    "logout": "退出登录",
+    "logout_confirm_title": "确认退出登录",
+    "logout_confirm_message": "退出后需要重新登录才能继续使用，确定要退出吗？",
+    "logout_confirm_action": "退出",
     "play": {
       "item": "播放设置",
       "instant_params": "即时生效参数",
@@ -400,6 +409,7 @@
       "20007": "当前登录身份无权访问该功能",
       "20008": "登录凭证校验失败，请重新登录",
       "20009": "该操作需要管理员权限",
+      "20010": "登录服务暂时不可用，请稍后重试",
       "30104": "找不到该歌手",
       "30204": "找不到该专辑",
       "30301": "播放链接已过期，请重试",

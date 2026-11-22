@@ -14,12 +14,17 @@ export function handleGlobalApiError(error: ApiError, method?: Method) {
 
   // 1. 上报 - 暂无上报机制，后续可添加
 
-  // 2. 登录失效
-  if (error.code === 'UNAUTHORIZED' || error.httpStatus === 401) {
-    const isLoginRequest = method?.meta?.authRole === 'login'
-    if (!isLoginRequest) {
+  // 2. 登录失效：仅普通业务请求跳转，鉴权流程自身由 auth-session 统一处理
+  const isCredentialFailure = error.code === 'UNAUTHORIZED'
+    || error.httpStatus === 401
+    || error.code === 20002
+    || error.code === '20002'
+  if (isCredentialFailure) {
+    const role = method?.meta?.authRole
+    const isAuthFlow = role === 'login' || role === 'refreshToken' || role === 'logout'
+    if (!isAuthFlow) {
       const authStore = useAuthStore()
-      authStore.redirectToLogin()
+      void authStore.redirectToLogin().catch(() => {})
       return
     }
   }

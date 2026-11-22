@@ -1,11 +1,13 @@
 <script setup lang="ts"> 
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useMusicStore } from '@/store/music';
 import { useTheme } from '@/composables/themes';
 import { appInfo } from '@/constants/app-info';
 import { idbReady } from '@/services/idb-state';
 import RouteMenuItem from '@/components/RouteMenuItem.vue';
+import ConfirmDialog from '@/components/ConfirmDialog.vue';
+import { useLogout } from '@/composables/auth';
 import { langsMap, loadLocaleMessages } from '@/i18n';
 import { useI18n } from 'vue-i18n';
 import { SW_VERSION } from '@/constants/app-info';
@@ -42,6 +44,14 @@ const currentLocale = computed({
 async function changeLocale(locale: SupportedLocale) {
   currentLocale.value = locale;
   await loadLocaleMessages(locale);
+}
+
+const confirmOpen = ref(false);
+const { pending: logoutPending, logout: doLogout } = useLogout();
+
+async function confirmLogout() {
+  confirmOpen.value = false;
+  await doLogout();
 }
 </script>
 
@@ -99,6 +109,28 @@ async function changeLocale(locale: SupportedLocale) {
         :icon="item.icon"
         class=" h-15"
       />
+      <button
+        type="button"
+        class=" flex justify-between items-center w-full py-2 h-15 text-rose-400 transition hover:bg-rose-400/10"
+        :aria-label="t('settings.logout')"
+        @click="confirmOpen = true"
+      >
+        <span>
+          <span class=" icon-[solar--logout-2-outline] text-xl align-middle mr-2"></span>
+          <span>{{ t('settings.logout') }}</span>
+        </span>
+        <span class=" icon-[solar--alt-arrow-right-linear] text-xl align-middle"></span>
+      </button>
     </div>
+    <ConfirmDialog
+      v-model:open="confirmOpen"
+      :title="t('settings.logout_confirm_title')"
+      :message="t('settings.logout_confirm_message')"
+      :confirm-text="t('settings.logout_confirm_action')"
+      :cancel-text="t('common.cancel')"
+      :busy="logoutPending"
+      danger
+      @confirm="confirmLogout"
+    />
   </div>
 </template>

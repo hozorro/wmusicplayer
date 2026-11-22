@@ -31,7 +31,12 @@
     "username_placeholder": "Enter username",
     "password_placeholder": "Enter password",
     "password": "Password",
-    "login": "Login"
+    "login": "Login",
+    "headline": "Feel the Beat again",
+    "subtitle": "Sign in to sync your music lib, playlists, favorites & playback.",
+    "show_password": "Show password",
+    "hide_password": "Hide password",
+    "logging_in": "Signing in…"
   },
   "player": {
     "track": "Track",
@@ -233,6 +238,10 @@
     "local_cache_status": "Local Cache Status",
     "ready": "Ready",
     "not_ready": "Not ready, sync local data",
+    "logout": "Sign out",
+    "logout_confirm_title": "Sign out?",
+    "logout_confirm_message": "You will need to sign in again to continue. Sign out now?",
+    "logout_confirm_action": "Sign out",
     "play": {
       "item": "Playback",
       "instant_params": "Instant Parameters",
@@ -400,6 +409,7 @@
       "20007": "This account type cannot access that feature",
       "20008": "Failed to verify your session, please sign in again",
       "20009": "Administrator permission is required",
+      "20010": "Sign-in service is temporarily unavailable, please retry",
       "30104": "Artist not found",
       "30204": "Album not found",
       "30301": "The playback link has expired, please retry",

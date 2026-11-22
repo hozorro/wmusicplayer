@@ -18,22 +18,38 @@ declare let self: ServiceWorkerGlobalScope & { __WB_MANIFEST: unknown[]; __SW_VE
 // 版本号写入全局，便于调试时确认当前 SW 版本
 self.__SW_VERSION__ = SW_VERSION;
 
-precacheAndRoute(self.__WB_MANIFEST);
+// 插件在 dev 下把 self.__WB_MANIFEST 替换成 []，生产构建注入真实清单，
+// 两者都是数组字面量；不要写 `?? []`，esbuild 会对 `[] ?? []` 报常量折叠警告。
+const precacheManifest = self.__WB_MANIFEST
+precacheAndRoute(precacheManifest)
 
 /**
  * SPA 深链离线回落
  * / 与 /index.html 会被上面的 precache 路由直接命中；/playlist/3 之类不在预缓存清单中，
  * 离线打开会 404。在线时透传网络，保证 nginx 的 no-cache 能返回最新 HTML；
  * 只有离线或网络失败才回落到预缓存的 App Shell。
+ *
+ * dev 模式下 vite-plugin-pwa 会把 __WB_MANIFEST 替换成 []，此时
+ * createHandlerBoundToURL 会抛 WorkboxError('non-precached-url')；
+ * 由于它在 SW 顶层求值阶段执行，会导致整个脚本注册失败
+ * （ServiceWorker script evaluation failed）。因此仅在清单非空时绑定。
  */
-const appShell = createHandlerBoundToURL('index.html')
-const navigationHandler = async (options: Parameters<typeof appShell>[0]): Promise<Response> => {
-  if (!self.navigator.onLine) return appShell(options)
+const appShell = precacheManifest.length > 0
+  ? createHandlerBoundToURL('index.html')
+  : null
+const navigationHandler = async (options: Parameters<NonNullable<typeof appShell>>[0]): Promise<Response> => {
+  if (!self.navigator.onLine) {
+    return appShell ? appShell(options) : offlineResponse()
+  }
   try {
     return await fetch(options.request)
   } catch {
-    return appShell(options)
+    return appShell ? appShell(options) : offlineResponse()
   }
+}
+
+function offlineResponse(): Response {
+  return new Response('Offline', { status: 503, statusText: 'Service Unavailable' })
 }
 registerRoute(new NavigationRoute(navigationHandler, {
   denylist: [/^\/api\//, /^\/media\//, /^\/music\//, /^\/admin(\/|$)/],
