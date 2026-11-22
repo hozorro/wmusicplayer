@@ -4,12 +4,23 @@ import { createEmitter } from '../emitter'
 
 describe('createEmitter', () => {
   it('异常隔离：前一个 handler 抛错不影响后续', () => {
-    const bus = createEmitter<{ e: void }>()
-    const spy = vi.fn()
-    bus.on('e', () => { throw new Error('boom') })
-    bus.on('e', spy)
-    bus.emit('e')
-    expect(spy).toHaveBeenCalledOnce()
+    // 该用例故意抛错，静默掉生产代码的隔离日志，避免噪声进入 stderr
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    try {
+      const bus = createEmitter<{ e: void }>()
+      const spy = vi.fn()
+      bus.on('e', () => { throw new Error('boom') })
+      bus.on('e', spy)
+      bus.emit('e')
+      expect(spy).toHaveBeenCalledOnce()
+      expect(errorSpy).toHaveBeenCalledOnce()
+      expect(errorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('handler error'),
+        expect.any(Error),
+      )
+    } finally {
+      errorSpy.mockRestore()
+    }
   })
 
   it('快照语义：发射期间退订，本轮仍执行', () => {
