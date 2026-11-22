@@ -12,7 +12,7 @@ vi.mock('vue-router', () => ({
   useRouter: () => ({ replace: replaceMock }),
 }))
 
-import { useLogout } from '../useLogout'
+import { useLogout } from '../auth'
 
 describe('useLogout', () => {
   beforeEach(() => {

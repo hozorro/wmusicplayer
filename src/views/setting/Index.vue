@@ -7,7 +7,7 @@ import { appInfo } from '@/constants/app-info';
 import { idbReady } from '@/services/idb-state';
 import RouteMenuItem from '@/components/RouteMenuItem.vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
-import { useLogout } from '@/composables/useLogout';
+import { useLogout } from '@/composables/auth';
 import { langsMap, loadLocaleMessages } from '@/i18n';
 import { useI18n } from 'vue-i18n';
 import { SW_VERSION } from '@/constants/app-info';
