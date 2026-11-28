@@ -48,6 +48,7 @@ const routes: RouteRecordRaw[] = [
         ]
       },
       { path: "/favourite", name: "favourite", component: () => import("@/views/player/Favourite.vue") },
+      { path: "/tracks/:sort?", name: "tracks", component: () => import("@/views/player/Tracks.vue") },
       { path: "/random", name: "random", component: () => import("@/views/player/Random.vue") },
       { path: "/search", name: "search", component: () => import("@/views/player/Search.vue") },
 

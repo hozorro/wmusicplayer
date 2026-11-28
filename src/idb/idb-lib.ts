@@ -14,7 +14,7 @@ export function reqAsPromise<T>(req: IDBRequest<T>): Promise<T> {
   })
 }
 
-export function openIdb(schema: IdbSchema): Promise<IDBDatabase> {
+export function openIdb(schema: IdbSchema, onVersionChange?: () => void): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(schema.dbName, schema.version)
     req.onupgradeneeded = e => {
@@ -34,8 +34,8 @@ export function openIdb(schema: IdbSchema): Promise<IDBDatabase> {
     }
     req.onsuccess= () => {
       const db = req.result
-      // 其他标签页升级版本时让位，避免 blocked
-      db.onversionchange = () => db.close()
+      // 其他标签页升级版本时让位，避免 blocked；同时通知持有者丢弃已关闭的连接
+      db.onversionchange = () => { db.close(); onVersionChange?.() }
       resolve(db)
     }
     req.onerror = () => reject(req.error)
@@ -43,9 +43,14 @@ export function openIdb(schema: IdbSchema): Promise<IDBDatabase> {
   })
 }
 
-export interface PageOptions { offset?: number, limit?: number }
+export interface PageOptions { offset?: number, limit?: number, direction?: IDBCursorDirection }
 
 export function createIdb(db: IDBDatabase) {
+  /** 游标回调里的 advance/continue 抛错时必须让内层 Promise 立即落定，否则请求永久挂起 */
+  const onCursor = (reject: (reason?: unknown) => void, fn: () => void) => () => {
+    try { fn() } catch (e) { reject(e) }
+  }
+
   function withTx<T>(
     stores: string[],
     mode: IDBTransactionMode,
@@ -60,7 +65,12 @@ export function createIdb(db: IDBDatabase) {
       tx.onabort = () => {
         if (!settled) { settled = true; reject(tx.error ?? new Error('IDB transaction aborted')) }
       }
-      try { result = fn(tx) } catch (e) { settled = true; reject(e) }
+      try {
+        result = fn(tx)
+        // 内层 Promise 可能先于 tx.oncomplete 拒绝；先挂一个 catch 防止
+        // Node 在事务结束前报 unhandled rejection（真正的拒绝仍由 resolve(result) 透传）
+        void Promise.resolve(result).catch(() => {})
+      } catch (e) { settled = true; reject(e) }
     })
   }
 
@@ -85,8 +95,8 @@ export function createIdb(db: IDBDatabase) {
   const count = (store: string, query: IDBValidKey | IDBKeyRange | undefined = undefined) =>
     withTx<number>([store], 'readonly', tx => reqAsPromise(tx.objectStore(store).count(query)))
 
-  const countByIndex = (store: string, index: string, query: IDBValidKey | IDBKeyRange) =>
-    withTx<number>([store], 'readonly', tx => reqAsPromise(tx.objectStore(store).index(index).count(query)))
+  const countByIndex = (store: string, index: string, query: IDBValidKey | IDBKeyRange | null = null) =>
+    withTx<number>([store], 'readonly', tx => reqAsPromise(tx.objectStore(store).index(index).count(query ?? undefined)))
 
   /**
    * 索引游标分页：genre_tracks 等场景的地基
@@ -95,15 +105,19 @@ export function createIdb(db: IDBDatabase) {
   const pageByIndex = <T>(
     store: string,
     indexName: string,
-    range: IDBKeyRange,
-    { offset = 0, limit = 20 }: PageOptions = {}
-  ) => 
-    withTx<T[]>([store], 'readonly', tx => new Promise<T[]>((resolve, reject) => {
+    range: IDBKeyRange | null,
+    { offset = 0, limit = 20, direction = 'next' }: PageOptions = {}
+  ): Promise<T[]> => {
+    // offset 非安全整数会令 advance() 的 WebIDL 转换抛错，直接拒绝而不是挂起
+    if (!Number.isSafeInteger(offset) || offset < 0) {
+      return Promise.reject(new TypeError(`pageByIndex: invalid offset ${offset}`))
+    }
+    return withTx<T[]>([store], 'readonly', tx => new Promise<T[]>((resolve, reject) => {
       const idx = tx.objectStore(store).index(indexName)
       const out: T[] = []
       let skipped = false
-      const req = idx.openCursor(range)
-      req.onsuccess = () => {
+      const req = idx.openCursor(range, direction)
+      req.onsuccess = onCursor(reject, () => {
         const cursor = req.result
         if (!cursor) { resolve(out); return }
         if (!skipped && offset > 0) {
@@ -114,9 +128,10 @@ export function createIdb(db: IDBDatabase) {
         out.push(cursor.value as T)
         if (out.length >= limit) { resolve(out); return }
         cursor.continue()
-      }
+      })
       req.onerror = () => reject(req.error)
     }))
+  }
 
   /** 偏移抽样：抽样比过半时退化为部分洗牌，避免拒绝采样退化 */
   function pickOffsets(total: number, take: number): number[] {
@@ -150,7 +165,7 @@ export function createIdb(db: IDBDatabase) {
         const out: T[] = []
         let i = 0     // 下一个待采集偏移序号
         let at = -1   // 当前游标序位
-        req.onsuccess = () => {
+        req.onsuccess = onCursor(reject, () => {
           const cursor = req.result
           if (!cursor || i >= offsets.length) { resolve(out); return }
           if (at === -1) at = 0     // 首条记录 = 序位 0
@@ -165,7 +180,7 @@ export function createIdb(db: IDBDatabase) {
           if (i >= offsets.length) { resolve(out); return }
           at++
           cursor.continue()
-        }
+        })
         req.onerror = () => reject(req.error)
       }))
     })()
@@ -192,7 +207,7 @@ export function createIdb(db: IDBDatabase) {
         const out: T[] = []
         let i = 0
         let at = -1
-        req.onsuccess = () => {
+        req.onsuccess = onCursor(reject, () => {
           const cursor = req.result
           if (!cursor || i >= offsets.length) { resolve(out); return }
           if (at === -1) at = 0
@@ -207,7 +222,7 @@ export function createIdb(db: IDBDatabase) {
           if (i >= offsets.length) { resolve(out); return }
           at++
           cursor.continue()
-        }
+        })
         req.onerror = () => reject(req.error)
       }))
     })()
@@ -227,12 +242,12 @@ export function createIdb(db: IDBDatabase) {
       const req = tx.objectStore(store).index(indexName)
         .openCursor(opts?.range ?? null, opts?.direction ?? 'next')
       const out: T[] = []
-      req.onsuccess = () => {
+      req.onsuccess = onCursor(reject, () => {
         const cursor = req.result
         if (!cursor || out.length >= n) { resolve(out); return }
         out.push(cursor.value as T)
         cursor.continue()
-      }
+      })
       req.onerror = () => reject(req.error)
     }))
 

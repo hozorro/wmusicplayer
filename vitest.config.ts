@@ -13,5 +13,7 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     setupFiles: ['./vitest.setup.ts'],
+    // Node 26 下默认 forks pool 会丢失 runner 上下文（所有套件在 describe 处崩溃）
+    pool: 'vmForks',
   },
 })

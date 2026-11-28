@@ -7,6 +7,7 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import ModuleHeader from '@/components/ModuleHeader.vue';
+import ViewAllButton from '@/components/ViewAllButton.vue';
 import MediaCard from '@/components/MediaCard.vue';
 import TrackRow from '@/components/TrackRow.vue';
 import PagerDots from '@/components/PagerDots.vue'
@@ -288,7 +289,7 @@ async function playRandom(m: RandomMode) {
 
       <!-- 最近添加 / 最常播放：tab + 2 x 2 snap 分页 -->
       <section>
-        <div class="flex items-center px-4 pb-3 pt-7">
+        <div class="flex items-center justify-between px-4 pb-3 pt-7">
           <div class="flex rounded-full bg-white/[0.05] p-1 ring-1 ring-white/10">
             <button
               v-for="tab in ([['latest', t('player.latest_added')], ['hot', t('player.most_played')]] as const)" :key="tab[0]"
@@ -301,6 +302,7 @@ async function playRandom(m: RandomMode) {
               {{ tab[1] }}
             </button>
           </div>
+          <ViewAllButton data-testid="tracks-view-all" :to="`/tracks/${trackTab}`" />
         </div>
 
         <template v-if="tracksLoaded">

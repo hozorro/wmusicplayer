@@ -15,3 +15,7 @@ Object.defineProperty(globalThis, 'localStorage', {
 const { default: i18n } = await import('./src/i18n')
 const { default: zhCN } = await import('./src/i18n/langs/zh-CN.json')
 i18n.global.setLocaleMessage('zh-CN', zhCN)
+
+// 顶层 await 只在模块中合法：Vite/esbuild 会按 ESM 处理本文件，
+// 但 tsserver 在无 import/export 时把它当脚本并报 TS1378，显式标记为模块。
+export {}

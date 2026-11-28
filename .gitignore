@@ -132,3 +132,6 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# 本地开发历史文档（design/plan/review/final_report，含本地完整路径，不入库）
+.codebuddy/

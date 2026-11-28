@@ -65,6 +65,8 @@ declare module 'vue-i18n' {
     to_album: string
     latest_added: string
     most_played: string
+    play_history: string
+    all_tracks: string
     no_playlist: string
     go_to_create: string
     sequential: string
@@ -235,6 +237,9 @@ declare module 'vue-i18n' {
     click_tip: string
     mode_play: string
     weight: string
+    fresh: string
+    fresh_tip: string
+    fresh_pool: string
     random_hint: string
   }
   settings: {

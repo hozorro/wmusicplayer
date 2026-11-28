@@ -2,7 +2,7 @@
 import type { IDBTrack, IDBAlbum, IDBArtist } from "../shapes/idb"
 import type { RawTrack, RawAlbum, RawArtist } from "../shapes/raw"
 
-export const toRawTrack = ({ title_lower, album_id, artist_ids, genre_titles, ...raw}: IDBTrack): RawTrack => raw
+export const toRawTrack = ({ title_lower, album_id, artist_ids, genre_titles, last_hit_at, ...raw}: IDBTrack): RawTrack => raw
 export const toRawAlbum = ({ title_lower, album_artist_id, artist_ids, ...raw}: IDBAlbum): RawAlbum => raw
 export const toRawArtist = ({ name_lower, ...raw}: IDBArtist): RawArtist => raw
 

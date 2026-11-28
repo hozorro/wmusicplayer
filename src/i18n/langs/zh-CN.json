@@ -60,6 +60,8 @@
     "to_album": "查看所属专辑",
     "latest_added": "最近添加",
     "most_played": "最常播放",
+    "play_history": "播放历史",
+    "all_tracks": "全部曲目",
     "no_playlist": "暂无歌单",
     "go_to_create": "去创建",
     "sequential": "顺序播放",
@@ -230,6 +232,9 @@
     "click_tip": "点按直接播放",
     "mode_play": "以{mode}模式播放",
     "weight": "权重",
+    "fresh": "新鲜模式",
+    "fresh_tip": "从最近添加的候选歌曲中随机选出 50 首，候选数量越大范围越广。",
+    "fresh_pool": "候选数量",
     "random_hint": "随机结果将替换当前播放清单并立即播放"
   },
   "settings": {

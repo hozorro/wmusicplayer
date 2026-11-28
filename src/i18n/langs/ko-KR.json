@@ -60,6 +60,8 @@
     "to_album": "앨범 보기",
     "latest_added": "최근 추가됨",
     "most_played": "자주 재생",
+    "play_history": "재생 기록",
+    "all_tracks": "전체 곡",
     "no_playlist": "재생목록 없음",
     "go_to_create": "생성하기",
     "sequential": "순서 재생",
@@ -230,6 +232,9 @@
     "click_tip": "눌러 재생",
     "mode_play": "{mode} 모드로 재생",
     "weight": "가중치",
+    "fresh": "신규 모드",
+    "fresh_tip": "최근 추가된 후보 곡에서 50곡을 무작위로 선택합니다. 후보 수가 클수록 범위가 넓어집니다.",
+    "fresh_pool": "후보 수",
     "random_hint": "현재 대기열을 교체하고 재생을 시작합니다"
   },
   "settings": {

@@ -16,7 +16,8 @@ import {
   idbGetRandomTracks, idbGetArtistRandomTracks, idbGetGenreRandomTracks,
   idbGetLatestTracks, idbGetHotTracks, idbGetCollectionTracks,
   idbGetRndArtistSctdTracks, idbGetWgtRndArtistTracks, idbGetWgtRndTracks,
-  idbGetTrackHits, idbGetRndUnhitTracks
+  idbGetTrackHits, idbGetRndUnhitTracks,
+  idbGetSortedTracks, idbGetRndFreshTracks
 } from '@/idb/sw-api/endpoints/tracks'
 import { idbFavoritedTracks, idbFavoritedTrackIds } from '@/idb/sw-api/endpoints/tracks'
 
@@ -31,7 +32,9 @@ import type {
   getRandomConstraintedArtistTracks, getRandomWeightedArtistTracks, getRandomHitsWeightedTracks,
   getFavoriteTracks, getFavoriteTrackIds, 
   searchLibrary,
-  getTrackHits, getRndUnhitTracks
+  getTrackHits, getRndUnhitTracks,
+  getRandomArtistTracks,
+  getTracksBySort, getRndFreshTracks
 } from '@/apis/methods/music'
 
 /**
@@ -115,10 +118,14 @@ route('/api/music/track/mostplayedtracks', idbGetHotTracks)
 export type remoteGetCollectionTracks = typeof getCollectionTracks
 route('/api/music/track/collection/:ctype/:cid', idbGetCollectionTracks)
 
-// '/music/track/rndartisttracks?num=' + num + '&numpa=1': getRandomConstraintedArtistTracks
+// '/music/track/rndartisttracks?num=' + num + '&numpa=1': getRandomArtistTracks（首页 artist-r 模式）
+export type remoteGetArtistScatterTracks = typeof getRandomArtistTracks
+// '/music/track/rndartisttracks?num=' + num + '&numpa=' + numpa: getRandomConstraintedArtistTracks
 export type remoteGetRandomArtistTracks = typeof getRandomConstraintedArtistTracks
 route('/api/music/track/rndartisttracks', idbGetRndArtistSctdTracks)
 
+// 4 个高级随机端点与 tracks/rndfreshtracks 均已在 wmusicbase 实现；
+// 本地 handler 返回 MISS（如空库）时 routeApi 会透传原始 Request 回源后端。
 // "/music/track/rndunhittracks?num=" + num: getRndUnhitTracks
 export type remoteGetRndUnhitTracks = typeof getRndUnhitTracks
 route('/api/music/track/rndunhittracks', idbGetRndUnhitTracks)
@@ -130,6 +137,14 @@ route('/api/music/track/rndwgttracks', idbGetWgtRndArtistTracks)
 // '/music/track/rndhitswgttracks?num=' + num + '&weight=' + weightRate: getRandomHitsWeightedTracks
 export type remoteGetRandomHitsWeightedTracks = typeof getRandomHitsWeightedTracks
 route('/api/music/track/rndhitswgttracks', idbGetWgtRndTracks)
+
+// "/music/track/tracks?sort=&page=&page_size=": getTracksBySort
+export type remoteGetTracksBySort = typeof getTracksBySort
+route('/api/music/track/tracks', idbGetSortedTracks)
+
+// "/music/track/rndfreshtracks?num=&pool=": getRndFreshTracks
+export type remoteGetRndFreshTracks = typeof getRndFreshTracks
+route('/api/music/track/rndfreshtracks', idbGetRndFreshTracks)
 
 // "/music/track/" + id: getTrackInfo
 export type remoteGetTrackInfo = typeof getTrackInfo

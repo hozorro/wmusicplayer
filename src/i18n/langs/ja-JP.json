@@ -60,6 +60,8 @@
     "to_album": "アルバムを表示",
     "latest_added": "最近追加",
     "most_played": "よく再生",
+    "play_history": "再生履歴",
+    "all_tracks": "すべての曲",
     "no_playlist": "プレイリストなし",
     "go_to_create": "作成する",
     "sequential": "順番再生",
@@ -230,6 +232,9 @@
     "click_tip": "タップで再生開始",
     "mode_play": "{mode}モードで再生",
     "weight": "重み",
+    "fresh": "新着モード",
+    "fresh_tip": "最近追加された候補曲からランダムに50曲選びます。候補数が多いほど範囲が広がります。",
+    "fresh_pool": "候補数",
     "random_hint": "現在のキューを置き換えて再生開始します"
   },
   "settings": {

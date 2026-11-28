@@ -2,6 +2,7 @@ import { generalAlova } from "..";
 import type { RandomModeKey } from "@/services/random-model";
 import { TokenStorage } from "@/utilies/auth";
 import { coverUrl } from "@/services/transform";
+import { HOME_TRACK_COUNT } from "@/config/player-config";
 
 export const login = (username: string, password: string) => { 
   const method = generalAlova.Post<TokenData>('/auth/login', {
@@ -168,8 +169,8 @@ export const getFavoriteTracks = (num: number = 100) => {
 export const getFavoriteTrackIds = (num: number = 100) => { 
   return generalAlova.Get<number[]>("/music/track/favoritetrackids?num=" + num, {name: 'getFavoriteTrackIds'})
 }
-export const getLatestTracks = () => {
-  return generalAlova.Get("/music/track/latesttracks",{
+export const getLatestTracks = (num: number = HOME_TRACK_COUNT) => {
+  return generalAlova.Get(`/music/track/latesttracks?num=${num}`,{
     name: 'getLatestTracks',
     transform: (rawData: Track[]) => {
       return rawData.map(track => ({
@@ -179,8 +180,8 @@ export const getLatestTracks = () => {
     }
   });
 };
-export const getHotTracks  = () => { 
-  return generalAlova.Get("/music/track/mostplayedtracks",{
+export const getHotTracks  = (num: number = HOME_TRACK_COUNT) => { 
+  return generalAlova.Get(`/music/track/mostplayedtracks?num=${num}`,{
     name: 'getMostPlayedTracks',
     transform: (rawData: Track[]) => {
       return rawData.map(track => ({
@@ -194,6 +195,20 @@ export const getHotTracks  = () => {
 export const getCollectionTracks = (collection_id: number, collection_type: Exclude<PopType, 'track'>) => { 
   return generalAlova.Get<Track[]>('/music/track/collection/' + collection_type + '/' + collection_id, {name: 'getCollectionTracks'})
 };
+// 全部曲目：三种排序 + 无限分页（Tracks.vue）
+export const getTracksBySort = (sort: TrackSort, page: number, pageSize: number) =>
+  generalAlova.Get<TracksPage>(
+    `/music/track/tracks?sort=${sort}&page=${page}&page_size=${pageSize}`,
+    { name: 'getTracksBySort', cacheFor: 0 }
+  )
+
+// 新鲜模式：只在最近添加的 pool 首里随机取 num 首
+export const getRndFreshTracks = (num: number, pool: number) =>
+  generalAlova.Get<Track[]>(
+    `/music/track/rndfreshtracks?num=${num}&pool=${pool}`,
+    { name: 'getRndFreshTracks', cacheFor: 0 }
+  )
+
 // #endregion
 
 // #region advanced
@@ -224,6 +239,7 @@ export const getModedRandomTracks = (key: RandomModeKey, param?: number) => {
     case "heat": return getRandomHitsWeightedTracks(50, param ?? 2)
     case "artist-c": return getRandomConstraintedArtistTracks(50, param ?? 2)
     case "artist-w": return getRandomWeightedArtistTracks(50, param ?? 2)
+    case "fresh": return getRndFreshTracks(50, param ?? 500)
     default: return getRandomTracks()
   }
 }

@@ -6,9 +6,11 @@ export interface RandomModeParam {
   step: number
   defaultValue: number
   format: (v: number) => string
+  /** 滑块语义标签（惰性求值，避免语言冻结）；缺省沿用「权重」 */
+  label?: () => string
 }
 
-export type RandomModeKey = 'pure' | 'artist-r' | 'unhit' | 'heat' | 'artist-c' | 'artist-w'
+export type RandomModeKey = 'pure' | 'artist-r' | 'unhit' | 'heat' | 'artist-c' | 'artist-w' | 'fresh'
 
 export interface RandomMode {
   key: RandomModeKey            // getRandomTracks 的 mode 参数
@@ -55,6 +57,17 @@ export const RANDOM_MODES: RandomMode[] = [
     get description() { return t('random.weighted_tip') }, 
     icon: 'artist-w',
     param: { min: 2, max: 9, step: 1, defaultValue: 2, format: v => `${v}` } 
+  },
+  {
+    key: 'fresh',
+    get name() { return t('random.fresh') },
+    get description() { return t('random.fresh_tip') },
+    icon: 'sparkles',
+    param: {
+      min: 100, max: 1000, step: 100, defaultValue: 500,
+      format: v => `${v} ${t('player.unit_track')}`,
+      label: () => t('random.fresh_pool')
+    }
   },
 ]
 

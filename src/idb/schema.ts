@@ -18,7 +18,7 @@ export interface IdbSchema {
  * 版本策略：bump 即全量重建，不做数据迁移
  * 曲库与 playback 数据均可从后端恢复，迁移逻辑是负资产
  */
-export const IDB_VERSION = 1
+export const IDB_VERSION = 2
 
 export const schema: IdbSchema = {
   dbName: 'idb-musiclib',
@@ -35,7 +35,8 @@ export const schema: IdbSchema = {
         { name: 'folder_id', keyPath: 'folder_id' },
         { name: 'hit_count', keyPath: 'hit_count' },
         { name: 'favorited_at', keyPath: 'favorited_at' },
-        { name: 'created_at', keyPath: 'created_at' }
+        { name: 'created_at', keyPath: 'created_at' },
+        { name: 'last_hit_at', keyPath: 'last_hit_at' }
       ]
     },
     {

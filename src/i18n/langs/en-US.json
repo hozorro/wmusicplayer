@@ -60,6 +60,8 @@
     "to_album": "View Album",
     "latest_added": "Recently Added",
     "most_played": "Most Played",
+    "play_history": "Play History",
+    "all_tracks": "All Tracks",
     "no_playlist": "No Playlists",
     "go_to_create": "Create One",
     "sequential": "Sequence",
@@ -230,6 +232,9 @@
     "click_tip": "Tap to play",
     "mode_play": "Play in {mode} mode",
     "weight": "Weight",
+    "fresh": "Fresh Mode",
+    "fresh_tip": "Pick 50 random tracks from the most recently added candidates. A larger pool widens the range.",
+    "fresh_pool": "Candidate pool",
     "random_hint": "Will replace current queue and start playback"
   },
   "settings": {

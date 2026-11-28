@@ -4,6 +4,13 @@
  * 所有魔法数字集中管理，支持运行时覆盖
  */
 
+/**
+ * 首页「最近添加 / 最常播放」条数。
+ * 后端 /api/v1/music/track/{latesttracks,mostplayedtracks} 默认值的唯一对照，
+ * 前端 URL 与 SW/IDB handler 都从这里取，避免 12 vs 16 的历史漂移。
+ */
+export const HOME_TRACK_COUNT = 16
+
 export interface PlayerConfig {
   // ——播放控制 ——
   /** 连续失败熔断阈值 */

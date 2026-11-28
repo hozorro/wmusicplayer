@@ -13,7 +13,10 @@ const _idbReady = ref(false)
 export const idbReady = readonly(_idbReady)
 
 export async function initIdbState(): Promise<void> {
-  _idbReady.value = !!(await getMeta<string>('sync:lastSyncAt'))
+  const ready = !!(await getMeta<string>('sync:lastSyncAt'))
+  _idbReady.value = ready
+  // 版本升级会清空 meta；启动即广播，避免 SW 沿用上一次会话缓存的 ready=true
+  channel?.postMessage(ready)
 }
 
 export function setIdbReady(v: boolean): void {

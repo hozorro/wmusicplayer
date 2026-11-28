@@ -31,6 +31,22 @@ describe('toIDBTrack', () => {
   })
 })
 
+describe('last_hit_at 派生', () => {
+  it('取 hits 中字典序最大的 ISO 时间戳', () => {
+    const t = toIDBTrack({
+      id: 1, title: 'X', duration: 1, folder_id: 0, genre_ids: [],
+      hits: ['2024-01-01T00:00:00Z', '2024-03-01T00:00:00Z', '2024-02-01T00:00:00Z']
+    })
+    expect(t.last_hit_at).toBe('2024-03-01T00:00:00Z')
+    expect(t.hit_count).toBe(3)
+  })
+
+  it('无播放记录时不生成索引键', () => {
+    const t = toIDBTrack({ id: 1, title: 'X', duration: 1, folder_id: 0, genre_ids: [] })
+    expect(t.last_hit_at).toBeUndefined()
+  })
+})
+
 describe('toIDBArtist / toIDBAlbum', () => {
   it('name_lower / title_lower 归一', () => {
     expect(toIDBArtist({ id: 1, name: ' Adele ', pinyin_initial: 'A', track_count: 10 }).name_lower).toBe('adele')

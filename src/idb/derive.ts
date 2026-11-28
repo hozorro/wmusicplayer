@@ -8,13 +8,18 @@ export const normalize = (s: string) => s.trim().toLocaleLowerCase()
 
 export function toIDBTrack(raw: RawTrack): IDBTrack {
   const title_lower = normalize(raw.title)
+  // ISO 8601 字典序 = 时间序；取最大值作为最后播放时间（缺失则不入索引）
+  const last_hit_at = raw.hits?.length
+    ? raw.hits.reduce((a, b) => (a > b ? a : b))
+    : undefined
   return {
     ...raw,
     title_lower,
     album_id: raw.album?.id ?? 0,
     artist_ids: raw.artists?.map(a => a.id) ?? [],
     genre_titles: (raw.genre_ids ?? []).map(gid => [gid, title_lower] as [number, string]),
-    hit_count: raw.hits?.length ?? 0
+    hit_count: raw.hits?.length ?? 0,
+    last_hit_at
   }
 }
 

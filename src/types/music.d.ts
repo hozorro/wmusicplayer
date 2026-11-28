@@ -92,6 +92,15 @@ declare type Track = {
   cover_art_hash?: string;
   cover?: string;
 };
+/** 全部曲目页的三种排序：与后端 sort 枚举、IDB 索引一一对应 */
+declare type TrackSort = 'latest' | 'hot' | 'history';
+declare type TracksPage = {
+  total: number;
+  page: number;
+  page_size: number;
+  sort: TrackSort;
+  tracks: Track[];
+};
 declare interface TrackInfo {
   id: number;
   title: string;

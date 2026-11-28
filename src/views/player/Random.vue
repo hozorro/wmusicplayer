@@ -118,7 +118,7 @@ async function playRandom(m: RandomMode) {
               type="range"
               :min="m.param.min" :max="m.param.max" :step="m.param.step"
               v-model.number="paramValues[m.key]"
-              :aria-label="`${m.name} ${t('random.weight')}`"
+              :aria-label="`${m.name} ${m.param?.label?.() ?? t('random.weight')}`"
               class="h-1.5 w-full cursor-pointer appearance-none rounded-full outline-none
                      [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none
                      [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-accent

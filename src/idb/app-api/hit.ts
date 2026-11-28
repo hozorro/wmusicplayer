@@ -12,7 +12,12 @@ export function bumpTrackHit(trackId: number): Promise<boolean> {
     label: `${t('player.track_play_times')}《${trackId}》`,
     opType: 'hit-track',
     payload: { id: trackId, at },
-    local: () => mutateEntity<IDBTrack>('tracks', trackId, t => ({ ...t, hits: [...(t.hits ?? []), at], hit_count: (t.hit_count ?? 0) + 1 })),
+    local: () => mutateEntity<IDBTrack>('tracks', trackId, t => ({
+      ...t,
+      hits: [...(t.hits ?? []), at],
+      hit_count: (t.hit_count ?? 0) + 1,
+      last_hit_at: at
+    })),
     remote: () => updateTrackHit(trackId).send()
   });
 }

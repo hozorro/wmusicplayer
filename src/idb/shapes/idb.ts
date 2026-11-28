@@ -8,6 +8,7 @@ export interface IDBTrack extends RawTrack {
   artist_ids: number[];
   genre_titles: [number, string][]  // 复合索引载体：[genreId, titlelower]
   hit_count?: number
+  last_hit_at?: string  // 最后播放时间：播放历史排序索引键，由 toIDBTrack / 计次写回派生
 }
 
 export interface IDBArtist extends RawArtist { name_lower: string; }

@@ -6,6 +6,7 @@ import { sample, weightedSample } from "@/utilies/general";
 import { normalize } from "@/idb/derive";
 import { reqAsPromise } from "@/idb/idb-lib";
 import type { PlayerConfig } from "@/config/player-config";
+import { HOME_TRACK_COUNT } from "@/config/player-config";
 
 /** 配置注入点：由应用层初始化时设置 */
 let idbConfig: Pick<PlayerConfig,
@@ -25,6 +26,11 @@ export function setIdbTracksConfig(config: typeof idbConfig) {
   idbConfig = config
 }
 
+/** 查询参数夹取：非数字回退、小数截断、上下界钳制（与后端 clamp_tracks_num 同口径） */
+const clampInt = (v: unknown, min: number, max: number, fallback: number) => {
+  const n = Number(v)
+  return Math.min(max, Math.max(min, Number.isFinite(n) ? Math.trunc(n) : fallback))
+}
 
 export const idbGetRandomTracks: ApiHandler = async ({ query }) => {
   const idb = await getLibraryIdb()
@@ -65,16 +71,20 @@ export const idbFavoritedTrackIds: ApiHandler = async ({ query }) => {
   return json(tracks.slice(0, num).map(t => t.id))
 }
 
-export const idbGetLatestTracks: ApiHandler = async () => {
+/** 首页两条列表：与后端 latesttracks/mostplayedtracks 共用 HOME_TRACK_COUNT=16 */
+const homeTrackCount = (query: URLSearchParams) =>
+  clampInt(query.get('num') ?? HOME_TRACK_COUNT, 1, 100, HOME_TRACK_COUNT)
+
+export const idbGetLatestTracks: ApiHandler = async ({ query }) => {
   const idb = await getLibraryIdb()
-  const rows = await idb.topByIndex<IDBTrack>('tracks', 'created_at', 16, { direction: 'prev' })
+  const rows = await idb.topByIndex<IDBTrack>('tracks', 'created_at', homeTrackCount(query), { direction: 'prev' })
   return json(rows.map(toRawTrack))
 }
 
-export const idbGetHotTracks: ApiHandler = async () => {
+export const idbGetHotTracks: ApiHandler = async ({ query }) => {
   const idb = await getLibraryIdb()
-  // hit_count = 0 表示从未播放，排在索引末尾，prev 方向取前 N 时自然被排除
-  const rows = await idb.topByIndex<IDBTrack>('tracks', 'hit_count', 16, { direction: 'prev' })
+  // 与后端一致：0 次曲目保留在索引末尾，取前 N 时自然排到最后
+  const rows = await idb.topByIndex<IDBTrack>('tracks', 'hit_count', homeTrackCount(query), { direction: 'prev' })
   return json(rows.map(toRawTrack))
 }
 
@@ -163,20 +173,24 @@ export const idbGetWgtRndArtistTracks: ApiHandler = async ({ query }) => {
   const picked = weightedSample(artists, x => (x.track_count || 1) ** a, num)
 
   // 每人随机一首：单事务并发索引查询
-  const pairs = await idb.readStores(['tracks'], async tx => {
+  const lists = await idb.readStores(['tracks'], async tx => {
     const idx = tx.objectStore('tracks').index('artist_ids')
-    return Promise.all(picked.map(artist => 
+    return Promise.all(picked.map(artist =>
       reqAsPromise(idx.getAll(artist.id) as IDBRequest<IDBTrack[]>)
-        .then(list => ({ artist, list}))
     ))
   })
-  return json((pairs as { artist: IDBArtist, list: IDBTrack[] }[])
-    .filter(p => p.list.length > 0)
-    .map(p => ({
-      artist: toRawArtist(p.artist),
-      tracks: toRawTrack(p.list[Math.floor(Math.random() * p.list.length)])
-    }))
-  )
+  // 前端 Random.vue 直接 toPlayTrack(...)，后端也返回 list[TrackBrief]：
+  // 这里必须展平成 Track[] 并按 id 去重，不能是 { artist, tracks } 包装形状
+  const seen = new Set<number>()
+  const tracks: IDBTrack[] = []
+  for (const list of lists as IDBTrack[][]) {
+    if (!list.length) continue
+    const track = list[Math.floor(Math.random() * list.length)]
+    if (seen.has(track.id)) continue
+    seen.add(track.id)
+    tracks.push(track)
+  }
+  return json(tracks.map(toRawTrack))
 }
 
 /**
@@ -206,6 +220,48 @@ export const idbGetRndUnhitTracks: ApiHandler = async ({ query }) => {
 }
 
 // # endregion
+
+// ── 全部曲目：三种排序的偏移分页（Tracks.vue / 后端同契约）──
+// TrackSort 为 src/types/music.d.ts 的 ambient 声明，与 getTracksBySort 共用
+const SORT_INDEX: Record<TrackSort, string> = {
+  latest: 'created_at',
+  hot: 'hit_count',
+  history: 'last_hit_at'
+}
+
+export const idbGetSortedTracks: ApiHandler = async ({ query }) => {
+  const sort = query.get('sort') ?? 'latest'
+  if (!['latest', 'hot', 'history'].includes(sort)) return MISS
+  const page = clampInt(query.get('page') ?? 1, 1, Number.MAX_SAFE_INTEGER, 1)
+  const pageSize = clampInt(query.get('page_size') ?? 20, 1, 100, 20)
+  // 与 total 使用同一 range：索引键缺失的记录（无创建时间 / 从未播放）不参与
+  const range = sort === 'hot' ? IDBKeyRange.lowerBound(0) : IDBKeyRange.lowerBound('')
+  const index = SORT_INDEX[sort as TrackSort]
+  const idb = await getLibraryIdb()
+  // 先取 total：越界页直接给空页，避免把天文数字 offset 交给 cursor.advance()
+  const total = await idb.countByIndex('tracks', index, range)
+  const offset = (page - 1) * pageSize
+  const rows = offset >= total
+    ? [] as IDBTrack[]
+    : await idb.pageByIndex<IDBTrack>('tracks', index, range, {
+      offset,
+      limit: pageSize,
+      direction: 'prev'
+    })
+  return json({ tracks: rows.map(toRawTrack), total, page, page_size: pageSize, sort })
+}
+
+/** 新鲜模式：只在最近添加的 pool 首里随机取 num 首 */
+export const idbGetRndFreshTracks: ApiHandler = async ({ query }) => {
+  const num = clampInt(query.get('num') ?? idbConfig.RANDOM_DEFAULT_NUM, 1, 200, 50)
+  const pool = Math.min(1000, Math.max(100,
+    Math.round(clampInt(query.get('pool') ?? 500, 100, 1000, 500) / 100) * 100))
+  const idb = await getLibraryIdb()
+  const rows = await idb.topByIndex<IDBTrack>('tracks', 'created_at', pool, { direction: 'prev' })
+  if (!rows.length) return MISS
+  return json(sample(rows, Math.min(num, rows.length)).map(toRawTrack))
+}
+
 
 export const idbGetTrack: ApiHandler = async ({ params }) => {
   const id = Number(params.id || 0)
